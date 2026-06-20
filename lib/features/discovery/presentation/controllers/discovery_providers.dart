@@ -93,3 +93,53 @@ class MockDiscoveryUsersController extends _$MockDiscoveryUsersController {
     ),
   ];
 }
+
+class BeaconInfo {
+  final String emoji;
+  final String message;
+  const BeaconInfo({required this.emoji, required this.message});
+}
+
+@riverpod
+class UserBeacons extends _$UserBeacons {
+  @override
+  Map<String, BeaconInfo> build() {
+    return {
+      'mock_1': const BeaconInfo(emoji: '☕', message: 'Coding & Coffee'),
+      'mock_3': const BeaconInfo(emoji: '🎨', message: 'Sketching life'),
+    };
+  }
+
+  void setBeacon(String userId, String emoji, String message) {
+    state = {
+      ...state,
+      userId: BeaconInfo(emoji: emoji, message: message),
+    };
+  }
+
+  void clearBeacon(String userId) {
+    final newState = Map<String, BeaconInfo>.from(state);
+    newState.remove(userId);
+    state = newState;
+  }
+}
+
+@riverpod
+class SelectedVibeFilter extends _$SelectedVibeFilter {
+  @override
+  String? build() => null;
+
+  void selectFilter(String? filter) {
+    state = filter;
+  }
+}
+
+@riverpod
+class InLocalRoom extends _$InLocalRoom {
+  @override
+  bool build() => true;
+
+  void setInRoom(bool value) => state = value;
+  void toggle() => state = !state;
+}
+

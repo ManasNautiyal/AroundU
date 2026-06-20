@@ -6,8 +6,11 @@ import 'features/onboarding/presentation/screens/location_permission_screen.dart
 import 'features/onboarding/presentation/screens/profile_setup_screen.dart';
 import 'features/connections/presentation/screens/main_layout.dart';
 import 'features/onboarding/presentation/controllers/onboarding_providers.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(
     const ProviderScope(
       child: MyApp(),

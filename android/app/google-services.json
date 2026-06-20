@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "863029322406",
+    "project_id": "aroundu-f57a3",
+    "storage_bucket": "aroundu-f57a3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:863029322406:android:f7135bada9cbe3012a0a67",
+        "android_client_info": {
+          "package_name": "com.aroundu.aroundu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7ob1JdHVpmAP15nmZSqR0HcYTOAqDADU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

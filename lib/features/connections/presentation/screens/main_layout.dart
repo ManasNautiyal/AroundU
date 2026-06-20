@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../discovery/presentation/screens/radar_screen.dart';
-import '../../presentation/screens/connections_screen.dart';
+import '../../presentation/screens/inbox_screen.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -14,7 +14,7 @@ class _MainLayoutState extends State<MainLayout> {
 
   final List<Widget> _tabs = const [
     RadarScreen(),
-    ConnectionsScreen(),
+    InboxScreen(),
   ];
 
   @override
@@ -40,9 +40,9 @@ class _MainLayoutState extends State<MainLayout> {
             label: 'Radar',
           ),
           NavigationDestination(
-            icon: Icon(Icons.people_outline_rounded),
-            selectedIcon: Icon(Icons.people_rounded),
-            label: 'Connections',
+            icon: Icon(Icons.mail_outline_rounded),
+            selectedIcon: Icon(Icons.mail_rounded),
+            label: 'Inbox',
           ),
         ],
       ),

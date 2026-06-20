@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../../onboarding/presentation/controllers/onboarding_providers.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -16,6 +17,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isSignUp = false; // Toggle state between sign in and sign up
 
   @override
   void dispose() {
@@ -29,18 +31,56 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    // Mock Authentication Call
-    await Future.delayed(const Duration(milliseconds: 1500));
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      if (_isSignUp) {
+        await authRepo.signUp(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        );
+      } else {
+        await authRepo.signIn(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        );
+      }
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      // Update onboarding step to Permission Screen
-      ref.read(onboardingStepProvider.notifier).setStep(1);
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isSignUp ? 'Registration successful!' : 'Login successful!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        // Move to Location Permission screen
+        ref.read(onboardingStepProvider.notifier).setStep(1);
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMsg = e.toString();
+        if (errorMsg.contains(']')) {
+          errorMsg = errorMsg.substring(errorMsg.indexOf(']') + 1).trim();
+        }
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Auth failed: $errorMsg'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _handleSocialLogin(String platform) async {
     setState(() => _isLoading = true);
+    // Mock login simulation for third-party auth
     await Future.delayed(const Duration(milliseconds: 1200));
     
     if (mounted) {
@@ -75,7 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
                 // Logo & Tagline
                 Center(
                   child: Hero(
@@ -120,7 +160,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
 
                 // Glassmorphic Input Form Container
                 Container(
@@ -144,6 +184,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Text(
+                          _isSignUp ? 'Create Account' : 'Welcome Back',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+
                         // Email Field
                         TextFormField(
                           controller: _emailController,
@@ -230,19 +280,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     valueColor: AlwaysStoppedAnimation(Colors.white),
                                   ),
                                 )
-                              : const Text(
-                                  'Continue',
-                                  style: TextStyle(
+                              : Text(
+                                  _isSignUp ? 'Sign Up' : 'Sign In',
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                         ),
+                        const SizedBox(height: 12),
+
+                        // Auth Toggle Switch Link
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _isSignUp = !_isSignUp;
+                            });
+                          },
+                          child: Text(
+                            _isSignUp
+                                ? 'Already have an account? Sign In'
+                                : 'Don\'t have an account? Sign Up',
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Divider
                 Row(
@@ -264,7 +333,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Social Auth Buttons
                 OutlinedButton.icon(

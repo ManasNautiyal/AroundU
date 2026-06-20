@@ -1,4 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
+import '../../../discovery/data/repositories/user_repository.dart';
 
 part 'onboarding_providers.g.dart';
 
@@ -101,17 +103,41 @@ class OnboardingController extends _$OnboardingController {
     }
   }
 
-  /// Simulated Firebase profile completion upload.
+  /// Real Firebase profile completion upload.
   Future<bool> finishProfile() async {
     if (!state.isBasicInfoValid || !state.isPicturesValid || !state.isVibeTagsValid) {
       return false;
     }
 
     state = state.copyWith(isLoading: true);
-    // Simulating upload time
-    await Future.delayed(const Duration(seconds: 2));
-    state = state.copyWith(isLoading: false);
-    return true;
+    try {
+      final userRepo = ref.read(userRepositoryProvider);
+      final authRepo = ref.read(authRepositoryProvider);
+      final uid = authRepo.currentUser?.uid;
+      
+      if (uid == null) {
+        throw Exception('No authenticated user found');
+      }
+
+      // Convert local picture paths if any, or mock profiles for pictures since we are focusing on profile data wiring
+      final nonNullPics = state.profilePictures.whereType<String>().toList();
+
+      await userRepo.createUserProfile(
+        uid: uid,
+        name: state.name.trim(),
+        bio: state.bio.trim(),
+        vibeTags: state.selectedVibeTags,
+        profilePictures: nonNullPics.isNotEmpty ? nonNullPics : const [
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500' // Fallback visual setup profile picture
+        ],
+      );
+
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      return false;
+    }
   }
 }
 
@@ -124,3 +150,4 @@ class OnboardingStep extends _$OnboardingStep {
     state = step;
   }
 }
+

@@ -43,3 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Key signing and secrets
+/android/key.properties
+*.jks
+*.keystore
+firebase-key.json
+
+# Android build and cache directories
+/android/build/
+.gradle/
+/android/.gradle/
+/android/.kotlin/
+
+

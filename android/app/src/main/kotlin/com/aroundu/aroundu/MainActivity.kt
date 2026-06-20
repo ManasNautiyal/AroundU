@@ -1,4 +1,4 @@
-package com.example.aroundu
+package com.aroundu.aroundu
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/nearby_user.dart';
 import '../../../connections/data/repositories/interaction_repository.dart';
-import '../../../connections/presentation/widgets/match_overlay.dart';
+import '../../../safety/data/repositories/block_service.dart';
 
 class ProfileDetailSheet extends ConsumerStatefulWidget {
   final UserModel userModel;
@@ -18,102 +18,193 @@ class ProfileDetailSheet extends ConsumerStatefulWidget {
 
 class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
   int _currentImageIndex = 0;
-  bool _isLiked = false;
-  bool _isWaved = false;
 
-  void _handleLike() async {
-    setState(() {
-      _isLiked = !_isLiked;
-    });
-    
-    ScaffoldMessenger.of(context).clearSnackBars();
-    
-    if (_isLiked) {
-      final repo = ref.read(interactionRepositoryProvider);
-      final isMutualMatch = await repo.sendLike(
-        currentUserId: 'me', // Mock current user
-        targetUserId: widget.userModel.uid,
-      );
+  void _showReportBottomSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final reasons = ['Spam', 'Harassment', 'Inappropriate Content'];
 
-      if (isMutualMatch && mounted) {
-        // Dismiss the Profile Detail Bottom Sheet
-        Navigator.pop(context);
-
-        // Celebrate the match!
-        MatchOverlay.show(
-          context: context,
-          matchedUser: widget.userModel,
-          onSendMessage: () {
-            // Placeholder: chat screen navigation in Phase 4
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Opening chat screen...')),
-            );
-          },
-          onKeepLooking: () {},
-        );
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Liked ${widget.userModel.name}!'),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Removed like for ${widget.userModel.name}.'),
-            duration: const Duration(seconds: 2),
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (modalContext) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Report ${widget.userModel.name}',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please select a reason for reporting this profile. This user will also be blocked automatically for your safety.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...reasons.map((reason) {
+                return ListTile(
+                  title: Text(reason),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onTap: () async {
+                    // Close the sheet
+                    Navigator.pop(modalContext);
+                    
+                    // Show progress message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Reporting ${widget.userModel.name}...'),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                    
+                    // Trigger block & report logic
+                    final blockService = ref.read(blockServiceProvider);
+                    await blockService.reportUser(
+                      reporterId: 'me',
+                      targetUserId: widget.userModel.uid,
+                      reason: reason,
+                    );
+                    
+                    if (!context.mounted) return;
+                    
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${widget.userModel.name} has been reported and blocked.'),
+                        backgroundColor: Colors.black,
+                      ),
+                    );
+                    // Close the Profile Detail sheet
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+            ],
           ),
         );
-      }
-    }
+      },
+    );
   }
 
-  void _handleWave() async {
-    if (_isWaved) return;
+  void _showConnectDialog() {
+    final theme = Theme.of(context);
+    final textController = TextEditingController();
 
-    try {
-      final repo = ref.read(interactionRepositoryProvider);
-      await repo.sendWave(
-        currentUserId: 'me',
-        targetUserId: widget.userModel.uid,
-      );
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (modalContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(modalContext).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.chat_bubble_outline_rounded, color: theme.colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Connect with ${widget.userModel.name}',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Add a friendly note to introduce yourself! Tapping send will transmit this request to ${widget.userModel.name}.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: textController,
+                    maxLines: 4,
+                    minLines: 2,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      labelText: 'Intro Message',
+                      hintText: 'e.g. Hey! I also love classic movies...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: () async {
+                      final message = textController.text.trim();
+                      if (message.isEmpty) {
+                        ScaffoldMessenger.of(modalContext).showSnackBar(
+                          const SnackBar(content: Text('Please type a message to connect.')),
+                        );
+                        return;
+                      }
 
-      setState(() {
-        _isWaved = true;
-      });
+                      // Close the dialog bottom sheet
+                      Navigator.pop(modalContext);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Wave sent to ${widget.userModel.name}! 👋'),
-            duration: const Duration(seconds: 2),
+                      // Call repository method
+                      final repo = ref.read(interactionRepositoryProvider);
+                      await repo.sendConnectionRequest(
+                        currentUserId: 'me',
+                        targetUserId: widget.userModel.uid,
+                        introMessage: message,
+                      );
+
+                      if (!mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Connection request sent to ${widget.userModel.name}!'),
+                          backgroundColor: Colors.black,
+                        ),
+                      );
+                      
+                      // Close the parent ProfileDetailSheet
+                      Navigator.pop(context);
+                    },
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Send Request',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
-      }
-    } on DailyWaveLimitExceededException catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Out of waves for today! (Limit: 3/day)'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
-      }
-    }
+      },
+    );
   }
 
   @override
@@ -230,12 +321,28 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
-                                user.name,
-                                style: theme.textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.onSurface,
-                                ),
+                              child: Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      user.name,
+                                      style: theme.textTheme.headlineMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.flag_outlined,
+                                      color: theme.colorScheme.error,
+                                    ),
+                                    tooltip: 'Report / Block User',
+                                    onPressed: () => _showReportBottomSheet(context),
+                                  ),
+                                ],
                               ),
                             ),
                             Container(
@@ -371,72 +478,22 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                       stops: const [0.0, 0.4, 1.0],
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      // Direct Wave Button (Outlined/Secondary)
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _handleWave,
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: BorderSide(
-                              color: _isWaved
-                                  ? theme.colorScheme.outlineVariant
-                                  : theme.colorScheme.primary,
-                              width: 1.5,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          icon: Icon(
-                            Icons.back_hand_rounded,
-                            color: _isWaved
-                                ? theme.colorScheme.onSurfaceVariant
-                                : theme.colorScheme.primary,
-                          ),
-                          label: Text(
-                            _isWaved ? 'Waved' : 'Wave',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: _isWaved
-                                  ? theme.colorScheme.onSurfaceVariant
-                                  : theme.colorScheme.primary,
-                            ),
-                          ),
-                        ),
+                  child: FilledButton.icon(
+                    onPressed: _showConnectDialog,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      const SizedBox(width: 16),
-
-                      // Heart/Like Button (Filled/Primary)
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: _handleLike,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: _isLiked
-                                ? Colors.redAccent
-                                : theme.colorScheme.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          icon: Icon(
-                            _isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            _isLiked ? 'Liked' : 'Like',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
+                    ),
+                    icon: const Icon(Icons.send_rounded),
+                    label: const Text(
+                      'Connect & Message',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

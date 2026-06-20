@@ -168,6 +168,26 @@ class InteractionRepository {
       return _incomingWavesController.stream;
     }
   }
+
+  /// Sends a connection request with an intro message note.
+  Future<void> sendConnectionRequest({
+    required String currentUserId,
+    required String targetUserId,
+    required String introMessage,
+  }) async {
+    if (_isFirebaseInitialized) {
+      await _firestore.collection('connection_requests').add({
+        'senderId': currentUserId,
+        'receiverId': targetUserId,
+        'introMessage': introMessage,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } else {
+      // Mock local write log
+      // ignore: avoid_print
+      print('Mock Connection Request: $currentUserId -> $targetUserId with msg: "$introMessage"');
+    }
+  }
 }
 
 @riverpod

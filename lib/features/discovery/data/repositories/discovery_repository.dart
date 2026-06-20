@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/services/location_service.dart';
+import '../../../safety/data/repositories/block_service.dart';
 import '../models/nearby_user.dart';
 
 part 'discovery_repository.g.dart';
@@ -108,6 +109,9 @@ DiscoveryRepository discoveryRepository(DiscoveryRepositoryRef ref) {
 Stream<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String currentUserId}) {
   final repository = ref.watch(discoveryRepositoryProvider);
   final positionAsync = ref.watch(userPositionProvider);
+  final blockedUsersAsync = ref.watch(blockedUsersStreamProvider(currentUserId: currentUserId));
+  
+  final blockedUserIds = blockedUsersAsync.valueOrNull ?? const [];
   
   return positionAsync.when(
     data: (position) {
@@ -121,8 +125,7 @@ Stream<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String curren
       return repository.getNearbyUsersStream(
         currentUserId: currentUserId,
         currentPosition: position,
-        // Blocked list could also be fetched from another provider in the future
-        blockedUserIds: [],
+        blockedUserIds: blockedUserIds,
       );
     },
     error: (err, stack) => Stream.value([]),

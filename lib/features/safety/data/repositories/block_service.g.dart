@@ -1,31 +1,30 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'discovery_repository.dart';
+part of 'block_service.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$discoveryRepositoryHash() =>
-    r'0572d651b3648ab50299f65c3e5fb6ed14cb7620';
+String _$blockServiceHash() => r'2f4b2f266356907432d79ed19470dccd35a1029a';
 
-/// See also [discoveryRepository].
-@ProviderFor(discoveryRepository)
-final discoveryRepositoryProvider =
-    AutoDisposeProvider<DiscoveryRepository>.internal(
-      discoveryRepository,
-      name: r'discoveryRepositoryProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$discoveryRepositoryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+/// See also [blockService].
+@ProviderFor(blockService)
+final blockServiceProvider = AutoDisposeProvider<BlockService>.internal(
+  blockService,
+  name: r'blockServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$blockServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef DiscoveryRepositoryRef = AutoDisposeProviderRef<DiscoveryRepository>;
-String _$nearbyUsersHash() => r'a3730cab35243407d5deba76e24ec90fdce07730';
+typedef BlockServiceRef = AutoDisposeProviderRef<BlockService>;
+String _$blockedUsersStreamHash() =>
+    r'a39b1f99021a58e1f78ddac947fd5dec5f754c77';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -48,23 +47,23 @@ class _SystemHash {
   }
 }
 
-/// See also [nearbyUsers].
-@ProviderFor(nearbyUsers)
-const nearbyUsersProvider = NearbyUsersFamily();
+/// See also [blockedUsersStream].
+@ProviderFor(blockedUsersStream)
+const blockedUsersStreamProvider = BlockedUsersStreamFamily();
 
-/// See also [nearbyUsers].
-class NearbyUsersFamily extends Family<AsyncValue<List<NearbyUser>>> {
-  /// See also [nearbyUsers].
-  const NearbyUsersFamily();
+/// See also [blockedUsersStream].
+class BlockedUsersStreamFamily extends Family<AsyncValue<List<String>>> {
+  /// See also [blockedUsersStream].
+  const BlockedUsersStreamFamily();
 
-  /// See also [nearbyUsers].
-  NearbyUsersProvider call({required String currentUserId}) {
-    return NearbyUsersProvider(currentUserId: currentUserId);
+  /// See also [blockedUsersStream].
+  BlockedUsersStreamProvider call({required String currentUserId}) {
+    return BlockedUsersStreamProvider(currentUserId: currentUserId);
   }
 
   @override
-  NearbyUsersProvider getProviderOverride(
-    covariant NearbyUsersProvider provider,
+  BlockedUsersStreamProvider getProviderOverride(
+    covariant BlockedUsersStreamProvider provider,
   ) {
     return call(currentUserId: provider.currentUserId);
   }
@@ -81,27 +80,31 @@ class NearbyUsersFamily extends Family<AsyncValue<List<NearbyUser>>> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'nearbyUsersProvider';
+  String? get name => r'blockedUsersStreamProvider';
 }
 
-/// See also [nearbyUsers].
-class NearbyUsersProvider extends AutoDisposeStreamProvider<List<NearbyUser>> {
-  /// See also [nearbyUsers].
-  NearbyUsersProvider({required String currentUserId})
+/// See also [blockedUsersStream].
+class BlockedUsersStreamProvider
+    extends AutoDisposeStreamProvider<List<String>> {
+  /// See also [blockedUsersStream].
+  BlockedUsersStreamProvider({required String currentUserId})
     : this._internal(
-        (ref) =>
-            nearbyUsers(ref as NearbyUsersRef, currentUserId: currentUserId),
-        from: nearbyUsersProvider,
-        name: r'nearbyUsersProvider',
+        (ref) => blockedUsersStream(
+          ref as BlockedUsersStreamRef,
+          currentUserId: currentUserId,
+        ),
+        from: blockedUsersStreamProvider,
+        name: r'blockedUsersStreamProvider',
         debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
             ? null
-            : _$nearbyUsersHash,
-        dependencies: NearbyUsersFamily._dependencies,
-        allTransitiveDependencies: NearbyUsersFamily._allTransitiveDependencies,
+            : _$blockedUsersStreamHash,
+        dependencies: BlockedUsersStreamFamily._dependencies,
+        allTransitiveDependencies:
+            BlockedUsersStreamFamily._allTransitiveDependencies,
         currentUserId: currentUserId,
       );
 
-  NearbyUsersProvider._internal(
+  BlockedUsersStreamProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
@@ -115,12 +118,12 @@ class NearbyUsersProvider extends AutoDisposeStreamProvider<List<NearbyUser>> {
 
   @override
   Override overrideWith(
-    Stream<List<NearbyUser>> Function(NearbyUsersRef provider) create,
+    Stream<List<String>> Function(BlockedUsersStreamRef provider) create,
   ) {
     return ProviderOverride(
       origin: this,
-      override: NearbyUsersProvider._internal(
-        (ref) => create(ref as NearbyUsersRef),
+      override: BlockedUsersStreamProvider._internal(
+        (ref) => create(ref as BlockedUsersStreamRef),
         from: from,
         name: null,
         dependencies: null,
@@ -132,13 +135,14 @@ class NearbyUsersProvider extends AutoDisposeStreamProvider<List<NearbyUser>> {
   }
 
   @override
-  AutoDisposeStreamProviderElement<List<NearbyUser>> createElement() {
-    return _NearbyUsersProviderElement(this);
+  AutoDisposeStreamProviderElement<List<String>> createElement() {
+    return _BlockedUsersStreamProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is NearbyUsersProvider && other.currentUserId == currentUserId;
+    return other is BlockedUsersStreamProvider &&
+        other.currentUserId == currentUserId;
   }
 
   @override
@@ -152,18 +156,19 @@ class NearbyUsersProvider extends AutoDisposeStreamProvider<List<NearbyUser>> {
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin NearbyUsersRef on AutoDisposeStreamProviderRef<List<NearbyUser>> {
+mixin BlockedUsersStreamRef on AutoDisposeStreamProviderRef<List<String>> {
   /// The parameter `currentUserId` of this provider.
   String get currentUserId;
 }
 
-class _NearbyUsersProviderElement
-    extends AutoDisposeStreamProviderElement<List<NearbyUser>>
-    with NearbyUsersRef {
-  _NearbyUsersProviderElement(super.provider);
+class _BlockedUsersStreamProviderElement
+    extends AutoDisposeStreamProviderElement<List<String>>
+    with BlockedUsersStreamRef {
+  _BlockedUsersStreamProviderElement(super.provider);
 
   @override
-  String get currentUserId => (origin as NearbyUsersProvider).currentUserId;
+  String get currentUserId =>
+      (origin as BlockedUsersStreamProvider).currentUserId;
 }
 
 // ignore_for_file: type=lint
