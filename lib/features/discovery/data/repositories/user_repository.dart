@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/nearby_user.dart';
 
@@ -6,8 +8,9 @@ part 'user_repository.g.dart';
 
 class UserRepository {
   final FirebaseFirestore _firestore;
+  final FirebaseStorage _storage;
 
-  UserRepository(this._firestore);
+  UserRepository(this._firestore, this._storage);
 
   Future<void> createUserProfile({
     required String uid,
@@ -35,9 +38,22 @@ class UserRepository {
     }
     return null;
   }
+
+  /// Uploads a profile picture to Firebase Storage and returns its download URL.
+  Future<String> uploadProfilePicture({
+    required String uid,
+    required String localPath,
+    required String slot,
+  }) async {
+    final ref = _storage.ref().child('users').child(uid).child('profile_pics').child('$slot.jpg');
+    final file = File(localPath);
+    final uploadTask = await ref.putFile(file);
+    return await uploadTask.ref.getDownloadURL();
+  }
 }
 
 @riverpod
 UserRepository userRepository(UserRepositoryRef ref) {
-  return UserRepository(FirebaseFirestore.instance);
+  return UserRepository(FirebaseFirestore.instance, FirebaseStorage.instance);
 }
+
