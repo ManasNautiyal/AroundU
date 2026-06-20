@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/widgets/image_helper.dart';
 import '../../data/models/nearby_user.dart';
 import '../../../connections/data/repositories/interaction_repository.dart';
 import '../../../safety/data/repositories/block_service.dart';
@@ -256,10 +257,9 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                             setState(() => _currentImageIndex = index);
                           },
                           itemBuilder: (context, index) {
-                            return Image.network(
+                            return getUserImageWidget(
                               images[index],
                               fit: BoxFit.cover,
-                              width: size.width,
                             );
                           },
                         ),

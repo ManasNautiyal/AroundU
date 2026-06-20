@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/widgets/image_helper.dart';
 import '../../../discovery/data/models/nearby_user.dart';
 import '../../data/models/message_model.dart';
 import '../../data/repositories/chat_repository.dart';
@@ -80,7 +81,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundImage: NetworkImage(avatarUrl),
+              backgroundImage: getUserImageProvider(avatarUrl),
             ),
             const SizedBox(width: 12),
             Expanded(

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/nearby_user.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 
 part 'user_repository.g.dart';
 
@@ -55,5 +56,13 @@ class UserRepository {
 @riverpod
 UserRepository userRepository(UserRepositoryRef ref) {
   return UserRepository(FirebaseFirestore.instance, FirebaseStorage.instance);
+}
+
+@riverpod
+Future<UserModel?> currentUserModel(CurrentUserModelRef ref) async {
+  final authRepo = ref.watch(authRepositoryProvider);
+  final uid = authRepo.currentUser?.uid;
+  if (uid == null) return null;
+  return ref.watch(userRepositoryProvider).getUserProfile(uid);
 }
 

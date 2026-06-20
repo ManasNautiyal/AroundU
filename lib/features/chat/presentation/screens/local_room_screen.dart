@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/widgets/image_helper.dart';
 import '../controllers/local_room_controller.dart';
 import '../../../discovery/presentation/controllers/discovery_providers.dart';
 
@@ -235,7 +236,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
             if (!isMe) ...[
               CircleAvatar(
                 radius: 16,
-                backgroundImage: NetworkImage(avatarUrl),
+                backgroundImage: getUserImageProvider(avatarUrl),
               ),
               const SizedBox(width: 8),
             ],

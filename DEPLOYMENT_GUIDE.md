@@ -342,26 +342,14 @@ firebase deploy --only hosting
 
 ## 9. Post-Deployment Checklist & Production Upgrades
 
-### A. Profile Image Handling Optimization
-Currently, the onboarding flow ([onboarding_providers.dart](file:///c:/Users/admin/StudioProjects/AroundU/lib/features/onboarding/presentation/controllers/onboarding_providers.dart)) saves image file paths locally:
-```dart
-final nonNullPics = state.profilePictures.whereType<String>().toList();
-// Writes local paths directly to Firestore
-```
-For production deployment, you should upload selected images to **Firebase Storage** first and write the returned network URLs to the Firestore user profile.
-1. Enable **Firebase Storage** in the Firebase console.
-2. Add the `firebase_storage` upload function to your repository before store deployment.
-3. Update the storage security rules to restrict writes:
-   ```javascript
-   service firebase.storage {
-     match /b/{bucket}/o {
-       match /users/{userId}/{allPaths=**} {
-         allow read: if request.auth != null;
-         allow write: if request.auth != null && request.auth.uid == userId;
-       }
-     }
-   }
-   ```
+### A. Profile Image Handling Optimization (Bypassed via Base64 & Firestore)
+To run the app fully on the Firebase Spark (free) tier without requiring the pay-as-you-go Blaze plan (which Firebase Storage requires for creation in many regions), AroundU uses a custom offline/on-device compression pipeline:
+1. During profile onboarding ([onboarding_providers.dart](file:///c:/Users/admin/StudioProjects/AroundU/lib/features/onboarding/presentation/controllers/onboarding_providers.dart)), user images are processed locally on-device.
+2. They are resized down to a width of `160px` via native codecs and compressed to save document space.
+3. The compressed bytes are encoded as a Base64 string prefixed with `base64:` and stored directly in the Firestore user profile document.
+4. Throughout the UI (cards, chats, settings, match overlays), the helper functions in [image_helper.dart](file:///c:/Users/admin/StudioProjects/AroundU/lib/core/widgets/image_helper.dart) dynamically decode and load the image data using `MemoryImage`, while falling back to standard `NetworkImage` for external mockup URLs.
+
+This completely bypasses the need for Firebase Storage setup or Blaze tier activation.
 
 ### B. Monitoring and Crash Reports
 Add Firebase Crashlytics to report runtime crashes on users' devices:

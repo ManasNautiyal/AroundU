@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/widgets/image_helper.dart';
 import '../../data/models/nearby_user.dart';
 import '../controllers/discovery_providers.dart';
 import 'profile_detail_sheet.dart';
@@ -54,29 +55,19 @@ class NearbyUserCard extends ConsumerWidget {
             fit: StackFit.expand,
             children: [
               // User Profile Picture
-              Image.network(
+              getUserImageWidget(
                 imageUrl,
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: const Icon(Icons.person, size: 48),
-                  );
-                },
+                placeholder: Container(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                errorWidget: Container(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: const Icon(Icons.person, size: 48),
+                ),
               ),
 
               // Bottom Gradient Overlay for Text Readability

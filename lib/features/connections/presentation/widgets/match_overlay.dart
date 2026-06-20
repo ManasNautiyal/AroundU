@@ -1,8 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../discovery/data/models/nearby_user.dart';
+import '../../../discovery/data/repositories/user_repository.dart';
+import '../../../../core/widgets/image_helper.dart';
 
-class MatchOverlay extends StatefulWidget {
+class MatchOverlay extends ConsumerStatefulWidget {
   final UserModel matchedUser;
   final VoidCallback onSendMessage;
   final VoidCallback onKeepLooking;
@@ -52,10 +55,10 @@ class MatchOverlay extends StatefulWidget {
   }
 
   @override
-  State<MatchOverlay> createState() => _MatchOverlayState();
+  ConsumerState<MatchOverlay> createState() => _MatchOverlayState();
 }
 
-class _MatchOverlayState extends State<MatchOverlay> with SingleTickerProviderStateMixin {
+class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
 
   @override
@@ -79,7 +82,12 @@ class _MatchOverlayState extends State<MatchOverlay> with SingleTickerProviderSt
     final size = MediaQuery.of(context).size;
     final matchedUser = widget.matchedUser;
 
-    const currentUserImageUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300'; // Mock current user image
+    final currentUserAsync = ref.watch(currentUserModelProvider);
+    final currentUser = currentUserAsync.valueOrNull;
+    final currentUserImageUrl = currentUser?.profilePictures.isNotEmpty == true
+        ? currentUser!.profilePictures[0]
+        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+
     final matchedUserImageUrl = matchedUser.profilePictures.isNotEmpty
         ? matchedUser.profilePictures[0]
         : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300';
@@ -168,7 +176,7 @@ class _MatchOverlayState extends State<MatchOverlay> with SingleTickerProviderSt
                               backgroundColor: Colors.white,
                               child: CircleAvatar(
                                 radius: 60,
-                                backgroundImage: const NetworkImage(currentUserImageUrl),
+                                backgroundImage: getUserImageProvider(currentUserImageUrl),
                               ),
                             ),
                           ),
@@ -201,7 +209,7 @@ class _MatchOverlayState extends State<MatchOverlay> with SingleTickerProviderSt
                               backgroundColor: Colors.white,
                               child: CircleAvatar(
                                 radius: 60,
-                                backgroundImage: NetworkImage(matchedUserImageUrl),
+                                backgroundImage: getUserImageProvider(matchedUserImageUrl),
                               ),
                             ),
                           ),

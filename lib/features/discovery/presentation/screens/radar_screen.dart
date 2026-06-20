@@ -7,6 +7,8 @@ import '../widgets/beacon_sheet.dart';
 import '../../../chat/presentation/screens/local_room_screen.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
 import '../../../safety/data/repositories/block_service.dart';
+import '../../data/repositories/user_repository.dart';
+import '../../../../core/widgets/image_helper.dart';
 
 class RadarScreen extends ConsumerStatefulWidget {
   const RadarScreen({super.key});
@@ -123,6 +125,13 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
     final selectedVibe = ref.watch(selectedVibeFilterProvider);
     final isInLocalRoom = ref.watch(inLocalRoomProvider);
 
+    // Watch current user to get dynamic avatar URL
+    final currentUserAsync = ref.watch(currentUserModelProvider);
+    final currentUser = currentUserAsync.valueOrNull;
+    final currentUserImageUrl = currentUser?.profilePictures.isNotEmpty == true
+        ? currentUser!.profilePictures[0]
+        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
+
     return Scaffold(
       // Dynamic appbar gradient depending on Ghost Mode
       appBar: PreferredSize(
@@ -155,10 +164,8 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
                     ),
                   );
                 },
-                child: const CircleAvatar(
-                  backgroundImage: NetworkImage(
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
-                  ),
+                child: CircleAvatar(
+                  backgroundImage: getUserImageProvider(currentUserImageUrl),
                 ),
               ),
             ),

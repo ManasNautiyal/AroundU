@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/widgets/image_helper.dart';
 import '../../../discovery/data/models/nearby_user.dart';
 import '../../../discovery/presentation/controllers/discovery_providers.dart';
 import '../../../discovery/presentation/widgets/profile_detail_sheet.dart';
@@ -171,7 +172,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: NetworkImage(avatarUrl),
+                    backgroundImage: getUserImageProvider(avatarUrl),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -283,7 +284,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                       onTap: () => _showProfileDetail(context, sender),
                       child: CircleAvatar(
                         radius: 24,
-                        backgroundImage: NetworkImage(avatarUrl),
+                        backgroundImage: getUserImageProvider(avatarUrl),
                       ),
                     ),
                     const SizedBox(width: 12),

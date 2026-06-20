@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
+import '../../../../core/widgets/image_helper.dart';
 
 part 'onboarding_providers.g.dart';
 
@@ -119,20 +120,17 @@ class OnboardingController extends _$OnboardingController {
         throw Exception('No authenticated user found');
       }
 
-      // Upload local files to Firebase Storage and get network URLs
+      // Compress and convert local files to Base64 data strings to bypass Firebase Storage
       final List<String> uploadedUrls = [];
       for (int i = 0; i < state.profilePictures.length; i++) {
         final path = state.profilePictures[i];
         if (path != null) {
-          if (path.startsWith('http://') || path.startsWith('https://')) {
+          if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('base64:')) {
             uploadedUrls.add(path);
           } else {
-            final downloadUrl = await userRepo.uploadProfilePicture(
-              uid: uid,
-              localPath: path,
-              slot: 'pic_$i',
-            );
-            uploadedUrls.add(downloadUrl);
+            // Compress image and convert to compact Base64 string
+            final base64String = await compressAndEncodeImage(path);
+            uploadedUrls.add(base64String);
           }
         }
       }
