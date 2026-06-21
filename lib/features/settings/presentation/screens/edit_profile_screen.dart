@@ -345,10 +345,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget _buildImageWidget(String path) {
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return Image.network(path, fit: BoxFit.cover);
-    } else if (path.startsWith('base64:')) {
-      return getUserImageWidget(path, fit: BoxFit.cover);
-    } else {
-      return Image.file(File(path), fit: BoxFit.cover);
     }
+    if (path.startsWith('base64:') || path.startsWith('data:image/')) {
+      return getUserImageWidget(path, fit: BoxFit.cover);
+    }
+    try {
+      final file = File(path);
+      if (file.existsSync()) {
+        return Image.file(file, fit: BoxFit.cover);
+      }
+    } catch (_) {}
+    return getUserImageWidget(path, fit: BoxFit.cover);
   }
 }

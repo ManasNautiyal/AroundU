@@ -110,12 +110,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (statefulContext, setModalState) {
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                bottom: MediaQuery.of(statefulContext).viewInsets.bottom + 24,
                 left: 24,
                 right: 24,
                 top: 16,
@@ -179,8 +179,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                                 await ref.read(authRepositoryProvider).sendPasswordResetEmail(
                                       emailResetController.text.trim(),
                                     );
-                                if (context.mounted) {
-                                  Navigator.pop(context);
+                                if (statefulContext.mounted) {
+                                  Navigator.pop(statefulContext);
+                                }
+                                if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text('Password reset link sent to ${emailResetController.text.trim()}!'),
@@ -189,8 +191,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                                   );
                                 }
                               } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                if (statefulContext.mounted) {
+                                  ScaffoldMessenger.of(statefulContext).showSnackBar(
                                     SnackBar(
                                       content: Text('Failed: ${e.toString()}'),
                                       backgroundColor: theme.colorScheme.error,

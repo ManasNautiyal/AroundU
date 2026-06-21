@@ -3,6 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/message_model.dart';
+import '../../../discovery/presentation/controllers/user_providers.dart';
+import '../../../../core/services/location_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 part 'chat_repository.g.dart';
 
@@ -100,13 +103,50 @@ Stream<List<MessageModel>> messagesStream(MessagesStreamRef ref, {required Strin
   return repo.getMessagesStream(matchId);
 }
 
-// Proximity status provider (Mocked state for each matched user)
+// Proximity status provider (Mocked state for each matched user, real distance check on Firebase)
 @riverpod
 class ProximityStatus extends _$ProximityStatus {
   @override
   bool build(String userId) {
-    // By default, let's say Marcus is nearby, others are away for testing variety
-    return userId == 'mock_2';
+    // 1. If Firebase is not initialized, fall back to mock logic
+    final isFirebaseInitialized = Firebase.apps.isNotEmpty;
+    if (!isFirebaseInitialized) {
+      // By default, let's say Marcus is nearby, others are away for testing variety
+      return userId == 'mock_2';
+    }
+
+    // 2. Real Firebase proximity calculation:
+    // Watch current user's position and target's profile
+    final positionAsync = ref.watch(userPositionProvider);
+    final targetProfileAsync = ref.watch(userProfileProvider(userId));
+
+    final position = positionAsync.valueOrNull;
+    final targetProfile = targetProfileAsync.valueOrNull;
+
+    if (position == null || targetProfile == null) {
+      return false;
+    }
+
+    // If target has ghost mode enabled or no location, they are not nearby
+    if (targetProfile.isGhostMode || targetProfile.location == null) {
+      return false;
+    }
+
+    final targetLocation = targetProfile.location!['geopoint'] as GeoPoint?;
+    if (targetLocation == null) {
+      return false;
+    }
+
+    // Calculate distance
+    final distance = Geolocator.distanceBetween(
+      position.latitude,
+      position.longitude,
+      targetLocation.latitude,
+      targetLocation.longitude,
+    );
+
+    // Nearby if within 100 meters
+    return distance <= 100.0;
   }
 
   void toggleProximity() {

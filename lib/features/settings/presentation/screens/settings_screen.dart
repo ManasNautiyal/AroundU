@@ -12,12 +12,12 @@ import '../../../../main.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+  void _showDeleteAccountDialog(BuildContext parentContext, WidgetRef ref) {
+    final theme = Theme.of(parentContext);
 
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: parentContext,
+      builder: (dialogContext) => AlertDialog(
         title: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
@@ -30,7 +30,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           FilledButton(
@@ -39,8 +39,8 @@ class SettingsScreen extends ConsumerWidget {
               foregroundColor: theme.colorScheme.onError,
             ),
             onPressed: () {
-              Navigator.pop(context); // Close step 1 dialog
-              _showDeleteAccountFinalConfirmationDialog(context, ref, theme);
+              Navigator.pop(dialogContext); // Close step 1 dialog
+              _showDeleteAccountFinalConfirmationDialog(parentContext, ref, theme);
             },
             child: const Text('Delete'),
           ),
@@ -50,20 +50,20 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showDeleteAccountFinalConfirmationDialog(
-    BuildContext context,
+    BuildContext parentContext,
     WidgetRef ref,
     ThemeData theme,
   ) {
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: parentContext,
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Final Warning'),
         content: const Text(
           'This is your last warning. Once clicked, your profile will be completely wiped from the database and there is no way to recover it. Proceed?',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           FilledButton(
@@ -72,8 +72,8 @@ class SettingsScreen extends ConsumerWidget {
               foregroundColor: theme.colorScheme.onError,
             ),
             onPressed: () {
-              Navigator.pop(context); // Close dialog
-              _performDelete(context, ref);
+              Navigator.pop(dialogContext); // Close dialog
+              _performDelete(parentContext, ref);
             },
             child: const Text('PERMANENTLY DELETE'),
           ),
@@ -82,11 +82,11 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _performDelete(BuildContext context, WidgetRef ref) async {
+  void _performDelete(BuildContext parentContext, WidgetRef ref) async {
     showDialog(
-      context: context,
+      context: parentContext,
       barrierDismissible: false,
-      builder: (context) => const Center(
+      builder: (dialogContext) => const Center(
         child: CircularProgressIndicator(),
       ),
     );
@@ -111,12 +111,12 @@ class SettingsScreen extends ConsumerWidget {
 
     await ref.read(authRepositoryProvider).signOut();
 
-    if (context.mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
+    if (parentContext.mounted) {
+      Navigator.of(parentContext).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const OnboardingRouter()),
         (route) => false,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(parentContext).showSnackBar(
         const SnackBar(
           content: Text('Account successfully deleted. All data has been wiped.'),
           backgroundColor: Colors.black,
@@ -294,16 +294,16 @@ class SettingsScreen extends ConsumerWidget {
                       Navigator.pop(modalContext); // Close sheet
                       final confirm = await showDialog<bool>(
                         context: context,
-                        builder: (context) => AlertDialog(
+                        builder: (dialogContext) => AlertDialog(
                           title: const Text('Log Out'),
                           content: const Text('Are you sure you want to log out of AroundU?'),
                           actions: [
                             TextButton(
-                              onPressed: () => Navigator.pop(context, false),
+                              onPressed: () => Navigator.pop(dialogContext, false),
                               child: const Text('Cancel'),
                             ),
                             FilledButton(
-                              onPressed: () => Navigator.pop(context, true),
+                              onPressed: () => Navigator.pop(dialogContext, true),
                               child: const Text('Log Out'),
                             ),
                           ],

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../controllers/onboarding_providers.dart';
+import '../../../../core/widgets/image_helper.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -117,7 +118,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Row(
           children: [
             Icon(Icons.check_circle_rounded, color: Colors.green),
@@ -131,7 +132,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         actions: [
           FilledButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               ref.read(onboardingStepProvider.notifier).setStep(3);
             },
             child: const Text('Let\'s Go'),
@@ -310,6 +311,22 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
+  Widget _buildImageWidget(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return Image.network(path, fit: BoxFit.cover);
+    }
+    if (path.startsWith('base64:') || path.startsWith('data:image/')) {
+      return getUserImageWidget(path, fit: BoxFit.cover);
+    }
+    try {
+      final file = File(path);
+      if (file.existsSync()) {
+        return Image.file(file, fit: BoxFit.cover);
+      }
+    } catch (_) {}
+    return getUserImageWidget(path, fit: BoxFit.cover);
+  }
+
   Widget _buildStep2Pictures(ThemeData theme, OnboardingState state) {
     final isDark = theme.brightness == Brightness.dark;
     return SingleChildScrollView(
@@ -361,10 +378,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(15),
                           child: state.profilePictures[0] != null
-                              ? Image.file(
-                                  File(state.profilePictures[0]!),
-                                  fit: BoxFit.cover,
-                                )
+                              ? _buildImageWidget(state.profilePictures[0]!)
                               : Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -417,10 +431,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(11),
                                   child: state.profilePictures[1] != null
-                                      ? Image.file(
-                                          File(state.profilePictures[1]!),
-                                          fit: BoxFit.cover,
-                                        )
+                                      ? _buildImageWidget(state.profilePictures[1]!)
                                       : Center(
                                           child: Icon(
                                             Icons.add_photo_alternate_outlined,
@@ -450,10 +461,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(11),
                                   child: state.profilePictures[2] != null
-                                      ? Image.file(
-                                          File(state.profilePictures[2]!),
-                                          fit: BoxFit.cover,
-                                        )
+                                      ? _buildImageWidget(state.profilePictures[2]!)
                                       : Center(
                                           child: Icon(
                                             Icons.add_photo_alternate_outlined,

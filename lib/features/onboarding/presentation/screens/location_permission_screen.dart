@@ -69,7 +69,7 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
   void _showPermissionDeniedDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Location Access Required'),
         content: const Text(
           'AroundU requires precise location permissions to calculate relative distances between you and other users within 100 meters. Without it, you cannot discover matching vibes nearby.',
@@ -77,14 +77,14 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               _navigateToProfileSetup(); // Let them proceed in debug/mock onboarding anyway
             },
             child: const Text('Proceed anyway'),
           ),
           FilledButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               _requestLocationPermission();
             },
             child: const Text('Try Again'),
