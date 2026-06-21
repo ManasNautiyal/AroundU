@@ -134,9 +134,9 @@ class SettingsScreen extends ConsumerWidget {
       isScrollControlled: true,
       builder: (modalContext) {
         return Consumer(
-          builder: (context, ref, child) {
-            final isGhostMode = ref.watch(ghostModeControllerProvider);
-            final themeMode = ref.watch(themeModeProvider);
+          builder: (sheetContext, sheetRef, child) {
+            final isGhostMode = sheetRef.watch(ghostModeControllerProvider);
+            final themeMode = sheetRef.watch(themeModeProvider);
             final isDark = themeMode == ThemeMode.dark;
 
             final sheetBgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
@@ -201,7 +201,7 @@ class SettingsScreen extends ConsumerWidget {
                     activeThumbColor: isDark ? Colors.white : Colors.black,
                     activeTrackColor: isDark ? Colors.white30 : Colors.black38,
                     onChanged: (val) {
-                      ref.read(ghostModeControllerProvider.notifier).toggle();
+                      sheetRef.read(ghostModeControllerProvider.notifier).toggle();
                     },
                   ),
                   const Divider(color: Colors.transparent, height: 4),
@@ -229,7 +229,7 @@ class SettingsScreen extends ConsumerWidget {
                     activeThumbColor: isDark ? Colors.white : Colors.black,
                     activeTrackColor: isDark ? Colors.white30 : Colors.black38,
                     onChanged: (val) {
-                      ref.read(themeModeProvider.notifier).toggleTheme();
+                      sheetRef.read(themeModeProvider.notifier).toggleTheme();
                     },
                   ),
                   Divider(color: dividerColor),
