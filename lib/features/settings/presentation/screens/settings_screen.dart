@@ -39,8 +39,9 @@ class SettingsScreen extends ConsumerWidget {
               foregroundColor: theme.colorScheme.onError,
             ),
             onPressed: () {
-              Navigator.pop(dialogContext); // Close step 1 dialog
-              _showDeleteAccountFinalConfirmationDialog(parentContext, ref, theme);
+              final navigator = Navigator.of(dialogContext);
+              navigator.pop(); // Close step 1 dialog
+              _showDeleteAccountFinalConfirmationDialog(navigator.context, ref, theme);
             },
             child: const Text('Delete'),
           ),
@@ -72,8 +73,9 @@ class SettingsScreen extends ConsumerWidget {
               foregroundColor: theme.colorScheme.onError,
             ),
             onPressed: () {
-              Navigator.pop(dialogContext); // Close dialog
-              _performDelete(parentContext, ref);
+              final navigator = Navigator.of(dialogContext);
+              navigator.pop(); // Close dialog
+              _performDelete(navigator.context, ref);
             },
             child: const Text('PERMANENTLY DELETE'),
           ),
@@ -291,9 +293,10 @@ class SettingsScreen extends ConsumerWidget {
                       shape: const StadiumBorder(),
                     ),
                     onPressed: () async {
-                      Navigator.pop(modalContext); // Close sheet
+                      final navigator = Navigator.of(modalContext);
+                      navigator.pop(); // Close sheet
                       final confirm = await showDialog<bool>(
-                        context: context,
+                        context: navigator.context,
                         builder: (dialogContext) => AlertDialog(
                           title: const Text('Log Out'),
                           content: const Text('Are you sure you want to log out of AroundU?'),
@@ -312,8 +315,9 @@ class SettingsScreen extends ConsumerWidget {
 
                       if (confirm == true) {
                         await ref.read(authRepositoryProvider).signOut();
-                        if (context.mounted) {
-                          Navigator.of(context).pushAndRemoveUntil(
+                        final navContext = navigator.context;
+                        if (navContext.mounted) {
+                          Navigator.of(navContext).pushAndRemoveUntil(
                             MaterialPageRoute(builder: (context) => const OnboardingRouter()),
                             (route) => false,
                           );
@@ -335,8 +339,9 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.pop(modalContext); // Close sheet
-                      _showDeleteAccountDialog(context, ref);
+                      final navigator = Navigator.of(modalContext);
+                      navigator.pop(); // Close sheet
+                      _showDeleteAccountDialog(navigator.context, ref);
                     },
                     icon: Icon(Icons.delete_forever_rounded, size: 18, color: isDark ? Colors.white60 : Colors.black54),
                     label: const Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold)),
