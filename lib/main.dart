@@ -245,11 +245,7 @@ class OnboardingRouter extends ConsumerWidget {
               }
             }
           },
-          loading: () => const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          ),
+          loading: () => const LoadingScreen(),
           error: (error, stack) => Scaffold(
             body: Center(
               child: Column(
@@ -267,14 +263,51 @@ class OnboardingRouter extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      ),
+      loading: () => const LoadingScreen(),
       error: (error, stack) => Scaffold(
         body: Center(
           child: Text('Authentication error: $error'),
+        ),
+      ),
+    );
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/logo/app_logo.png',
+              width: 140,
+              height: 140,
+              errorBuilder: (context, error, stackTrace) => const Text(
+                'AroundU',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: -1.0,
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.0,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white38),
+              ),
+            ),
+          ],
         ),
       ),
     );

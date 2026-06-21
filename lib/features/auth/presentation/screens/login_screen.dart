@@ -482,7 +482,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
+                Center(
+                  child: Image.asset(
+                    'assets/logo/app_logo.png',
+                    height: 100,
+                    width: 100,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Text(
                   'AroundU',
                   textAlign: TextAlign.center,
