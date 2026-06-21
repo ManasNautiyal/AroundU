@@ -149,204 +149,206 @@ class SettingsScreen extends ConsumerWidget {
             final chevronThemeColor = isDark ? Colors.white30 : Colors.black26;
             final dividerColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
 
-            return Container(
-              decoration: BoxDecoration(
-                color: sheetBgColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(
-                  top: BorderSide(color: borderBgColor, width: 1.5),
+            return Material(
+              color: sheetBgColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: borderBgColor, width: 1.5),
+                  ),
                 ),
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      height: 4,
-                      width: 40,
-                      margin: const EdgeInsets.only(bottom: 24),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey.shade800 : Colors.grey.shade400,
-                        borderRadius: BorderRadius.circular(2),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        height: 4,
+                        width: 40,
+                        margin: const EdgeInsets.only(bottom: 24),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey.shade800 : Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                  ),
-                  Text(
-                    'Settings',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: textThemeColor,
+                    Text(
+                      'Settings',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: textThemeColor,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Ghost Mode Toggle Switch Tile
-                  SwitchListTile(
-                    title: Row(
-                      children: [
-                        Icon(Icons.visibility_off_outlined, color: iconThemeColor),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Ghost Mode',
-                          style: TextStyle(fontWeight: FontWeight.w600, color: textThemeColor),
-                        ),
-                      ],
+                    const SizedBox(height: 16),
+                    
+                    // Ghost Mode Toggle Switch Tile
+                    SwitchListTile(
+                      title: Row(
+                        children: [
+                          Icon(Icons.visibility_off_outlined, color: iconThemeColor),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Ghost Mode',
+                            style: TextStyle(fontWeight: FontWeight.w600, color: textThemeColor),
+                          ),
+                        ],
+                      ),
+                      subtitle: Text(
+                        'Disappear from radars. Your location stops updating.',
+                        style: TextStyle(fontSize: 12, color: subtitleColor),
+                      ),
+                      value: isGhostMode,
+                      activeThumbColor: isDark ? Colors.white : Colors.black,
+                      activeTrackColor: isDark ? Colors.white30 : Colors.black38,
+                      onChanged: (val) {
+                        sheetRef.read(ghostModeControllerProvider.notifier).toggle();
+                      },
                     ),
-                    subtitle: Text(
-                      'Disappear from radars. Your location stops updating.',
-                      style: TextStyle(fontSize: 12, color: subtitleColor),
+                    const Divider(color: Colors.transparent, height: 4),
+
+                    // Theme Mode Toggle Switch Tile
+                    SwitchListTile(
+                      title: Row(
+                        children: [
+                          Icon(
+                            isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                            color: iconThemeColor,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Light Mode',
+                            style: TextStyle(fontWeight: FontWeight.w600, color: textThemeColor),
+                          ),
+                        ],
+                      ),
+                      subtitle: Text(
+                        'Switch between light and dark monochrome themes.',
+                        style: TextStyle(fontSize: 12, color: subtitleColor),
+                      ),
+                      value: !isDark,
+                      activeThumbColor: isDark ? Colors.white : Colors.black,
+                      activeTrackColor: isDark ? Colors.white30 : Colors.black38,
+                      onChanged: (val) {
+                        sheetRef.read(themeModeProvider.notifier).toggleTheme();
+                      },
                     ),
-                    value: isGhostMode,
-                    activeThumbColor: isDark ? Colors.white : Colors.black,
-                    activeTrackColor: isDark ? Colors.white30 : Colors.black38,
-                    onChanged: (val) {
-                      sheetRef.read(ghostModeControllerProvider.notifier).toggle();
-                    },
-                  ),
-                  const Divider(color: Colors.transparent, height: 4),
+                    Divider(color: dividerColor),
 
-                  // Theme Mode Toggle Switch Tile
-                  SwitchListTile(
-                    title: Row(
-                      children: [
-                        Icon(
-                          isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-                          color: iconThemeColor,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Light Mode',
-                          style: TextStyle(fontWeight: FontWeight.w600, color: textThemeColor),
-                        ),
-                      ],
+                    // Edit Profile
+                    ListTile(
+                      leading: Icon(Icons.person_outline_rounded, color: iconThemeColor),
+                      title: Text('Edit Profile', style: TextStyle(color: textThemeColor)),
+                      trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
+                      onTap: () {
+                        Navigator.pop(modalContext);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EditProfileScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    subtitle: Text(
-                      'Switch between light and dark monochrome themes.',
-                      style: TextStyle(fontSize: 12, color: subtitleColor),
+                    
+                    // Notifications
+                    ListTile(
+                      leading: Icon(Icons.notifications_none_rounded, color: iconThemeColor),
+                      title: Text('Notifications', style: TextStyle(color: textThemeColor)),
+                      trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
+                      onTap: () {
+                        Navigator.pop(modalContext);
+                      },
                     ),
-                    value: !isDark,
-                    activeThumbColor: isDark ? Colors.white : Colors.black,
-                    activeTrackColor: isDark ? Colors.white30 : Colors.black38,
-                    onChanged: (val) {
-                      sheetRef.read(themeModeProvider.notifier).toggleTheme();
-                    },
-                  ),
-                  Divider(color: dividerColor),
 
-                  // Edit Profile
-                  ListTile(
-                    leading: Icon(Icons.person_outline_rounded, color: iconThemeColor),
-                    title: Text('Edit Profile', style: TextStyle(color: textThemeColor)),
-                    trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
-                    onTap: () {
-                      Navigator.pop(modalContext);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const EditProfileScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  
-                  // Notifications
-                  ListTile(
-                    leading: Icon(Icons.notifications_none_rounded, color: iconThemeColor),
-                    title: Text('Notifications', style: TextStyle(color: textThemeColor)),
-                    trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
-                    onTap: () {
-                      Navigator.pop(modalContext);
-                    },
-                  ),
-
-                  // Privacy
-                  ListTile(
-                    leading: Icon(Icons.privacy_tip_outlined, color: iconThemeColor),
-                    title: Text('Privacy Policy', style: TextStyle(color: textThemeColor)),
-                    trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
-                    onTap: () {
-                      Navigator.pop(modalContext);
-                    },
-                  ),
-
-                  // Terms
-                  ListTile(
-                    leading: Icon(Icons.description_outlined, color: iconThemeColor),
-                    title: Text('Terms of Service', style: TextStyle(color: textThemeColor)),
-                    trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
-                    onTap: () {
-                      Navigator.pop(modalContext);
-                    },
-                  ),
-                  Divider(color: dividerColor),
-                  const SizedBox(height: 16),
-
-                  // Log Out Button
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: borderBgColor,
-                      foregroundColor: textThemeColor,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: const StadiumBorder(),
+                    // Privacy
+                    ListTile(
+                      leading: Icon(Icons.privacy_tip_outlined, color: iconThemeColor),
+                      title: Text('Privacy Policy', style: TextStyle(color: textThemeColor)),
+                      trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
+                      onTap: () {
+                        Navigator.pop(modalContext);
+                      },
                     ),
-                    onPressed: () async {
-                      final navigator = Navigator.of(modalContext);
-                      navigator.pop(); // Close sheet
-                      final confirm = await showDialog<bool>(
-                        context: navigator.context,
-                        builder: (dialogContext) => AlertDialog(
-                          title: const Text('Log Out'),
-                          content: const Text('Are you sure you want to log out of AroundU?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(dialogContext, false),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              onPressed: () => Navigator.pop(dialogContext, true),
-                              child: const Text('Log Out'),
-                            ),
-                          ],
-                        ),
-                      );
 
-                      if (confirm == true) {
-                        await ref.read(authRepositoryProvider).signOut();
-                        final navContext = navigator.context;
-                        if (navContext.mounted) {
-                          Navigator.of(navContext).pushAndRemoveUntil(
-                            MaterialPageRoute(builder: (context) => const OnboardingRouter()),
-                            (route) => false,
-                          );
+                    // Terms
+                    ListTile(
+                      leading: Icon(Icons.description_outlined, color: iconThemeColor),
+                      title: Text('Terms of Service', style: TextStyle(color: textThemeColor)),
+                      trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
+                      onTap: () {
+                        Navigator.pop(modalContext);
+                      },
+                    ),
+                    Divider(color: dividerColor),
+                    const SizedBox(height: 16),
+
+                    // Log Out Button
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: borderBgColor,
+                        foregroundColor: textThemeColor,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: const StadiumBorder(),
+                      ),
+                      onPressed: () async {
+                        final navigator = Navigator.of(modalContext);
+                        navigator.pop(); // Close sheet
+                        final confirm = await showDialog<bool>(
+                          context: navigator.context,
+                          builder: (dialogContext) => AlertDialog(
+                            title: const Text('Log Out'),
+                            content: const Text('Are you sure you want to log out of AroundU?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(dialogContext, false),
+                                child: const Text('Cancel'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(dialogContext, true),
+                                child: const Text('Log Out'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          await ref.read(authRepositoryProvider).signOut();
+                          final navContext = navigator.context;
+                          if (navContext.mounted) {
+                            Navigator.of(navContext).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (context) => const OnboardingRouter()),
+                              (route) => false,
+                            );
+                          }
                         }
-                      }
-                    },
-                    icon: Icon(Icons.logout_rounded, size: 18, color: iconThemeColor),
-                    label: Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold, color: textThemeColor)),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Delete Account Button
-                  TextButton.icon(
-                    style: TextButton.styleFrom(
-                      foregroundColor: isDark ? Colors.white60 : Colors.black54,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: StadiumBorder(
-                        side: BorderSide(color: isDark ? Colors.white24 : Colors.black26, width: 1),
-                      ),
+                      },
+                      icon: Icon(Icons.logout_rounded, size: 18, color: iconThemeColor),
+                      label: Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold, color: textThemeColor)),
                     ),
-                    onPressed: () {
-                      final navigator = Navigator.of(modalContext);
-                      navigator.pop(); // Close sheet
-                      _showDeleteAccountDialog(navigator.context, ref);
-                    },
-                    icon: Icon(Icons.delete_forever_rounded, size: 18, color: isDark ? Colors.white60 : Colors.black54),
-                    label: const Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+
+                    // Delete Account Button
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: isDark ? Colors.white60 : Colors.black54,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: StadiumBorder(
+                          side: BorderSide(color: isDark ? Colors.white24 : Colors.black26, width: 1),
+                        ),
+                      ),
+                      onPressed: () {
+                        final navigator = Navigator.of(modalContext);
+                        navigator.pop(); // Close sheet
+                        _showDeleteAccountDialog(navigator.context, ref);
+                      },
+                      icon: Icon(Icons.delete_forever_rounded, size: 18, color: isDark ? Colors.white60 : Colors.black54),
+                      label: const Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
               ),
             );
           },
