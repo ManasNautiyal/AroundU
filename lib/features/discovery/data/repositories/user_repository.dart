@@ -45,13 +45,7 @@ class UserRepository {
       throw UserProfileValidationException('Bio cannot exceed 150 characters.');
     }
 
-    // 4. Validate vibe tags
-    if (vibeTags.isEmpty) {
-      throw UserProfileValidationException('Please select at least one vibe tag.');
-    }
-    if (vibeTags.length > 5) {
-      throw UserProfileValidationException('You can select a maximum of 5 vibe tags.');
-    }
+    // 4. Validate vibe tags (Disabled: Vibe tags functionality removed)
 
     final userModel = UserModel(
       uid: uid,
@@ -91,6 +85,15 @@ class UserRepository {
       'beaconEmoji': emoji ?? FieldValue.delete(),
       'beaconMessage': message ?? FieldValue.delete(),
       'lastActive': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Updates the ghost mode status. If enabled, deletes the user location from the database.
+  Future<void> updateGhostMode(String uid, bool isGhostMode) async {
+    await _firestore.collection('users').doc(uid).update({
+      'isGhostMode': isGhostMode,
+      'lastActive': FieldValue.serverTimestamp(),
+      if (isGhostMode) 'location': FieldValue.delete(),
     });
   }
 }

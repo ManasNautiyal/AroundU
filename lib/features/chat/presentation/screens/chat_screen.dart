@@ -154,19 +154,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
             ),
           ],
         ),
-        actions: [
-          // Developer Proximity Toggle Button
-          IconButton(
-            icon: const Icon(Icons.swap_horiz_rounded),
-            tooltip: 'Toggle Mock Proximity',
-            onPressed: () {
-              ref
-                  .read(proximityStatusProvider(widget.targetUser.uid).notifier)
-                  .toggleProximity();
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
+
       ),
       body: Container(
         decoration: BoxDecoration(

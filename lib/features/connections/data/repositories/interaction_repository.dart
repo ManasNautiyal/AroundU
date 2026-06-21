@@ -27,26 +27,7 @@ class InteractionRepository {
   final _matchesController = StreamController<List<MatchModel>>.broadcast();
   final _incomingWavesController = StreamController<List<InteractionModel>>.broadcast();
 
-  InteractionRepository(this._firestore) {
-    // Seed initial mock wave data so developer can test the Connections list view instantly
-    _mockIncomingWaves.add(InteractionModel(
-      id: 'wave_mock_1',
-      senderId: 'mock_2', // Marcus
-      receiverId: 'me',
-      type: InteractionType.wave,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
-    ));
-    _mockIncomingWaves.add(InteractionModel(
-      id: 'wave_mock_2',
-      senderId: 'mock_3', // Aria
-      receiverId: 'me',
-      type: InteractionType.wave,
-      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-    ));
-
-    _matchesController.add(_mockMatches);
-    _incomingWavesController.add(_mockIncomingWaves);
-  }
+  InteractionRepository(this._firestore);
 
   bool get _isFirebaseInitialized {
     try {

@@ -29,15 +29,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
   late AnimationController _pulseController;
   UserModel? _selectedUser;
 
-  // Harmonious vibe list matching mock user interest tags
-  final List<String> _vibeFilters = [
-    '☕ Coffee',
-    '🎵 Music',
-    '🎨 Art',
-    '🎮 Gaming',
-    '🏋️ Gym',
-    '🍕 Foodie',
-  ];
+
 
   @override
   void initState() {
@@ -52,10 +44,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    // Default select Sarah W. to match mockup screenshot on load
-    _selectedUser = _getLocalMockUsers()
-        .firstWhere((u) => u.user.uid == 'mock_sarah')
-        .user;
+    _selectedUser = null;
   }
 
   @override
@@ -92,98 +81,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
     }
   }
 
-  List<NearbyUser> _getLocalMockUsers() {
-    return [
-      NearbyUser(
-        user: UserModel(
-          uid: 'mock_sarah',
-          name: 'Sarah W.',
-          bio: 'Flutter developer and coffee snob. Let\'s build something cool!',
-          profilePictures: ['https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300'],
-          vibeTags: ['#FlutterDev', '#CoffeeSnob'],
-          isGhostMode: false,
-          lastActive: DateTime.now(),
-          beaconEmoji: '🔍',
-          beaconMessage: 'Anyone want to play?',
-        ),
-        distanceInMeters: 15.0,
-      ),
-      NearbyUser(
-        user: UserModel(
-          uid: 'mock_2', // Liam P.
-          name: 'Liam P.',
-          bio: 'Debugging code and vibing to vinyl.',
-          profilePictures: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300'],
-          vibeTags: ['#Music', '#Guitar'],
-          isGhostMode: false,
-          lastActive: DateTime.now(),
-          beaconEmoji: '🚩',
-          beaconMessage: 'Dehoodie / Debugging code',
-        ),
-        distanceInMeters: 45.0,
-      ),
-      NearbyUser(
-        user: UserModel(
-          uid: 'mock_3', // Ava C.
-          name: 'Ava C.',
-          bio: 'Sketching and painting around town.',
-          profilePictures: ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300'],
-          vibeTags: ['#Art', '#Sketching'],
-          isGhostMode: false,
-          lastActive: DateTime.now(),
-        ),
-        distanceInMeters: 70.0,
-      ),
-      NearbyUser(
-        user: UserModel(
-          uid: 'mock_daina',
-          name: 'Daina K.',
-          bio: 'UI/UX designer looking for creative vibes.',
-          profilePictures: ['https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300'],
-          vibeTags: ['#Design', '#UIUX'],
-          isGhostMode: false,
-          lastActive: DateTime.now(),
-        ),
-        distanceInMeters: 35.0,
-      ),
-      NearbyUser(
-        user: UserModel(
-          uid: 'mock_david',
-          name: 'David L.',
-          bio: 'Gym enthusiast and morning runner.',
-          profilePictures: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300'],
-          vibeTags: ['#Gym', '#Fitness'],
-          isGhostMode: false,
-          lastActive: DateTime.now(),
-        ),
-        distanceInMeters: 80.0,
-      ),
-      NearbyUser(
-        user: UserModel(
-          uid: 'mock_chloe',
-          name: 'Chloe K.',
-          bio: 'Always looking for the best local coffee shop.',
-          profilePictures: ['https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300'],
-          vibeTags: ['#Coffee', '#Chilling'],
-          isGhostMode: false,
-          lastActive: DateTime.now(),
-        ),
-        distanceInMeters: 60.0,
-      ),
-      NearbyUser(
-        user: UserModel(
-          uid: 'mock_chloe_2',
-          name: 'Chloe K.',
-          bio: 'Always looking for the best local coffee shop.',
-          profilePictures: ['https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300'],
-          vibeTags: ['#Coffee', '#Chilling'],
-          isGhostMode: false,
-          lastActive: DateTime.now(),
-        ),
-        distanceInMeters: 70.0,
-      ),
-    ];
-  }
+
 
   void _handleWave(String targetUserId, String targetName) async {
     final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
@@ -288,11 +186,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
 
                   // Retrieve live users
                   final liveUsersAsync = ref.watch(nearbyUsersProvider(currentUserId: currentUserId));
-                  final liveUsers = liveUsersAsync.valueOrNull ?? const [];
-                  List<NearbyUser> displayedUsers = liveUsers;
-                  if (displayedUsers.isEmpty) {
-                    displayedUsers = _getLocalMockUsers();
-                  }
+                  final displayedUsers = liveUsersAsync.valueOrNull ?? const [];
 
                   return Stack(
                     clipBehavior: Clip.none,
@@ -540,49 +434,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
                   ),
                   const SizedBox(height: 12),
 
-                  // Bottom Vibe Chips bar
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4.0, bottom: 6.0),
-                        child: Text(
-                          selectedVibe != null ? 'Vibe Heatmap Active' : 'Filter by Vibe Heatmap',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: selectedVibe != null
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: _vibeFilters.map((vibe) {
-                            final isSelected = selectedVibe == vibe;
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: FilterChip(
-                                label: Text(vibe),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  ref.read(selectedVibeFilterProvider.notifier).selectFilter(
-                                        selected ? vibe : null,
-                                      );
-                                },
-                                selectedColor: theme.colorScheme.primaryContainer,
-                                checkmarkColor: theme.colorScheme.onPrimaryContainer,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ],
-                  ),
+
                 ],
               ),
             ),
@@ -698,7 +550,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
                     Expanded(
                       child: TextField(
                         decoration: InputDecoration(
-                          hintText: 'Find people or #VibeTags...',
+                          hintText: 'Find people...',
                           hintStyle: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant.withAlpha(150),
                             fontSize: 14,
@@ -818,32 +670,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: user.vibeTags.map((tag) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: theme.brightness == Brightness.light
-                                  ? const Color(0xFFE8F0FE)
-                                  : const Color(0xFF1E3A8A).withAlpha(120),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              tag,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: theme.brightness == Brightness.light
-                                    ? const Color(0xFF1A73E8)
-                                    : const Color(0xFF60A5FA),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
+
                     ],
                   ),
                 ),
@@ -851,7 +678,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              '3-Tier Interaction System',
+              'Interaction Options',
               style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onSurfaceVariant,
@@ -878,28 +705,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Endorse Vibe Button
-                Expanded(
-                  child: Container(
-                    height: 44,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFEE8A42), Color(0xFFFFB074)],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: TextButton.icon(
-                      onPressed: () => _handleEndorse(user.uid, user.name),
-                      icon: const Icon(Icons.favorite_rounded, color: Colors.white, size: 16),
-                      label: const Text(
-                        'Endorse Vibe',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 // Message Request Button
                 Expanded(
                   child: Container(

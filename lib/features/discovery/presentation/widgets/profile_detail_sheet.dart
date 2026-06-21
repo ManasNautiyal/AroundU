@@ -423,39 +423,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                         ),
                         const SizedBox(height: 28),
 
-                        // Vibe Tags
-                        Text(
-                          'Vibes',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8.0,
-                          runSpacing: 8.0,
-                          children: user.vibeTags.map((tag) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceContainerHighest.withAlpha(120),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: theme.colorScheme.outlineVariant.withAlpha(50),
-                                ),
-                              ),
-                              child: Text(
-                                tag,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
+
                       ],
                     ),
                   ),

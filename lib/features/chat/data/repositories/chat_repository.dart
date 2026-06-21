@@ -15,33 +15,7 @@ class ChatRepository {
   // StreamControllers to push updates for mock streams
   final Map<String, StreamController<List<MessageModel>>> _controllers = {};
 
-  ChatRepository(this._firestore) {
-    // Seed initial mock messages for matches to make the UI immediately interactive
-    final initialMsgs = [
-      MessageModel(
-        id: 'msg_seed_1',
-        senderId: 'mock_2', // Marcus
-        text: 'Hey there! I saw we matched. Are you nearby?',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-      ),
-      MessageModel(
-        id: 'msg_seed_2',
-        senderId: 'me',
-        text: 'Hey Marcus! Yes, I am grabbing a coffee nearby. You?',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 3)),
-      ),
-      MessageModel(
-        id: 'msg_seed_3',
-        senderId: 'mock_2',
-        text: 'Awesome, I just finished a workout at the gym here! 🏋️',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
-      ),
-    ];
-
-    // Seed mock chats bi-directionally
-    _mockChats['match_me_mock_2'] = List.from(initialMsgs);
-    _mockChats['match_mock_2_me'] = List.from(initialMsgs);
-  }
+  ChatRepository(this._firestore);
 
   bool get _isFirebaseInitialized {
     try {

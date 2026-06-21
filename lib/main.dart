@@ -53,8 +53,8 @@ class MyApp extends StatelessWidget {
         seedColor: primaryBlue,
         primary: const Color(0xFF3B82F6),
         secondary: const Color(0xFF60A5FA),
-        surface: const Color(0xFF1E293B),
-        background: const Color(0xFF0F172A),
+        surface: Colors.black,
+        background: Colors.black,
         brightness: Brightness.dark,
       ),
     );
@@ -62,7 +62,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'AroundU',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system, // Support light & dark modes reactively
+      themeMode: ThemeMode.dark, // Force true AMOLED black globally
       theme: baseLight.copyWith(
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
         appBarTheme: const AppBarTheme(
@@ -113,7 +113,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       darkTheme: baseDark.copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        scaffoldBackgroundColor: Colors.black,
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -127,17 +127,17 @@ class MyApp extends StatelessWidget {
           ),
         ),
         cardTheme: CardThemeData(
-          color: const Color(0xFF1E293B),
+          color: const Color(0xFF121212), // Deep premium dark grey surface
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
-            side: const BorderSide(color: Color(0xFF334155), width: 1),
+            side: const BorderSide(color: Color(0xFF262626), width: 1.5), // High contrast borders
           ),
         ),
         navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: const Color(0xFF1E293B),
+          backgroundColor: Colors.black,
           elevation: 8,
-          indicatorColor: const Color(0xFF1E3A8A),
+          indicatorColor: const Color(0xFF262626), // Premium dark grey indicator
           labelTextStyle: MaterialStateProperty.all(
             const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
           ),

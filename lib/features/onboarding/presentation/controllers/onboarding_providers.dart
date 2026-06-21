@@ -59,13 +59,13 @@ class OnboardingController extends _$OnboardingController {
   }
 
   void setPage(int page) {
-    if (page >= 0 && page <= 2) {
+    if (page >= 0 && page <= 1) {
       state = state.copyWith(currentPage: page);
     }
   }
 
   void nextPage() {
-    if (state.currentPage < 2) {
+    if (state.currentPage < 1) {
       state = state.copyWith(currentPage: state.currentPage + 1);
     }
   }
@@ -106,7 +106,7 @@ class OnboardingController extends _$OnboardingController {
 
   /// Real Firebase profile completion upload.
   Future<void> finishProfile() async {
-    if (!state.isBasicInfoValid || !state.isPicturesValid || !state.isVibeTagsValid) {
+    if (!state.isBasicInfoValid || !state.isPicturesValid) {
       throw UserProfileValidationException('Please complete all steps before finishing.');
     }
 
@@ -139,12 +139,13 @@ class OnboardingController extends _$OnboardingController {
         uid: uid,
         name: state.name.trim(),
         bio: state.bio.trim(),
-        vibeTags: state.selectedVibeTags,
+        vibeTags: const [], // Empty vibeTags as vibe functionalities are removed
         profilePictures: uploadedUrls.isNotEmpty ? uploadedUrls : const [
           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500' // Fallback visual setup profile picture
         ],
       );
 
+      ref.invalidate(currentUserModelProvider);
       state = state.copyWith(isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false);

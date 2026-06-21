@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../safety/data/repositories/block_service.dart';
 import '../models/nearby_user.dart';
+import '../../presentation/controllers/discovery_providers.dart';
 
 part 'discovery_repository.g.dart';
 
@@ -110,17 +111,20 @@ Stream<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String curren
   final repository = ref.watch(discoveryRepositoryProvider);
   final positionAsync = ref.watch(userPositionProvider);
   final blockedUsersAsync = ref.watch(blockedUsersStreamProvider(currentUserId: currentUserId));
+  final isGhostMode = ref.watch(ghostModeControllerProvider);
   
   final blockedUserIds = blockedUsersAsync.valueOrNull ?? const [];
   
   return positionAsync.when(
     data: (position) {
-      // Periodic location update to Firestore when position changes
-      repository.updateUserLocation(
-        uid: currentUserId,
-        latitude: position.latitude,
-        longitude: position.longitude,
-      );
+      if (!isGhostMode) {
+        // Periodic location update to Firestore only when NOT in Ghost Mode
+        repository.updateUserLocation(
+          uid: currentUserId,
+          latitude: position.latitude,
+          longitude: position.longitude,
+        );
+      }
       
       return repository.getNearbyUsersStream(
         currentUserId: currentUserId,

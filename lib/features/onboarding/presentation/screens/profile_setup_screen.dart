@@ -189,7 +189,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       children: [
                         _buildStep1BasicInfo(theme, state),
                         _buildStep2Pictures(theme, state),
-                        _buildStep3VibeTags(theme, state),
                       ],
                     ),
                   ),
@@ -198,8 +197,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   Padding(
                     padding: const EdgeInsets.all(24.0),
                     child: FilledButton(
-                      onPressed: state.currentPage == 2
-                          ? (state.isVibeTagsValid ? _submitProfile : null)
+                      onPressed: state.currentPage == 1
+                          ? (state.isPicturesValid ? _submitProfile : null)
                           : _nextPage,
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -208,7 +207,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         ),
                       ),
                       child: Text(
-                        state.currentPage == 2 ? 'Finish Profile' : 'Next Step',
+                        state.currentPage == 1 ? 'Finish Profile' : 'Next Step',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -232,7 +231,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Step ${currentPage + 1} of 3',
+                'Step ${currentPage + 1} of 2',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
@@ -241,9 +240,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               Text(
                 currentPage == 0
                     ? 'Basic Info'
-                    : currentPage == 1
-                        ? 'Profile Pictures'
-                        : 'Vibe Tags',
+                    : 'Profile Pictures',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -252,13 +249,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           ),
           const SizedBox(height: 8),
           Row(
-            children: List.generate(3, (index) {
+            children: List.generate(2, (index) {
               final active = index <= currentPage;
               return Expanded(
                 child: Container(
                   height: 6,
                   margin: EdgeInsets.only(
-                    right: index < 2 ? 8.0 : 0.0,
+                    right: index < 1 ? 8.0 : 0.0,
                   ),
                   decoration: BoxDecoration(
                     color: active
@@ -504,60 +501,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  Widget _buildStep3VibeTags(ThemeData theme, OnboardingState state) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Select your vibe',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Choose up to 5 interests that describe your personality. These will appear as tags on your radar card.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Selected: ${state.selectedVibeTags.length} / 5',
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: state.isVibeTagsValid
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.error,
-            ),
-          ),
-          const SizedBox(height: 24),
 
-          Wrap(
-            spacing: 8.0,
-            runSpacing: 8.0,
-            children: _predefinedTags.map((tag) {
-              final isSelected = state.selectedVibeTags.contains(tag);
-              return FilterChip(
-                label: Text(tag),
-                selected: isSelected,
-                onSelected: (selected) {
-                  ref.read(onboardingControllerProvider.notifier).toggleVibeTag(tag);
-                },
-                selectedColor: theme.colorScheme.primaryContainer,
-                checkmarkColor: theme.colorScheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// Custom painter to draw dashed borders for image uploads.

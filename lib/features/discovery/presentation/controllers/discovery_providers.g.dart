@@ -7,7 +7,7 @@ part of 'discovery_providers.dart';
 // **************************************************************************
 
 String _$ghostModeControllerHash() =>
-    r'd503e3d71e45964673ee1306f2da4bd4f1092547';
+    r'172f5ba7a1e6edde72b11fb775c2c87ed7f3e756';
 
 /// See also [GhostModeController].
 @ProviderFor(GhostModeController)
