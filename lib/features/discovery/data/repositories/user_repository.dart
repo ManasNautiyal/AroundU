@@ -59,6 +59,33 @@ class UserRepository {
     await _firestore.collection('users').doc(uid).set(userModel.toMap());
   }
 
+  Future<void> updateUserProfile({
+    required String uid,
+    required String name,
+    required String bio,
+    required List<String> profilePictures,
+  }) async {
+    final sanitizedName = name.trim();
+    final sanitizedBio = bio.trim();
+
+    if (sanitizedName.isEmpty) {
+      throw UserProfileValidationException('Name cannot be empty. Please enter your name.');
+    }
+    if (sanitizedBio.isEmpty) {
+      throw UserProfileValidationException('Bio cannot be empty. Please share a little about yourself.');
+    }
+    if (sanitizedBio.length > 150) {
+      throw UserProfileValidationException('Bio cannot exceed 150 characters.');
+    }
+
+    await _firestore.collection('users').doc(uid).update({
+      'name': sanitizedName,
+      'bio': sanitizedBio,
+      'profilePictures': profilePictures,
+      'lastActive': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<UserModel?> getUserProfile(String uid) async {
     final doc = await _firestore.collection('users').doc(uid).get();
     if (doc.exists && doc.data() != null) {

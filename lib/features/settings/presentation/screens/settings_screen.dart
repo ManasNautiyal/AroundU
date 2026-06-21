@@ -5,6 +5,7 @@ import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
 import '../../../connections/data/repositories/interaction_repository.dart';
 import '../../../../core/widgets/image_helper.dart';
+import 'edit_profile_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -186,6 +187,12 @@ class SettingsScreen extends ConsumerWidget {
                     trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white30),
                     onTap: () {
                       Navigator.pop(modalContext);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EditProfileScreen(),
+                        ),
+                      );
                     },
                   ),
                   
@@ -397,10 +404,10 @@ class SettingsScreen extends ConsumerWidget {
               // Wide Outlined "Edit Profile" Button
               OutlinedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Edit profile features coming in a future update!'),
-                      behavior: SnackBarBehavior.floating,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EditProfileScreen(),
                     ),
                   );
                 },
