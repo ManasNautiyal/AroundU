@@ -104,7 +104,9 @@ LocationService locationService(LocationServiceRef ref) {
 }
 
 @riverpod
-Stream<Position> userPosition(UserPositionRef ref) {
+Stream<Position> userPosition(UserPositionRef ref) async* {
   final locService = ref.watch(locationServiceProvider);
-  return locService.getPositionStream();
+  final initialPosition = await locService.getCurrentPosition();
+  yield initialPosition;
+  yield* locService.getPositionStream();
 }
