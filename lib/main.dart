@@ -346,7 +346,7 @@ class LoadingScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.jpg',
+              isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.png',
               width: 140,
               height: 140,
               errorBuilder: (context, error, stackTrace) => Text(
