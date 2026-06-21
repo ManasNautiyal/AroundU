@@ -6,9 +6,12 @@ import '../widgets/nearby_user_card.dart';
 import '../widgets/beacon_sheet.dart';
 import '../../../chat/presentation/screens/local_room_screen.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
-import '../../../safety/data/repositories/block_service.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../../../core/widgets/image_helper.dart';
+import '../../../../core/services/location_service.dart';
+import '../../data/repositories/discovery_repository.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
+import 'package:geolocator/geolocator.dart';
 
 class RadarScreen extends ConsumerStatefulWidget {
   const RadarScreen({super.key});
@@ -114,347 +117,398 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isGhostMode = ref.watch(ghostModeControllerProvider);
+    final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     
-    final nearbyUsersRaw = ref.watch(mockDiscoveryUsersControllerProvider);
-    final blockedUsersAsync = ref.watch(blockedUsersStreamProvider(currentUserId: 'me'));
-    final blockedUserIds = blockedUsersAsync.valueOrNull ?? const [];
-    final nearbyUsers = nearbyUsersRaw.where((u) => !blockedUserIds.contains(u.user.uid)).toList();
+    // Watch GPS state and coordinate changes live
+    final positionAsync = ref.watch(userPositionProvider);
 
-    // Read new state providers
-    final selectedVibe = ref.watch(selectedVibeFilterProvider);
-    final isInLocalRoom = ref.watch(inLocalRoomProvider);
+    return positionAsync.when(
+      data: (position) {
+        final isGhostMode = ref.watch(ghostModeControllerProvider);
+        
+        // Watch the real-time matching users list from Firestore (radius: 100 meters)
+        final nearbyUsersAsync = ref.watch(nearbyUsersProvider(currentUserId: currentUserId));
+        final nearbyUsers = nearbyUsersAsync.valueOrNull ?? const [];
 
-    // Watch current user to get dynamic avatar URL
-    final currentUserAsync = ref.watch(currentUserModelProvider);
-    final currentUser = currentUserAsync.valueOrNull;
-    final currentUserImageUrl = currentUser?.profilePictures.isNotEmpty == true
-        ? currentUser!.profilePictures[0]
-        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
+        // Read vibe filter states
+        final selectedVibe = ref.watch(selectedVibeFilterProvider);
+        final isInLocalRoom = ref.watch(inLocalRoomProvider);
 
-    return Scaffold(
-      // Dynamic appbar gradient depending on Ghost Mode
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isGhostMode
-                  ? [
-                      theme.colorScheme.secondaryContainer.withAlpha(200),
-                      theme.colorScheme.surfaceContainerHighest,
-                    ]
-                  : [
-                      theme.colorScheme.primaryContainer.withAlpha(100),
-                      theme.colorScheme.surface,
-                    ],
-            ),
-          ),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 16.0),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
-                    ),
-                  );
-                },
-                child: CircleAvatar(
-                  backgroundImage: getUserImageProvider(currentUserImageUrl),
-                ),
-              ),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  Icons.radar_rounded,
-                  color: isGhostMode
-                      ? theme.colorScheme.onSurfaceVariant
-                      : theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  isGhostMode ? 'AroundU (Ghost)' : 'AroundU',
-                  style: const TextStyle(fontWeight: FontWeight.w900),
-                ),
-              ],
-            ),
-            actions: [
-              // Ghost Mode Toggle
-              IconButton(
-                onPressed: () {
-                  ref.read(ghostModeControllerProvider.notifier).toggle();
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        isGhostMode
-                            ? 'Ghost Mode disabled. You are now visible to others.'
-                            : 'Ghost Mode enabled. You are now invisible to others.',
-                      ),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-                icon: Icon(
-                  isGhostMode ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                  color: isGhostMode
-                      ? theme.colorScheme.secondary
-                      : theme.colorScheme.onSurfaceVariant,
-                ),
-                tooltip: 'Toggle Ghost Mode',
-              ),
-              const SizedBox(width: 12),
-            ],
-          ),
-        ),
-      ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background Gradient decoration
-          Positioned.fill(
+        // Watch current user model for dynamic avatar rendering
+        final currentUserAsync = ref.watch(currentUserModelProvider);
+        final currentUser = currentUserAsync.valueOrNull;
+        final currentUserImageUrl = currentUser?.profilePictures.isNotEmpty == true
+            ? currentUser!.profilePictures[0]
+            : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
+
+        return Scaffold(
+          // Dynamic appbar gradient depending on Ghost Mode
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    theme.colorScheme.surface,
-                    theme.colorScheme.primaryContainer.withAlpha(30),
-                  ],
+                  colors: isGhostMode
+                      ? [
+                          theme.colorScheme.secondaryContainer.withAlpha(200),
+                          theme.colorScheme.surfaceContainerHighest,
+                        ]
+                      : [
+                          theme.colorScheme.primaryContainer.withAlpha(100),
+                          theme.colorScheme.surface,
+                        ],
                 ),
               ),
-            ),
-          ),
-
-          // Glowing Vibe Heatmap Circles (Pulsing background)
-          if (selectedVibe != null)
-            AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Stack(
-                  children: _buildHeatmapCircles(selectedVibe, theme),
-                );
-              },
-            ),
-
-          // Main Discovery Grid (Dimmed when Vibe Heatmap mode is active)
-          Positioned.fill(
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 300),
-              opacity: selectedVibe != null ? 0.30 : 1.0,
-              child: nearbyUsers.isEmpty
-                  ? _buildEmptyRadarState(theme)
-                  : _buildDiscoveryGrid(nearbyUsers),
-            ),
-          ),
-
-          // Floating Proximity Chat Zone Banner at the very top
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutBack,
-              offset: isInLocalRoom ? Offset.zero : const Offset(0, -2.0),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: isInLocalRoom ? 1.0 : 0.0,
-                child: Material(
-                  elevation: 8,
-                  borderRadius: BorderRadius.circular(20),
-                  color: theme.colorScheme.tertiaryContainer,
-                  child: InkWell(
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const LocalRoomScreen(),
+                          builder: (context) => const SettingsScreen(),
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.pin_drop_rounded,
-                            color: theme.colorScheme.onTertiaryContainer,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Downtown Coffee Shop Zone",
-                                  style: theme.textTheme.labelMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onTertiaryContainer.withAlpha(200),
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  "📍 You are in the zone. Join Chat ➔",
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onTertiaryContainer,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: CircleAvatar(
+                      backgroundImage: getUserImageProvider(currentUserImageUrl),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
-
-          // Bottom Vibe Filter Chips Row
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    theme.colorScheme.surface.withAlpha(0),
-                    theme.colorScheme.surface.withAlpha(240),
-                    theme.colorScheme.surface,
+                title: Row(
+                  children: [
+                    Icon(
+                      Icons.radar_rounded,
+                      color: isGhostMode
+                          ? theme.colorScheme.onSurfaceVariant
+                          : theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isGhostMode ? 'AroundU (Ghost)' : 'AroundU',
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
                   ],
                 ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
-                    child: Text(
-                      selectedVibe != null ? 'Vibe Heatmap Active' : 'Filter by Vibe Heatmap',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: selectedVibe != null 
-                            ? theme.colorScheme.primary 
-                            : theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _vibeFilters.map((vibe) {
-                        final isSelected = selectedVibe == vibe;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: FilterChip(
-                            label: Text(vibe),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              ref.read(selectedVibeFilterProvider.notifier).selectFilter(
-                                    selected ? vibe : null,
-                                  );
-                            },
-                            selectedColor: theme.colorScheme.primaryContainer,
-                            checkmarkColor: theme.colorScheme.onPrimaryContainer,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                actions: [
+                  // Ghost Mode Toggle
+                  IconButton(
+                    onPressed: () {
+                      ref.read(ghostModeControllerProvider.notifier).toggle();
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isGhostMode
+                                ? 'Ghost Mode disabled. You are now visible to others.'
+                                : 'Ghost Mode enabled. You are now invisible to others.',
                           ),
-                        );
-                      }).toList(),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: Icon(
+                      isGhostMode ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                      color: isGhostMode
+                          ? theme.colorScheme.secondary
+                          : theme.colorScheme.onSurfaceVariant,
                     ),
+                    tooltip: 'Toggle Ghost Mode',
                   ),
+                  const SizedBox(width: 12),
                 ],
               ),
             ),
           ),
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Background Gradient decoration
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        theme.colorScheme.surface,
+                        theme.colorScheme.primaryContainer.withAlpha(30),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
-          // Developer Control Panel (Positioned higher to avoid overlapping filters/FAB)
-          Positioned(
-            bottom: 160,
-            right: 16,
+              // Glowing Vibe Heatmap Circles (Pulsing background)
+              if (selectedVibe != null)
+                AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Stack(
+                      children: _buildHeatmapCircles(selectedVibe, theme),
+                    );
+                  },
+                ),
+
+              // Main Discovery Grid (Dimmed when Vibe Heatmap mode is active)
+              Positioned.fill(
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 300),
+                  opacity: selectedVibe != null ? 0.30 : 1.0,
+                  child: nearbyUsers.isEmpty
+                      ? _buildEmptyRadarState(theme, isScanning: false)
+                      : _buildDiscoveryGrid(nearbyUsers),
+                ),
+              ),
+
+              // Floating Proximity Chat Zone Banner at the very top
+              Positioned(
+                top: 16,
+                left: 16,
+                right: 16,
+                child: AnimatedSlide(
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeOutBack,
+                  offset: isInLocalRoom ? Offset.zero : const Offset(0, -2.0),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: isInLocalRoom ? 1.0 : 0.0,
+                    child: Material(
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(20),
+                      color: theme.colorScheme.tertiaryContainer,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LocalRoomScreen(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.pin_drop_rounded,
+                                color: theme.colorScheme.onTertiaryContainer,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Downtown Coffee Shop Zone",
+                                      style: theme.textTheme.labelMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.colorScheme.onTertiaryContainer.withAlpha(200),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "📍 You are in the zone. Join Chat ➔",
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.colorScheme.onTertiaryContainer,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Bottom Vibe Filter Chips Row
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        theme.colorScheme.surface.withAlpha(0),
+                        theme.colorScheme.surface.withAlpha(240),
+                        theme.colorScheme.surface,
+                      ],
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+                        child: Text(
+                          selectedVibe != null ? 'Vibe Heatmap Active' : 'Filter by Vibe Heatmap',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: selectedVibe != null 
+                                ? theme.colorScheme.primary 
+                                : theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _vibeFilters.map((vibe) {
+                            final isSelected = selectedVibe == vibe;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: FilterChip(
+                                label: Text(vibe),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  ref.read(selectedVibeFilterProvider.notifier).selectFilter(
+                                        selected ? vibe : null,
+                                      );
+                                },
+                                selectedColor: theme.colorScheme.primaryContainer,
+                                checkmarkColor: theme.colorScheme.onPrimaryContainer,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+
+            ],
+          ),
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.only(bottom: 84.0), // Elevate FAB above the bottom filter chips bar
+            child: FloatingActionButton.extended(
+              heroTag: 'drop_beacon_fab',
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => const BeaconSheet(),
+                );
+              },
+              icon: const Icon(Icons.radar_rounded),
+              label: const Text('Drop Beacon'),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        );
+      },
+      loading: () => Scaffold(
+        appBar: AppBar(
+          title: Row(
+            children: [
+              Icon(Icons.radar_rounded, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              const Text(
+                'AroundU',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ],
+          ),
+          elevation: 0,
+        ),
+        body: _buildEmptyRadarState(theme, isScanning: true),
+      ),
+      error: (error, stack) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Location Required'),
+            elevation: 0,
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(32.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Reset Mock Users
-                FloatingActionButton.small(
-                  heroTag: 'dev_populate',
-                  backgroundColor: theme.colorScheme.secondary,
-                  foregroundColor: theme.colorScheme.onSecondary,
-                  tooltip: 'Reset Mock Users',
-                  onPressed: () {
-                    ref.read(mockDiscoveryUsersControllerProvider.notifier).resetUsers();
-                  },
-                  child: const Icon(Icons.people_rounded),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.errorContainer.withAlpha(50),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.location_off_rounded,
+                      size: 72,
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 8),
-                // Clear Mock Users
-                FloatingActionButton.small(
-                  heroTag: 'dev_clear',
-                  backgroundColor: theme.colorScheme.errorContainer,
-                  foregroundColor: theme.colorScheme.onErrorContainer,
-                  tooltip: 'Clear Mock Users',
-                  onPressed: () {
-                    ref.read(mockDiscoveryUsersControllerProvider.notifier).clearUsers();
-                  },
-                  child: const Icon(Icons.people_outline_rounded),
+                const SizedBox(height: 32),
+                Text(
+                  'GPS Location Offline',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(height: 8),
-                // Toggle Proximity Chat Room Zone
-                FloatingActionButton.small(
-                  heroTag: 'dev_proximity',
-                  backgroundColor: theme.colorScheme.tertiaryContainer,
-                  foregroundColor: theme.colorScheme.onTertiaryContainer,
-                  tooltip: 'Toggle Proximity Zone',
-                  onPressed: () {
-                    ref.read(inLocalRoomProvider.notifier).toggle();
+                const SizedBox(height: 16),
+                Text(
+                  'AroundU requires active GPS services and precise location permissions to calculate relative distances to other users within 100 meters. Without location permission, you cannot discover matching vibes nearby.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 48),
+                FilledButton.icon(
+                  onPressed: () async {
+                    try {
+                      final locService = ref.read(locationServiceProvider);
+                      await locService.requestPermission();
+                      ref.invalidate(userPositionProvider);
+                    } catch (e) {
+                      // ignore
+                    }
                   },
-                  child: const Icon(Icons.pin_drop_rounded),
+                  icon: const Icon(Icons.share_location_rounded),
+                  label: const Text(
+                    'Grant Permission & Retry',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () {
+                    Geolocator.openLocationSettings();
+                  },
+                  child: const Text('Open Device Settings'),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 84.0), // Elevate FAB above the bottom filter chips bar
-        child: FloatingActionButton.extended(
-          heroTag: 'drop_beacon_fab',
-          onPressed: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) => const BeaconSheet(),
-            );
-          },
-          icon: const Icon(Icons.radar_rounded),
-          label: const Text('Drop Beacon'),
-          backgroundColor: theme.colorScheme.primary,
-          foregroundColor: Colors.white,
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildEmptyRadarState(ThemeData theme) {
-
+  Widget _buildEmptyRadarState(ThemeData theme, {bool isScanning = false}) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -480,14 +534,16 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
             ),
             const SizedBox(height: 40),
             Text(
-              'Scanning the area...',
+              isScanning ? 'Scanning the area...' : 'No one nearby',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'No one is within 100 meters of your location yet. Try moving to a new spot!',
+              isScanning
+                  ? 'Searching for vibes within 100 meters of your current GPS location.'
+                  : 'No one is within 100 meters of your location yet. Try moving to a new spot!',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,

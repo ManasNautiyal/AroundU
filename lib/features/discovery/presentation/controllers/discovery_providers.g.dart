@@ -24,7 +24,7 @@ final ghostModeControllerProvider =
 
 typedef _$GhostModeController = AutoDisposeNotifier<bool>;
 String _$mockDiscoveryUsersControllerHash() =>
-    r'776b3f9979ff84b751cc550160aa5d070d9907a7';
+    r'08ba81c3131e3eb0bc73393274a8e66b96c595d0';
 
 /// See also [MockDiscoveryUsersController].
 @ProviderFor(MockDiscoveryUsersController)
@@ -43,22 +43,6 @@ final mockDiscoveryUsersControllerProvider =
     );
 
 typedef _$MockDiscoveryUsersController = AutoDisposeNotifier<List<NearbyUser>>;
-String _$userBeaconsHash() => r'50bf3e5311e75ccb7b56e55fb8bd716685015a44';
-
-/// See also [UserBeacons].
-@ProviderFor(UserBeacons)
-final userBeaconsProvider =
-    AutoDisposeNotifierProvider<UserBeacons, Map<String, BeaconInfo>>.internal(
-      UserBeacons.new,
-      name: r'userBeaconsProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$userBeaconsHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$UserBeacons = AutoDisposeNotifier<Map<String, BeaconInfo>>;
 String _$selectedVibeFilterHash() =>
     r'e62b5eb314a89af455fe8dbf30d813aa15589908';
 

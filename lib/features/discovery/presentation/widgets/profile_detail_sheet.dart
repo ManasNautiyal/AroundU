@@ -4,6 +4,7 @@ import '../../../../core/widgets/image_helper.dart';
 import '../../data/models/nearby_user.dart';
 import '../../../connections/data/repositories/interaction_repository.dart';
 import '../../../safety/data/repositories/block_service.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 
 class ProfileDetailSheet extends ConsumerStatefulWidget {
   final UserModel userModel;
@@ -71,8 +72,9 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                     
                     // Trigger block & report logic
                     final blockService = ref.read(blockServiceProvider);
+                    final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
                     await blockService.reportUser(
-                      reporterId: 'me',
+                      reporterId: currentUserId,
                       targetUserId: widget.userModel.uid,
                       reason: reason,
                     );
@@ -170,8 +172,9 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
 
                       // Call repository method
                       final repo = ref.read(interactionRepositoryProvider);
+                      final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
                       await repo.sendConnectionRequest(
-                        currentUserId: 'me',
+                        currentUserId: currentUserId,
                         targetUserId: widget.userModel.uid,
                         introMessage: message,
                       );

@@ -10,6 +10,8 @@ class UserModel {
   final bool isGhostMode;
   final DateTime lastActive;
   final Map<String, dynamic>? location; // Contains 'geopoint' and 'geohash'
+  final String? beaconEmoji;
+  final String? beaconMessage;
 
   UserModel({
     required this.uid,
@@ -20,6 +22,8 @@ class UserModel {
     required this.isGhostMode,
     required this.lastActive,
     this.location,
+    this.beaconEmoji,
+    this.beaconMessage,
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map, String uid) {
@@ -32,6 +36,8 @@ class UserModel {
       isGhostMode: map['isGhostMode'] ?? false,
       lastActive: (map['lastActive'] as Timestamp?)?.toDate() ?? DateTime.now(),
       location: map['location'] as Map<String, dynamic>?,
+      beaconEmoji: map['beaconEmoji'] as String?,
+      beaconMessage: map['beaconMessage'] as String?,
     );
   }
 
@@ -44,6 +50,8 @@ class UserModel {
       'isGhostMode': isGhostMode,
       'lastActive': Timestamp.fromDate(lastActive),
       if (location != null) 'location': location,
+      if (beaconEmoji != null) 'beaconEmoji': beaconEmoji,
+      if (beaconMessage != null) 'beaconMessage': beaconMessage,
     };
   }
 }

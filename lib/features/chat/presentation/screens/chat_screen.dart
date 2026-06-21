@@ -5,6 +5,7 @@ import '../../../../core/widgets/image_helper.dart';
 import '../../../discovery/data/models/nearby_user.dart';
 import '../../data/models/message_model.dart';
 import '../../data/repositories/chat_repository.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String matchId;
@@ -50,9 +51,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
 
     try {
       final repo = ref.read(chatRepositoryProvider);
+      final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? 'me';
       await repo.sendMessage(
         matchId: widget.matchId,
-        senderId: 'me', // Mock current user
+        senderId: currentUserId,
         text: text,
       );
     } catch (e) {
@@ -67,6 +69,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     final isNearby = ref.watch(proximityStatusProvider(widget.targetUser.uid));
     final messagesAsync = ref.watch(messagesStreamProvider(matchId: widget.matchId));
 
@@ -192,7 +195,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
-                      final isMe = message.senderId == 'me';
+                      final isMe = message.senderId == currentUserId;
                       return _buildMessageBubble(message, isMe, theme);
                     },
                   );

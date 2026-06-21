@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/interaction_model.dart';
+import '../models/message_request_model.dart';
 
 part 'interaction_repository.g.dart';
 
@@ -188,6 +189,65 @@ class InteractionRepository {
       print('Mock Connection Request: $currentUserId -> $targetUserId with msg: "$introMessage"');
     }
   }
+
+  /// Streams incoming connection requests.
+  Stream<List<MessageRequestModel>> getConnectionRequestsStream(String currentUserId) {
+    if (_isFirebaseInitialized) {
+      return _firestore
+          .collection('connection_requests')
+          .where('receiverId', isEqualTo: currentUserId)
+          .snapshots()
+          .map((snap) => snap.docs.map((d) => MessageRequestModel.fromMap(d.data(), d.id)).toList());
+    } else {
+      return const Stream.empty();
+    }
+  }
+
+  /// Accepts a connection request: creates a match, writes the first chat message, and deletes the request.
+  Future<void> acceptConnectionRequest(MessageRequestModel request) async {
+    if (_isFirebaseInitialized) {
+      final matchId = request.senderId.compareTo(request.receiverId) < 0
+          ? '${request.senderId}_${request.receiverId}'
+          : '${request.receiverId}_${request.senderId}';
+
+      final batch = _firestore.batch();
+      
+      // 1. Create match
+      final matchRef = _firestore.collection('matches').doc(matchId);
+      batch.set(matchRef, {
+        'user1Id': request.senderId,
+        'user2Id': request.receiverId,
+        'userIds': [request.senderId, request.receiverId],
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Add intro message as first chat message
+      final messageRef = _firestore
+          .collection('chats')
+          .doc(matchId)
+          .collection('messages')
+          .doc();
+      batch.set(messageRef, {
+        'senderId': request.senderId,
+        'text': request.introMessage,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+
+      // 3. Delete connection request
+      final requestRef = _firestore.collection('connection_requests').doc(request.id);
+      batch.delete(requestRef);
+
+      await batch.commit();
+    }
+  }
+
+  /// Declines a connection request: deletes the request.
+  Future<void> declineConnectionRequest(String requestId) async {
+    if (_isFirebaseInitialized) {
+      await _firestore.collection('connection_requests').doc(requestId).delete();
+    }
+  }
 }
 
 @riverpod
@@ -205,4 +265,10 @@ Stream<List<MatchModel>> matchesStream(MatchesStreamRef ref, {required String cu
 Stream<List<InteractionModel>> incomingWavesStream(IncomingWavesStreamRef ref, {required String currentUserId}) {
   final repo = ref.watch(interactionRepositoryProvider);
   return repo.getIncomingWavesStream(currentUserId);
+}
+
+@riverpod
+Stream<List<MessageRequestModel>> connectionRequestsStream(ConnectionRequestsStreamRef ref, {required String currentUserId}) {
+  final repo = ref.watch(interactionRepositoryProvider);
+  return repo.getConnectionRequestsStream(currentUserId);
 }

@@ -104,28 +104,28 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   }
 
   Future<void> _submitProfile() async {
-    final state = ref.read(onboardingControllerProvider);
-    if (!state.isBasicInfoValid || !state.isPicturesValid || !state.isVibeTagsValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please complete all steps before finishing.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    final success = await ref.read(onboardingControllerProvider.notifier).finishProfile();
-    if (success && mounted) {
-      _showSuccessDialog();
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to save profile to Firestore. Please try again.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    try {
+      await ref.read(onboardingControllerProvider.notifier).finishProfile();
+      if (mounted) {
+        _showSuccessDialog();
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMsg = e.toString();
+        if (errorMsg.contains(']')) {
+          errorMsg = errorMsg.substring(errorMsg.indexOf(']') + 1).trim();
+        } else if (errorMsg.startsWith('Exception:')) {
+          errorMsg = errorMsg.replaceFirst('Exception:', '').trim();
+        }
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

@@ -1,0 +1,85 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Checks if the request is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper: Checks if the user is accessing their own document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper: Verifies that a mutual match document exists for a chat room
+    function isMatchParticipant(matchId) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/matches/$(matchId)) &&
+        (request.auth.uid in get(/databases/$(database)/documents/matches/$(matchId)).data.userIds);
+    }
+
+    // --- Users Profiles ---
+    match /users/{userId} {
+      // Only authenticated users can read profiles
+      allow read: if isAuthenticated();
+      
+      // Users can only create or update their own profile document
+      allow create, update: if isOwner(userId);
+      
+      // Prevent deletion of profile documents entirely to protect collection integrity
+      allow delete: if false;
+    }
+
+    // --- Blocks ---
+    match /blocks/{blockId} {
+      allow read: if isAuthenticated() && 
+        (resource.data.blockerId == request.auth.uid || resource.data.blockedId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.blockerId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.blockerId == request.auth.uid;
+    }
+
+    // --- Reports ---
+    match /reports/{reportId} {
+      allow create: if isAuthenticated() && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // --- Likes ---
+    match /likes/{likeId} {
+      allow read: if isAuthenticated() && 
+        (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow write: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+    }
+
+    // --- Matches ---
+    match /matches/{matchId} {
+      allow read: if isAuthenticated() && (request.auth.uid in resource.data.userIds);
+      allow write: if isAuthenticated() && (request.auth.uid in request.resource.data.userIds);
+    }
+
+    // --- Waves ---
+    match /waves/{waveId} {
+      allow read: if isAuthenticated() && 
+        (resource.data.receiverId == request.auth.uid || resource.data.senderId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+    }
+
+    // --- Connection Requests ---
+    match /connection_requests/{requestId} {
+      allow read: if isAuthenticated() && 
+        (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+    }
+
+    // --- Chats & Messages subcollection ---
+    match /chats/{matchId} {
+      allow read, write: if isMatchParticipant(matchId);
+
+      match /messages/{messageId} {
+        allow read, write: if isMatchParticipant(matchId);
+      }
+    }
+  }
+}

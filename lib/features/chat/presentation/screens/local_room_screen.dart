@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/widgets/image_helper.dart';
 import '../controllers/local_room_controller.dart';
 import '../../../discovery/presentation/controllers/discovery_providers.dart';
+import '../../../discovery/presentation/controllers/user_providers.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 
 class LocalRoomScreen extends ConsumerStatefulWidget {
   const LocalRoomScreen({super.key});
@@ -47,10 +49,6 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
     final theme = Theme.of(context);
     final isInRoom = ref.watch(inLocalRoomProvider);
     final messages = ref.watch(localRoomMessagesProvider);
-    final users = ref.watch(mockDiscoveryUsersControllerProvider);
-
-    // Helper map to quickly find mock user details for avatars
-    final userMap = {for (var u in users) u.user.uid: u.user};
 
     // Standard list reversed so new messages flow from bottom
     final reversedMessages = messages.reversed.toList();
@@ -151,9 +149,9 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                           itemCount: reversedMessages.length,
                           itemBuilder: (context, index) {
                             final message = reversedMessages[index];
-                            final isMe = message.senderId == 'me';
-                            final sender = userMap[message.senderId];
-                            return _buildGroupMessageBubble(message, isMe, sender, theme);
+                            final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
+                            final isMe = message.senderId == currentUserId;
+                            return _buildGroupMessageBubble(message, isMe, message.senderId, theme);
                           },
                         ),
             ),
@@ -206,99 +204,106 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
     );
   }
 
-  Widget _buildGroupMessageBubble(dynamic message, bool isMe, dynamic sender, ThemeData theme) {
-    final bubbleColor = isMe
-        ? theme.colorScheme.primary
-        : theme.colorScheme.surfaceContainerHighest;
-    final textColor = isMe
-        ? Colors.white
-        : theme.colorScheme.onSurface;
+  Widget _buildGroupMessageBubble(dynamic message, bool isMe, String senderId, ThemeData theme) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final senderAsync = ref.watch(userProfileProvider(senderId));
+        final sender = senderAsync.valueOrNull;
 
-    final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final margin = isMe
-        ? const EdgeInsets.only(left: 64, top: 4, bottom: 4)
-        : const EdgeInsets.only(right: 64, top: 4, bottom: 4);
+        final bubbleColor = isMe
+            ? theme.colorScheme.primary
+            : theme.colorScheme.surfaceContainerHighest;
+        final textColor = isMe
+            ? Colors.white
+            : theme.colorScheme.onSurface;
 
-    final formattedTime = DateFormat('h:mm a').format(message.timestamp);
+        final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+        final margin = isMe
+            ? const EdgeInsets.only(left: 64, top: 4, bottom: 4)
+            : const EdgeInsets.only(right: 64, top: 4, bottom: 4);
 
-    final avatarUrl = (sender != null && sender.profilePictures.isNotEmpty)
-        ? sender.profilePictures[0]
-        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+        final formattedTime = DateFormat('h:mm a').format(message.timestamp);
 
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: margin,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isMe) ...[
-              CircleAvatar(
-                radius: 16,
-                backgroundImage: getUserImageProvider(avatarUrl),
-              ),
-              const SizedBox(width: 8),
-            ],
-            Flexible(
-              child: Column(
-                crossAxisAlignment: align,
-                children: [
-                  if (!isMe && sender != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4.0, bottom: 2.0),
-                      child: Text(
-                        sender.name,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: bubbleColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(20),
-                        topRight: const Radius.circular(20),
-                        bottomLeft: Radius.circular(isMe ? 20 : 4),
-                        bottomRight: Radius.circular(isMe ? 4 : 20),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(10),
-                          blurRadius: 3,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      message.text,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 15,
-                        height: 1.35,
-                      ),
-                    ),
+        final avatarUrl = (sender != null && sender.profilePictures.isNotEmpty)
+            ? sender.profilePictures[0]
+            : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+
+        return Align(
+          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: margin,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isMe) ...[
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundImage: getUserImageProvider(avatarUrl),
                   ),
-                  const SizedBox(height: 2),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                    child: Text(
-                      formattedTime,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontSize: 10,
-                        color: theme.colorScheme.onSurfaceVariant.withAlpha(180),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(width: 8),
                 ],
-              ),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: align,
+                    children: [
+                      if (!isMe && sender != null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4.0, bottom: 2.0),
+                          child: Text(
+                            sender.name,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: bubbleColor,
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(20),
+                            topRight: const Radius.circular(20),
+                            bottomLeft: Radius.circular(isMe ? 20 : 4),
+                            bottomRight: Radius.circular(isMe ? 4 : 20),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(10),
+                              blurRadius: 3,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          message.text,
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 15,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Text(
+                          formattedTime,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 10,
+                            color: theme.colorScheme.onSurfaceVariant.withAlpha(180),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

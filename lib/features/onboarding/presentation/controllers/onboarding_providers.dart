@@ -105,9 +105,9 @@ class OnboardingController extends _$OnboardingController {
   }
 
   /// Real Firebase profile completion upload.
-  Future<bool> finishProfile() async {
+  Future<void> finishProfile() async {
     if (!state.isBasicInfoValid || !state.isPicturesValid || !state.isVibeTagsValid) {
-      return false;
+      throw UserProfileValidationException('Please complete all steps before finishing.');
     }
 
     state = state.copyWith(isLoading: true);
@@ -117,7 +117,7 @@ class OnboardingController extends _$OnboardingController {
       final uid = authRepo.currentUser?.uid;
       
       if (uid == null) {
-        throw Exception('No authenticated user found');
+        throw UserProfileValidationException('No authenticated user found');
       }
 
       // Compress and convert local files to Base64 data strings to bypass Firebase Storage
@@ -146,10 +146,9 @@ class OnboardingController extends _$OnboardingController {
       );
 
       state = state.copyWith(isLoading: false);
-      return true;
     } catch (e) {
       state = state.copyWith(isLoading: false);
-      return false;
+      rethrow;
     }
   }
 }

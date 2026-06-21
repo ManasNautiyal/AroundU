@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/image_helper.dart';
 import '../../../discovery/data/models/nearby_user.dart';
-import '../../../discovery/presentation/controllers/discovery_providers.dart';
 import '../../../discovery/presentation/widgets/profile_detail_sheet.dart';
 import '../../data/models/interaction_model.dart';
 import '../../data/models/message_request_model.dart';
-import '../controllers/social_mock_providers.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
+import '../../data/repositories/interaction_repository.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
+import '../../../discovery/presentation/controllers/user_providers.dart';
 
 class InboxScreen extends ConsumerStatefulWidget {
   const InboxScreen({super.key});
@@ -17,54 +18,6 @@ class InboxScreen extends ConsumerStatefulWidget {
 }
 
 class _InboxScreenState extends ConsumerState<InboxScreen> {
-  /// Resolves the user profile model from our mock discovery users list or standard seeding fallbacks.
-  UserModel _resolveUser(String uid) {
-    if (uid == 'me') {
-      return UserModel(
-        uid: 'me',
-        name: 'My Profile',
-        bio: 'Self bio',
-        profilePictures: const ['https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'],
-        vibeTags: const [],
-        isGhostMode: false,
-        lastActive: DateTime.now(),
-      );
-    }
-
-    final nearbyList = ref.read(mockDiscoveryUsersControllerProvider);
-    try {
-      return nearbyList.firstWhere((u) => u.user.uid == uid).user;
-    } catch (_) {
-      // Seeding fallback profiles
-      if (uid == 'mock_2') {
-        return UserModel(
-          uid: 'mock_2',
-          name: 'Marcus',
-          bio: '🏋️ Gym enthusiast & fitness trainer. Love hiking, rock climbing, and good food.',
-          profilePictures: const [
-            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500',
-            'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500',
-          ],
-          vibeTags: const ['🏋️ Gym', '⚽ Sports', '🍕 Foodie'],
-          isGhostMode: false,
-          lastActive: DateTime.now().subtract(const Duration(minutes: 5)),
-        );
-      }
-      return UserModel(
-        uid: 'mock_3',
-        name: 'Aria',
-        bio: '🎨 Art director & film nerd. Let\'s talk about cinema!',
-        profilePictures: const [
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500',
-          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500',
-        ],
-        vibeTags: const ['🎨 Art', '🎬 Movies', '🎵 Music'],
-        isGhostMode: false,
-        lastActive: DateTime.now().subtract(const Duration(minutes: 15)),
-      );
-    }
-  }
-
   void _showProfileDetail(BuildContext context, UserModel user) {
     showModalBottomSheet(
       context: context,
@@ -77,8 +30,9 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final activeConnections = ref.watch(mockActiveConnectionsProvider);
-    final pendingRequests = ref.watch(mockMessageRequestsProvider);
+    final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
+    final activeConnectionsAsync = ref.watch(matchesStreamProvider(currentUserId: currentUserId));
+    final pendingRequestsAsync = ref.watch(connectionRequestsStreamProvider(currentUserId: currentUserId));
 
     return DefaultTabController(
       length: 2,
@@ -94,8 +48,20 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
             labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             indicatorColor: theme.colorScheme.primary,
             tabs: [
-              Tab(text: 'Messages (${activeConnections.length})'),
-              Tab(text: 'Requests (${pendingRequests.length})'),
+              Tab(
+                text: activeConnectionsAsync.when(
+                  data: (list) => 'Messages (${list.length})',
+                  error: (err, stack) => 'Messages (0)',
+                  loading: () => 'Messages (...)',
+                ),
+              ),
+              Tab(
+                text: pendingRequestsAsync.when(
+                  data: (list) => 'Requests (${list.length})',
+                  error: (err, stack) => 'Requests (0)',
+                  loading: () => 'Requests (...)',
+                ),
+              ),
             ],
           ),
         ),
@@ -113,10 +79,18 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           child: TabBarView(
             children: [
               // Messages Tab: List of active connections
-              _buildMessagesList(activeConnections, theme),
+              activeConnectionsAsync.when(
+                data: (connections) => _buildMessagesList(connections, currentUserId, theme),
+                error: (err, _) => Center(child: Text('Error loading messages: $err')),
+                loading: () => const Center(child: CircularProgressIndicator()),
+              ),
 
               // Requests Tab: List of pending message requests
-              _buildRequestsList(pendingRequests, theme),
+              pendingRequestsAsync.when(
+                data: (requests) => _buildRequestsList(requests, theme),
+                error: (err, _) => Center(child: Text('Error loading requests: $err')),
+                loading: () => const Center(child: CircularProgressIndicator()),
+              ),
             ],
           ),
         ),
@@ -124,7 +98,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     );
   }
 
-  Widget _buildMessagesList(List<MatchModel> connections, ThemeData theme) {
+  Widget _buildMessagesList(List<MatchModel> connections, String currentUserId, ThemeData theme) {
     if (connections.isEmpty) {
       return _buildEmptyState(
         theme: theme,
@@ -139,12 +113,109 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       itemCount: connections.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final connection = connections[index];
-        final targetUserId = connection.user1Id == 'me' ? connection.user2Id : connection.user1Id;
-        final user = _resolveUser(targetUserId);
+        return MatchTile(
+          connection: connections[index],
+          currentUserId: currentUserId,
+          theme: theme,
+        );
+      },
+    );
+  }
 
+  Widget _buildRequestsList(List<MessageRequestModel> requests, ThemeData theme) {
+    if (requests.isEmpty) {
+      return _buildEmptyState(
+        theme: theme,
+        icon: Icons.mark_chat_unread_outlined,
+        title: 'No Pending Requests',
+        body: 'You are all caught up! New intro message requests from nearby users will appear here.',
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      itemCount: requests.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        return MessageRequestTile(
+          request: requests[index],
+          theme: theme,
+          onShowProfile: _showProfileDetail,
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState({
+    required ThemeData theme,
+    required IconData icon,
+    required String title,
+    required String body,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withAlpha(20),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 48,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class MatchTile extends ConsumerWidget {
+  final MatchModel connection;
+  final String currentUserId;
+  final ThemeData theme;
+
+  const MatchTile({
+    super.key,
+    required this.connection,
+    required this.currentUserId,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final targetUserId = connection.user1Id == currentUserId ? connection.user2Id : connection.user1Id;
+    final userAsync = ref.watch(userProfileProvider(targetUserId));
+
+    return userAsync.when(
+      data: (user) {
+        if (user == null) {
+          return const SizedBox.shrink();
+        }
         final avatarUrl = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
-
         return Card(
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -241,29 +312,78 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           ),
         );
       },
+      loading: () => Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: theme.colorScheme.outlineVariant.withAlpha(55),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 16,
+                      width: 100,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 12,
+                      width: 60,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      error: (err, _) => const SizedBox.shrink(),
     );
   }
+}
 
-  Widget _buildRequestsList(List<MessageRequestModel> requests, ThemeData theme) {
-    if (requests.isEmpty) {
-      return _buildEmptyState(
-        theme: theme,
-        icon: Icons.mark_chat_unread_outlined,
-        title: 'No Pending Requests',
-        body: 'You are all caught up! New intro message requests from nearby users will appear here.',
-      );
-    }
+class MessageRequestTile extends ConsumerWidget {
+  final MessageRequestModel request;
+  final ThemeData theme;
+  final Function(BuildContext, UserModel) onShowProfile;
 
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      itemCount: requests.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final request = requests[index];
-        final sender = _resolveUser(request.senderId);
+  const MessageRequestTile({
+    super.key,
+    required this.request,
+    required this.theme,
+    required this.onShowProfile,
+  });
 
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final senderAsync = ref.watch(userProfileProvider(request.senderId));
+
+    return senderAsync.when(
+      data: (sender) {
+        if (sender == null) {
+          return const SizedBox.shrink();
+        }
         final avatarUrl = sender.profilePictures.isNotEmpty ? sender.profilePictures[0] : '';
-
         return Card(
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -281,7 +401,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () => _showProfileDetail(context, sender),
+                      onTap: () => onShowProfile(context, sender),
                       child: CircleAvatar(
                         radius: 24,
                         backgroundImage: getUserImageProvider(avatarUrl),
@@ -333,14 +453,17 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                   children: [
                     // Decline Button
                     OutlinedButton.icon(
-                      onPressed: () {
-                        ref.read(mockMessageRequestsProvider.notifier).declineRequest(request.id);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Declined request from ${sender.name}.'),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
+                      onPressed: () async {
+                        final repo = ref.read(interactionRepositoryProvider);
+                        await repo.declineConnectionRequest(request.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Declined request from ${sender.name}.'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
@@ -355,14 +478,17 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                     const SizedBox(width: 12),
                     // Accept Button
                     FilledButton.icon(
-                      onPressed: () {
-                        ref.read(mockMessageRequestsProvider.notifier).acceptRequest(request.id);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Accepted request! Chat with ${sender.name} is now open.'),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
+                      onPressed: () async {
+                        final repo = ref.read(interactionRepositoryProvider);
+                        await repo.acceptConnectionRequest(request);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Accepted request! Chat with ${sender.name} is now open.'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
                       },
                       style: FilledButton.styleFrom(
                         backgroundColor: Colors.green,
@@ -381,52 +507,52 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildEmptyState({
-    required ThemeData theme,
-    required IconData icon,
-    required String title,
-    required String body,
-  }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withAlpha(20),
-                shape: BoxShape.circle,
+      loading: () => Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: theme.colorScheme.outlineVariant.withAlpha(55),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      height: 16,
+                      width: 100,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: Icon(
-                icon,
-                size: 48,
-                color: theme.colorScheme.primary,
+              const SizedBox(height: 12),
+              Container(
+                height: 48,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              body,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+      error: (err, _) => const SizedBox.shrink(),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../discovery/presentation/controllers/discovery_providers.dart';
-import '../../../onboarding/presentation/controllers/onboarding_providers.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -88,14 +88,22 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
 
-    // Mock deleting details
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      final user = authRepo.currentUser;
+      if (user != null) {
+        // Delete the Firebase Auth credentials
+        await user.delete();
+      }
+    } catch (e) {
+      // Catch e.g. requires-recent-login errors and log out anyway so they can sign in fresh
+    }
+
+    // Always perform a sign out to clear authStateChanges
+    await ref.read(authRepositoryProvider).signOut();
 
     if (context.mounted) {
       Navigator.pop(context); // Close loading spinner
-      
-      // Reset onboarding step to step 0 (Auth screen) reactively
-      ref.read(onboardingStepProvider.notifier).setStep(0);
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -214,6 +222,53 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () {},
             ),
             const SizedBox(height: 48),
+
+            // Log Out Button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  foregroundColor: theme.colorScheme.onPrimaryContainer,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Log Out'),
+                      content: const Text('Are you sure you want to log out of AroundU?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Log Out'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    await ref.read(authRepositoryProvider).signOut();
+                    if (context.mounted) {
+                      Navigator.pop(context); // Close Settings screen
+                    }
+                  }
+                },
+                icon: const Icon(Icons.logout_rounded),
+                label: const Text(
+                  'Log Out',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // Delete Account Button
             Padding(

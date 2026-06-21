@@ -7,6 +7,14 @@ import '../../../auth/data/repositories/auth_repository.dart';
 
 part 'user_repository.g.dart';
 
+class UserProfileValidationException implements Exception {
+  final String message;
+  UserProfileValidationException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class UserRepository {
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
@@ -20,10 +28,35 @@ class UserRepository {
     required List<String> vibeTags,
     List<String> profilePictures = const [],
   }) async {
+    // 1. Sanitize input: Trim whitespace from name and bio
+    final sanitizedName = name.trim();
+    final sanitizedBio = bio.trim();
+
+    // 2. Validate name
+    if (sanitizedName.isEmpty) {
+      throw UserProfileValidationException('Name cannot be empty. Please enter your first name.');
+    }
+
+    // 3. Validate bio length
+    if (sanitizedBio.isEmpty) {
+      throw UserProfileValidationException('Bio cannot be empty. Please share a little about yourself.');
+    }
+    if (sanitizedBio.length > 150) {
+      throw UserProfileValidationException('Bio cannot exceed 150 characters.');
+    }
+
+    // 4. Validate vibe tags
+    if (vibeTags.isEmpty) {
+      throw UserProfileValidationException('Please select at least one vibe tag.');
+    }
+    if (vibeTags.length > 5) {
+      throw UserProfileValidationException('You can select a maximum of 5 vibe tags.');
+    }
+
     final userModel = UserModel(
       uid: uid,
-      name: name,
-      bio: bio,
+      name: sanitizedName,
+      bio: sanitizedBio,
       profilePictures: profilePictures,
       vibeTags: vibeTags,
       isGhostMode: false,
@@ -50,6 +83,15 @@ class UserRepository {
     final file = File(localPath);
     final uploadTask = await ref.putFile(file);
     return await uploadTask.ref.getDownloadURL();
+  }
+
+  /// Updates or deletes the beacon values on the user's Firestore document.
+  Future<void> updateBeacon(String uid, String? emoji, String? message) async {
+    await _firestore.collection('users').doc(uid).update({
+      'beaconEmoji': emoji ?? FieldValue.delete(),
+      'beaconMessage': message ?? FieldValue.delete(),
+      'lastActive': FieldValue.serverTimestamp(),
+    });
   }
 }
 

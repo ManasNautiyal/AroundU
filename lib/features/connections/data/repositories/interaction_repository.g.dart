@@ -302,5 +302,137 @@ class _IncomingWavesStreamProviderElement
       (origin as IncomingWavesStreamProvider).currentUserId;
 }
 
+String _$connectionRequestsStreamHash() =>
+    r'58c3127c9ef57a7e7ea6741cbf423f6a42b12e72';
+
+/// See also [connectionRequestsStream].
+@ProviderFor(connectionRequestsStream)
+const connectionRequestsStreamProvider = ConnectionRequestsStreamFamily();
+
+/// See also [connectionRequestsStream].
+class ConnectionRequestsStreamFamily
+    extends Family<AsyncValue<List<MessageRequestModel>>> {
+  /// See also [connectionRequestsStream].
+  const ConnectionRequestsStreamFamily();
+
+  /// See also [connectionRequestsStream].
+  ConnectionRequestsStreamProvider call({required String currentUserId}) {
+    return ConnectionRequestsStreamProvider(currentUserId: currentUserId);
+  }
+
+  @override
+  ConnectionRequestsStreamProvider getProviderOverride(
+    covariant ConnectionRequestsStreamProvider provider,
+  ) {
+    return call(currentUserId: provider.currentUserId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'connectionRequestsStreamProvider';
+}
+
+/// See also [connectionRequestsStream].
+class ConnectionRequestsStreamProvider
+    extends AutoDisposeStreamProvider<List<MessageRequestModel>> {
+  /// See also [connectionRequestsStream].
+  ConnectionRequestsStreamProvider({required String currentUserId})
+    : this._internal(
+        (ref) => connectionRequestsStream(
+          ref as ConnectionRequestsStreamRef,
+          currentUserId: currentUserId,
+        ),
+        from: connectionRequestsStreamProvider,
+        name: r'connectionRequestsStreamProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$connectionRequestsStreamHash,
+        dependencies: ConnectionRequestsStreamFamily._dependencies,
+        allTransitiveDependencies:
+            ConnectionRequestsStreamFamily._allTransitiveDependencies,
+        currentUserId: currentUserId,
+      );
+
+  ConnectionRequestsStreamProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.currentUserId,
+  }) : super.internal();
+
+  final String currentUserId;
+
+  @override
+  Override overrideWith(
+    Stream<List<MessageRequestModel>> Function(
+      ConnectionRequestsStreamRef provider,
+    )
+    create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: ConnectionRequestsStreamProvider._internal(
+        (ref) => create(ref as ConnectionRequestsStreamRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        currentUserId: currentUserId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<List<MessageRequestModel>> createElement() {
+    return _ConnectionRequestsStreamProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ConnectionRequestsStreamProvider &&
+        other.currentUserId == currentUserId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, currentUserId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ConnectionRequestsStreamRef
+    on AutoDisposeStreamProviderRef<List<MessageRequestModel>> {
+  /// The parameter `currentUserId` of this provider.
+  String get currentUserId;
+}
+
+class _ConnectionRequestsStreamProviderElement
+    extends AutoDisposeStreamProviderElement<List<MessageRequestModel>>
+    with ConnectionRequestsStreamRef {
+  _ConnectionRequestsStreamProviderElement(super.provider);
+
+  @override
+  String get currentUserId =>
+      (origin as ConnectionRequestsStreamProvider).currentUserId;
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

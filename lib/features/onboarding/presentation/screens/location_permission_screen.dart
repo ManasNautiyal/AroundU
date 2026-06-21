@@ -80,7 +80,7 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
               Navigator.pop(context);
               _navigateToProfileSetup(); // Let them proceed in debug/mock onboarding anyway
             },
-            child: const Text('Proceed Anyway (Mock)'),
+            child: const Text('Proceed anyway'),
           ),
           FilledButton(
             onPressed: () {

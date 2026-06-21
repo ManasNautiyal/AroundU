@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/image_helper.dart';
 import '../../data/models/nearby_user.dart';
-import '../controllers/discovery_providers.dart';
 import 'profile_detail_sheet.dart';
 
 class NearbyUserCard extends ConsumerWidget {
@@ -26,10 +25,6 @@ class NearbyUserCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final user = nearbyUser.user;
-
-    // Watch beacons to see if this user has dropped one
-    final beacons = ref.watch(userBeaconsProvider);
-    final userBeacon = beacons[user.uid];
 
     // Use primary photo (index 0) or fallback to placeholder
     final imageUrl = user.profilePictures.isNotEmpty
@@ -88,7 +83,7 @@ class NearbyUserCard extends ConsumerWidget {
               ),
 
               // Floating Beacon Badge at top of the card
-              if (userBeacon != null)
+              if (user.beaconEmoji != null && user.beaconMessage != null)
                 Positioned(
                   top: 12,
                   left: 12,
@@ -114,13 +109,13 @@ class NearbyUserCard extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          userBeacon.emoji,
+                          user.beaconEmoji!,
                           style: const TextStyle(fontSize: 16),
                         ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            userBeacon.message,
+                            user.beaconMessage!,
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: theme.colorScheme.onSurface,
                               fontWeight: FontWeight.bold,

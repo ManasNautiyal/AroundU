@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../controllers/discovery_providers.dart';
+import '../../data/repositories/user_repository.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 
 class BeaconSheet extends ConsumerStatefulWidget {
   const BeaconSheet({super.key});
@@ -30,12 +31,11 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
     super.initState();
     // Load existing beacon if available
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final beacons = ref.read(userBeaconsProvider);
-      final myBeacon = beacons['me'];
-      if (myBeacon != null) {
+      final currentUser = ref.read(currentUserModelProvider).valueOrNull;
+      if (currentUser != null && currentUser.beaconEmoji != null) {
         setState(() {
-          _selectedEmoji = myBeacon.emoji;
-          _textController.text = myBeacon.message;
+          _selectedEmoji = currentUser.beaconEmoji!;
+          _textController.text = currentUser.beaconMessage ?? '';
         });
       }
     });
@@ -50,8 +50,8 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final beacons = ref.watch(userBeaconsProvider);
-    final hasActiveBeacon = beacons.containsKey('me');
+    final currentUser = ref.watch(currentUserModelProvider).valueOrNull;
+    final hasActiveBeacon = currentUser != null && currentUser.beaconEmoji != null;
 
     return Container(
       decoration: BoxDecoration(
@@ -102,15 +102,21 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
                 ),
                 if (hasActiveBeacon)
                   TextButton.icon(
-                    onPressed: () {
-                      ref.read(userBeaconsProvider.notifier).clearBeacon('me');
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Beacon cleared! You are now offline.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                    onPressed: () async {
+                      final uid = ref.read(authRepositoryProvider).currentUser?.uid;
+                      if (uid != null) {
+                        await ref.read(userRepositoryProvider).updateBeacon(uid, null, null);
+                        ref.invalidate(currentUserModelProvider);
+                      }
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Beacon cleared! You are now offline.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
                     },
                     icon: const Icon(Icons.delete_outline_rounded, size: 18),
                     label: const Text('Clear'),
@@ -264,26 +270,32 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
                   ],
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      ref.read(userBeaconsProvider.notifier).setBeacon(
-                            'me',
-                            _selectedEmoji,
-                            _textController.text.trim(),
-                          );
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Text(_selectedEmoji, style: const TextStyle(fontSize: 18)),
-                              const SizedBox(width: 8),
-                              const Text('Beacon successfully dropped!'),
-                            ],
+                      final uid = ref.read(authRepositoryProvider).currentUser?.uid;
+                      if (uid != null) {
+                        await ref.read(userRepositoryProvider).updateBeacon(
+                              uid,
+                              _selectedEmoji,
+                              _textController.text.trim(),
+                            );
+                        ref.invalidate(currentUserModelProvider);
+                      }
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Text(_selectedEmoji, style: const TextStyle(fontSize: 18)),
+                                const SizedBox(width: 8),
+                                const Text('Beacon successfully dropped!'),
+                              ],
+                            ),
+                            behavior: SnackBarBehavior.floating,
                           ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                        );
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
