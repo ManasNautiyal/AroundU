@@ -200,9 +200,6 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
                 onPressed: _isRequesting ? null : _requestLocationPermission,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
                 ),
                 icon: _isRequesting
                     ? const SizedBox(

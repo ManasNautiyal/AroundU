@@ -537,10 +537,9 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: theme.brightness == Brightness.light
-                      ? const Color(0xFFF0F4F9)
-                      : const Color(0xFF232931),
+                  color: const Color(0xFF121212),
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFF262626), width: 1.2),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -569,10 +568,9 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
               height: 48,
               width: 48,
               decoration: BoxDecoration(
-                color: theme.brightness == Brightness.light
-                    ? const Color(0xFFF0F4F9)
-                    : const Color(0xFF232931),
+                color: const Color(0xFF121212),
                 shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF262626), width: 1.2),
               ),
               child: IconButton(
                 icon: const Icon(Icons.filter_list, size: 20),
@@ -606,17 +604,14 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
 
   Widget _buildSelectedUserCard(UserModel user, ThemeData theme) {
     final primaryPhoto = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
-      elevation: 6,
-      shadowColor: Colors.black.withAlpha(30),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(28),
-        side: BorderSide(
-          color: theme.brightness == Brightness.light
-              ? const Color(0xFFE2E8F0)
-              : const Color(0xFF334155),
-          width: 1,
+      decoration: BoxDecoration(
+        color: const Color(0xFF121212),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF262626),
+          width: 1.2,
         ),
       ),
       child: Padding(
@@ -631,7 +626,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
                 width: 36,
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withAlpha(80),
+                  color: Colors.white24,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -670,7 +665,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
                           ),
                         ],
                       ),
-
                     ],
                   ),
                 ),
@@ -681,7 +675,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
               'Interaction Options',
               style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurfaceVariant,
+                color: Colors.white54,
               ),
             ),
             const SizedBox(height: 10),
@@ -689,18 +683,19 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
               children: [
                 // Wave Button
                 Expanded(
-                  child: Container(
+                  child: SizedBox(
                     height: 44,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF25C5C),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: TextButton.icon(
+                    child: ElevatedButton.icon(
                       onPressed: () => _handleWave(user.uid, user.name),
                       icon: const Icon(Icons.back_hand_rounded, color: Colors.white, size: 16),
                       label: const Text(
                         'Wave',
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF25C5C),
+                        shape: const StadiumBorder(),
+                        elevation: 0,
                       ),
                     ),
                   ),
@@ -708,18 +703,19 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
                 const SizedBox(width: 12),
                 // Message Request Button
                 Expanded(
-                  child: Container(
+                  child: SizedBox(
                     height: 44,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: TextButton.icon(
+                    child: ElevatedButton.icon(
                       onPressed: () => _handleConnect(user),
                       icon: const Icon(Icons.mail_rounded, color: Colors.white, size: 16),
                       label: const Text(
                         'Message',
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        shape: const StadiumBorder(),
+                        elevation: 0,
                       ),
                     ),
                   ),

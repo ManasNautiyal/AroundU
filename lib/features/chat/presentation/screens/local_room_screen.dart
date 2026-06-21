@@ -96,8 +96,8 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withAlpha(40),
+        decoration: const BoxDecoration(
+          color: Colors.black,
         ),
         child: Column(
           children: [
@@ -212,10 +212,8 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
 
         final bubbleColor = isMe
             ? theme.colorScheme.primary
-            : theme.colorScheme.surfaceContainerHighest;
-        final textColor = isMe
-            ? Colors.white
-            : theme.colorScheme.onSurface;
+            : const Color(0xFF262626);
+        const textColor = Colors.white;
 
         final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
         final margin = isMe
@@ -263,18 +261,11 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                         decoration: BoxDecoration(
                           color: bubbleColor,
                           borderRadius: BorderRadius.only(
-                            topLeft: const Radius.circular(20),
-                            topRight: const Radius.circular(20),
-                            bottomLeft: Radius.circular(isMe ? 20 : 4),
-                            bottomRight: Radius.circular(isMe ? 4 : 20),
+                            topLeft: const Radius.circular(18),
+                            topRight: const Radius.circular(18),
+                            bottomLeft: Radius.circular(isMe ? 18 : 4),
+                            bottomRight: Radius.circular(isMe ? 4 : 18),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(10),
-                              blurRadius: 3,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
                         child: Text(
                           message.text,
@@ -292,7 +283,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                           formattedTime,
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontSize: 10,
-                            color: theme.colorScheme.onSurfaceVariant.withAlpha(180),
+                            color: Colors.white54,
                           ),
                         ),
                       ),
@@ -309,12 +300,13 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
 
   Widget _buildInputArea(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: const BoxDecoration(
+        color: Colors.black,
         border: Border(
           top: BorderSide(
-            color: theme.colorScheme.outlineVariant.withAlpha(80),
+            color: Color(0xFF262626),
+            width: 1.0,
           ),
         ),
       ),
@@ -323,28 +315,57 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
           children: [
             Expanded(
               child: Container(
+                height: 48,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withAlpha(100),
+                  color: const Color(0xFF121212),
                   borderRadius: BorderRadius.circular(24),
-                ),
-                child: TextField(
-                  controller: _messageController,
-                  textCapitalization: TextCapitalization.sentences,
-                  maxLines: 4,
-                  minLines: 1,
-                  decoration: const InputDecoration(
-                    hintText: 'Share something with the zone...',
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    border: InputBorder.none,
+                  border: Border.all(
+                    color: const Color(0xFF262626),
+                    width: 1.2,
                   ),
-                  onSubmitted: (_) => _sendMessage(),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 8),
+                    // Text Input field
+                    Expanded(
+                      child: TextField(
+                        controller: _messageController,
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLines: 4,
+                        minLines: 1,
+                        style: const TextStyle(color: Colors.white, fontSize: 15),
+                        decoration: const InputDecoration(
+                          hintText: 'Share something with the zone...',
+                          hintStyle: TextStyle(color: Colors.white38),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                          filled: false,
+                        ),
+                        onSubmitted: (_) => _sendMessage(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Send Button
+                    TextButton(
+                      onPressed: _sendMessage,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        foregroundColor: theme.colorScheme.primary,
+                      ),
+                      child: const Text(
+                        'Send',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            IconButton.filled(
-              onPressed: _sendMessage,
-              icon: const Icon(Icons.send),
             ),
           ],
         ),

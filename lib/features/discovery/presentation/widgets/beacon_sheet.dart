@@ -54,16 +54,12 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
     final hasActiveBeacon = currentUser != null && currentUser.beaconEmoji != null;
 
     return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(40),
-            blurRadius: 20,
-            spreadRadius: 5,
-          ),
-        ],
+      decoration: const BoxDecoration(
+        color: Color(0xFF121212),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(
+          top: BorderSide(color: Color(0xFF262626), width: 1.5),
+        ),
       ),
       padding: EdgeInsets.only(
         top: 8,
@@ -213,14 +209,6 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
                     style: const TextStyle(fontSize: 24),
                   ),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: theme.colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
-                ),
                 counterText: '', // Hide default counter to make custom clean UI
               ),
               onChanged: (_) => setState(() {}),
@@ -251,67 +239,47 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
             // Submit Button
             SizedBox(
               width: double.infinity,
-              height: 54,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.secondary,
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withAlpha(80),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      final uid = ref.read(authRepositoryProvider).currentUser?.uid;
-                      if (uid != null) {
-                        await ref.read(userRepositoryProvider).updateBeacon(
-                              uid,
-                              _selectedEmoji,
-                              _textController.text.trim(),
-                            );
-                        ref.invalidate(currentUserModelProvider);
-                      }
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                Text(_selectedEmoji, style: const TextStyle(fontSize: 18)),
-                                const SizedBox(width: 8),
-                                const Text('Beacon successfully dropped!'),
-                              ],
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    final uid = ref.read(authRepositoryProvider).currentUser?.uid;
+                    if (uid != null) {
+                      await ref.read(userRepositoryProvider).updateBeacon(
+                            uid,
+                            _selectedEmoji,
+                            _textController.text.trim(),
+                          );
+                      ref.invalidate(currentUserModelProvider);
                     }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                  ),
-                  child: Text(
-                    hasActiveBeacon ? 'Update Beacon' : 'Drop Beacon',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              Text(_selectedEmoji, style: const TextStyle(fontSize: 18)),
+                              const SizedBox(width: 8),
+                              const Text('Beacon successfully dropped!'),
+                            ],
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: const StadiumBorder(),
+                  elevation: 0,
+                ),
+                child: Text(
+                  hasActiveBeacon ? 'Update Beacon' : 'Drop Beacon',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),

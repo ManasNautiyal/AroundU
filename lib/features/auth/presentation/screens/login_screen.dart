@@ -154,12 +154,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                     TextFormField(
                       controller: emailResetController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Email Address',
-                        prefixIcon: const Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                        prefixIcon: Icon(Icons.email_outlined),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -207,9 +204,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                             },
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
                       ),
                       child: isResetLoading
                           ? const SizedBox(
@@ -479,16 +473,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
       body: Container(
         height: size.height,
         width: size.width,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.primaryContainer.withAlpha(50),
-              theme.colorScheme.secondaryContainer.withAlpha(75),
-            ],
-          ),
+        decoration: const BoxDecoration(
+          color: Colors.black,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -529,18 +515,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surface.withAlpha(200),
-                      borderRadius: BorderRadius.circular(28),
+                      color: const Color(0xFF121212),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: theme.colorScheme.outlineVariant.withAlpha(80),
+                        color: const Color(0xFF262626),
+                        width: 1.2,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(10),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
                     ),
                     child: Form(
                       key: _formKey,
@@ -598,10 +578,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   onPressed: _isLoading ? null : _handleGoogleSignIn,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    side: BorderSide(color: theme.colorScheme.outlineVariant),
+                    side: const BorderSide(color: Color(0xFF262626)),
                   ),
                   icon: Image.network(
                     'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
@@ -628,9 +605,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                         ? Colors.black
                         : Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
                   ),
                   icon: const Icon(Icons.apple, size: 20),
                   label: const Text(
@@ -677,12 +651,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
           key: const ValueKey('signin_email'),
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Email Address',
-            prefixIcon: const Icon(Icons.email_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            prefixIcon: Icon(Icons.email_outlined),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -711,9 +682,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
               onPressed: () {
                 setState(() => _obscurePassword = !_obscurePassword);
               },
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
             ),
           ),
           validator: (value) {
@@ -748,9 +716,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
           onPressed: _isLoading ? null : _handleLogin,
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
           ),
           child: _isLoading
               ? const SizedBox(
@@ -819,12 +784,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
           key: const ValueKey('signup_email'),
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Email Address',
-            prefixIcon: const Icon(Icons.email_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            prefixIcon: Icon(Icons.email_outlined),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -853,9 +815,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
               onPressed: () {
                 setState(() => _obscurePassword = !_obscurePassword);
               },
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
             ),
           ),
           onChanged: (val) => setState(() {}),
@@ -916,9 +875,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
               },
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -936,9 +892,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
           onPressed: _isLoading ? null : _handleLogin,
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
           ),
           child: _isLoading
               ? const SizedBox(
@@ -1006,13 +959,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             key: const ValueKey('phone_number_input'),
             controller: _phoneController,
             keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Phone Number',
               hintText: 'e.g. +1 555-010-0000',
-              prefixIcon: const Icon(Icons.phone_rounded),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              prefixIcon: Icon(Icons.phone_rounded),
             ),
           ),
           const SizedBox(height: 24),
@@ -1022,9 +972,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             label: const Text('Send Verification Code', style: TextStyle(fontWeight: FontWeight.bold)),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
             ),
           ),
         ] else ...[
@@ -1034,13 +981,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             controller: _otpController,
             keyboardType: TextInputType.number,
             maxLength: 6,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '6-digit OTP Code',
-              prefixIcon: const Icon(Icons.sms_rounded),
+              prefixIcon: Icon(Icons.sms_rounded),
               counterText: '',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -1050,9 +994,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             label: const Text('Verify & Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
             ),
           ),
           const SizedBox(height: 12),

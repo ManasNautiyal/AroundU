@@ -227,9 +227,7 @@ class SettingsScreen extends ConsumerWidget {
                       backgroundColor: const Color(0xFF262626),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: const StadiumBorder(),
                     ),
                     onPressed: () async {
                       Navigator.pop(modalContext); // Close sheet
@@ -265,9 +263,8 @@ class SettingsScreen extends ConsumerWidget {
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.redAccent,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: Colors.redAccent, width: 1),
+                      shape: const StadiumBorder(
+                        side: BorderSide(color: Colors.redAccent, width: 1),
                       ),
                     ),
                     onPressed: () {

@@ -36,15 +36,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     final activeConnectionsAsync = ref.watch(matchesStreamProvider(currentUserId: currentUserId));
     final pendingRequestsAsync = ref.watch(connectionRequestsStreamProvider(currentUserId: currentUserId));
 
-    final decoration = BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          theme.colorScheme.surface,
-          theme.colorScheme.primaryContainer.withAlpha(20),
-        ],
-      ),
+    const decoration = BoxDecoration(
+      color: Colors.black,
     );
 
     // If split navigation overrides the view, render only the specific tab list
@@ -152,9 +145,13 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: connections.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      separatorBuilder: (context, index) => const Divider(
+        color: Color(0xFF262626),
+        height: 1,
+        thickness: 1.0,
+      ),
       itemBuilder: (context, index) {
         return MatchTile(
           connection: connections[index],
@@ -176,9 +173,13 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: requests.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      separatorBuilder: (context, index) => const Divider(
+        color: Color(0xFF262626),
+        height: 1,
+        thickness: 1.0,
+      ),
       itemBuilder: (context, index) {
         return MessageRequestTile(
           request: requests[index],
@@ -259,16 +260,9 @@ class MatchTile extends ConsumerWidget {
           return const SizedBox.shrink();
         }
         final avatarUrl = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
-        return Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: theme.colorScheme.outlineVariant.withAlpha(55),
-            ),
-          ),
+        return Material(
+          color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(20),
             onTap: () {
               Navigator.push(
                 context,
@@ -281,11 +275,11 @@ class MatchTile extends ConsumerWidget {
               );
             },
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 30,
+                    radius: 28,
                     backgroundImage: getUserImageProvider(avatarUrl),
                   ),
                   const SizedBox(width: 16),
@@ -316,7 +310,7 @@ class MatchTile extends ConsumerWidget {
                             Text(
                               'Active now',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                                color: Colors.white54,
                               ),
                             ),
                           ],
@@ -328,8 +322,9 @@ class MatchTile extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withAlpha(20),
-                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF262626), width: 1.0),
                     ),
                     child: Row(
                       children: [
@@ -355,49 +350,40 @@ class MatchTile extends ConsumerWidget {
           ),
         );
       },
-      loading: () => Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: theme.colorScheme.outlineVariant.withAlpha(55),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 16,
-                      width: 100,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+      loading: () => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: const Color(0xFF121212),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 16,
+                    width: 100,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF121212),
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 12,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 12,
+                    width: 60,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF121212),
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       error: (err, _) => const SizedBox.shrink(),
@@ -427,16 +413,10 @@ class MessageRequestTile extends ConsumerWidget {
           return const SizedBox.shrink();
         }
         final avatarUrl = sender.profilePictures.isNotEmpty ? sender.profilePictures[0] : '';
-        return Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: theme.colorScheme.outlineVariant.withAlpha(55),
-            ),
-          ),
+        return Material(
+          color: Colors.transparent,
           child: Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -464,7 +444,7 @@ class MessageRequestTile extends ConsumerWidget {
                           Text(
                             'Sent a message request',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                              color: Colors.white54,
                             ),
                           ),
                         ],
@@ -478,14 +458,16 @@ class MessageRequestTile extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withAlpha(100),
+                    color: const Color(0xFF121212),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF262626), width: 1.0),
                   ),
                   child: Text(
                     request.introMessage,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontStyle: FontStyle.italic,
                       height: 1.4,
+                      color: Colors.white70,
                     ),
                   ),
                 ),
@@ -495,53 +477,58 @@ class MessageRequestTile extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     // Decline Button
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final repo = ref.read(interactionRepositoryProvider);
-                        await repo.declineConnectionRequest(request.id);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Declined request from ${sender.name}.'),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    SizedBox(
+                      height: 36,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final repo = ref.read(interactionRepositoryProvider);
+                          await repo.declineConnectionRequest(request.id);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Declined request from ${sender.name}.'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: const BorderSide(color: Colors.redAccent),
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                         ),
+                        icon: const Icon(Icons.close, size: 16),
+                        label: const Text('Decline', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
-                      icon: const Icon(Icons.close, size: 16),
-                      label: const Text('Decline'),
                     ),
                     const SizedBox(width: 12),
                     // Accept Button
-                    FilledButton.icon(
-                      onPressed: () async {
-                        final repo = ref.read(interactionRepositoryProvider);
-                        await repo.acceptConnectionRequest(request);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Accepted request! Chat with ${sender.name} is now open.'),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    SizedBox(
+                      height: 36,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final repo = ref.read(interactionRepositoryProvider);
+                          await repo.acceptConnectionRequest(request);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Accepted request! Chat with ${sender.name} is now open.'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          elevation: 0,
                         ),
+                        icon: const Icon(Icons.check, size: 16),
+                        label: const Text('Accept', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
-                      icon: const Icon(Icons.check, size: 16),
-                      label: const Text('Accept'),
                     ),
                   ],
                 ),
@@ -550,49 +537,40 @@ class MessageRequestTile extends ConsumerWidget {
           ),
         );
       },
-      loading: () => Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: theme.colorScheme.outlineVariant.withAlpha(55),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      height: 16,
-                      width: 100,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+      loading: () => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: const Color(0xFF121212),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 16,
+                    width: 100,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF121212),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Container(
-                height: 48,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
                 ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 48,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF121212),
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       error: (err, _) => const SizedBox.shrink(),

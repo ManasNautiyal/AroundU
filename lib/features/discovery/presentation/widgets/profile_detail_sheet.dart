@@ -32,6 +32,13 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
       ),
       builder: (modalContext) {
         return Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF121212),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+              top: BorderSide(color: Color(0xFF262626), width: 1.5),
+            ),
+          ),
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -117,6 +124,13 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
           ),
           child: SingleChildScrollView(
             child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF121212),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border(
+                  top: BorderSide(color: Color(0xFF262626), width: 1.5),
+                ),
+              ),
               padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -147,12 +161,9 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                     maxLines: 4,
                     minLines: 2,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Intro Message',
                       hintText: 'e.g. Hey! I also love classic movies...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
                       alignLabelWithHint: true,
                     ),
                   ),
@@ -193,9 +204,6 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                     },
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
                     ),
                     child: const Text(
                       'Send Request',
@@ -229,18 +237,14 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(32),
+          decoration: const BoxDecoration(
+            color: Color(0xFF121212),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(24),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(50),
-                blurRadius: 20,
-                spreadRadius: 5,
-              ),
-            ],
+            border: Border(
+              top: BorderSide(color: Color(0xFF262626), width: 1.5),
+            ),
           ),
           child: Stack(
             children: [
@@ -437,25 +441,22 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                 right: 0,
                 child: Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        theme.colorScheme.surface.withAlpha(0),
-                        theme.colorScheme.surface.withAlpha(240),
-                        theme.colorScheme.surface,
+                        Colors.transparent,
+                        Colors.black87,
+                        Colors.black,
                       ],
-                      stops: const [0.0, 0.4, 1.0],
+                      stops: [0.0, 0.4, 1.0],
                     ),
                   ),
                   child: FilledButton.icon(
                     onPressed: _showConnectDialog,
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
                     ),
                     icon: const Icon(Icons.send_rounded),
                     label: const Text(

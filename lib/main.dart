@@ -130,8 +130,8 @@ class MyApp extends StatelessWidget {
           color: const Color(0xFF121212), // Deep premium dark grey surface
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-            side: const BorderSide(color: Color(0xFF262626), width: 1.5), // High contrast borders
+            borderRadius: BorderRadius.circular(16), // Sleeker corner radius
+            side: const BorderSide(color: Color(0xFF262626), width: 1.2), // Micro thin border
           ),
         ),
         navigationBarTheme: NavigationBarThemeData(
@@ -144,21 +144,42 @@ class MyApp extends StatelessWidget {
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+            shape: const StadiumBorder(),
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+            shape: const StadiumBorder(),
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
           ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF121212),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30), // Pill style input fields
+            borderSide: const BorderSide(color: Color(0xFF262626), width: 1.2),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: const BorderSide(color: Color(0xFF262626), width: 1.2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: const BorderSide(color: Colors.white24, width: 1.5),
+          ),
+          labelStyle: const TextStyle(color: Colors.white70),
+          hintStyle: const TextStyle(color: Colors.white38),
         ),
       ),
       home: const OnboardingRouter(),

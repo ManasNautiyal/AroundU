@@ -346,8 +346,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             ),
           ),
           const SizedBox(height: 32),
-
-          // Photos layout grid
           LayoutBuilder(
             builder: (context, constraints) {
               final double totalWidth = constraints.maxWidth;
@@ -366,49 +364,49 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         width: leftWidth,
                         height: itemHeight,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest.withAlpha(80),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: CustomPaint(
-                          painter: DashedRectPainter(
+                          color: const Color(0xFF121212),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
                             color: state.profilePictures[0] != null
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.outlineVariant,
-                            strokeWidth: 2,
-                            gap: 6,
+                                : const Color(0xFF262626),
+                            width: 1.5,
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: state.profilePictures[0] != null
-                                ? Image.file(
-                                    File(state.profilePictures[0]!),
-                                    fit: BoxFit.cover,
-                                  )
-                                : Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.add_a_photo_outlined,
-                                        size: 40,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: state.profilePictures[0] != null
+                              ? Image.file(
+                                  File(state.profilePictures[0]!),
+                                  fit: BoxFit.cover,
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_a_photo_outlined,
+                                      size: 36,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    const Text(
+                                      'Primary Photo',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Required',
+                                      style: theme.textTheme.bodySmall?.copyWith(
                                         color: theme.colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      const SizedBox(height: 12),
-                                      const Text(
-                                        'Primary Photo',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Required',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: theme.colorScheme.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
+                                    ),
+                                  ],
+                                ),
                         ),
                       ),
                     ),
@@ -424,30 +422,27 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               onTap: () => _pickImage(1),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.surfaceContainerHighest.withAlpha(80),
-                                  borderRadius: BorderRadius.circular(16),
+                                  color: const Color(0xFF121212),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFF262626),
+                                    width: 1.2,
+                                  ),
                                 ),
-                                child: CustomPaint(
-                                  painter: DashedRectPainter(
-                                    color: theme.colorScheme.outlineVariant,
-                                    strokeWidth: 1.5,
-                                    gap: 5,
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: state.profilePictures[1] != null
-                                        ? Image.file(
-                                            File(state.profilePictures[1]!),
-                                            fit: BoxFit.cover,
-                                          )
-                                        : Center(
-                                            child: Icon(
-                                              Icons.add_photo_alternate_outlined,
-                                              size: 28,
-                                              color: theme.colorScheme.onSurfaceVariant,
-                                            ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(11),
+                                  child: state.profilePictures[1] != null
+                                      ? Image.file(
+                                          File(state.profilePictures[1]!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : const Center(
+                                          child: Icon(
+                                            Icons.add_photo_alternate_outlined,
+                                            size: 24,
+                                            color: Colors.white54,
                                           ),
-                                  ),
+                                        ),
                                 ),
                               ),
                             ),
@@ -460,30 +455,27 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               onTap: () => _pickImage(2),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.surfaceContainerHighest.withAlpha(80),
-                                  borderRadius: BorderRadius.circular(16),
+                                  color: const Color(0xFF121212),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFF262626),
+                                    width: 1.2,
+                                  ),
                                 ),
-                                child: CustomPaint(
-                                  painter: DashedRectPainter(
-                                    color: theme.colorScheme.outlineVariant,
-                                    strokeWidth: 1.5,
-                                    gap: 5,
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: state.profilePictures[2] != null
-                                        ? Image.file(
-                                            File(state.profilePictures[2]!),
-                                            fit: BoxFit.cover,
-                                          )
-                                        : Center(
-                                            child: Icon(
-                                              Icons.add_photo_alternate_outlined,
-                                              size: 28,
-                                              color: theme.colorScheme.onSurfaceVariant,
-                                            ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(11),
+                                  child: state.profilePictures[2] != null
+                                      ? Image.file(
+                                          File(state.profilePictures[2]!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : const Center(
+                                          child: Icon(
+                                            Icons.add_photo_alternate_outlined,
+                                            size: 24,
+                                            color: Colors.white54,
                                           ),
-                                  ),
+                                        ),
                                 ),
                               ),
                             ),
