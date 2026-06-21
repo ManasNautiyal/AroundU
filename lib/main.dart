@@ -13,6 +13,38 @@ import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/discovery/data/repositories/user_repository.dart';
 import 'features/discovery/presentation/controllers/discovery_providers.dart';
 import 'features/chat/presentation/controllers/local_room_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+  return ThemeModeNotifier();
+});
+
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  ThemeModeNotifier() : super(ThemeMode.dark) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isLight = prefs.getBool('is_light_mode') ?? false;
+      state = isLight ? ThemeMode.light : ThemeMode.dark;
+    } catch (_) {}
+  }
+
+  Future<void> toggleTheme() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (state == ThemeMode.dark) {
+        state = ThemeMode.light;
+        await prefs.setBool('is_light_mode', true);
+      } else {
+        state = ThemeMode.dark;
+        await prefs.setBool('is_light_mode', false);
+      }
+    } catch (_) {}
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,27 +56,25 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF0058C6);
-    const darkBlue = Color(0xFF0F5A9E);
-    const lightPill = Color(0xFFD3E3FD);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
 
     final baseLight = ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
-        primary: Colors.white,
-        onPrimary: Colors.black,
-        secondary: Colors.white70,
-        onSecondary: Colors.black,
-        surface: Color(0xFF060606),
-        onSurface: Colors.white,
-        background: Color(0xFF060606),
-        onBackground: Colors.white,
+      brightness: Brightness.light,
+      colorScheme: const ColorScheme.light(
+        primary: Colors.black,
+        onPrimary: Colors.white,
+        secondary: Colors.black87,
+        onSecondary: Colors.white,
+        surface: Color(0xFFF3F5F2),
+        onSurface: Colors.black,
+        background: Color(0xFFFBFDFA),
+        onBackground: Colors.black,
       ),
     );
 
@@ -66,9 +96,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'AroundU',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark, // Force true AMOLED black globally
+      themeMode: themeMode,
       theme: baseLight.copyWith(
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        scaffoldBackgroundColor: const Color(0xFFFBFDFA),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -82,38 +112,59 @@ class MyApp extends StatelessWidget {
           ),
         ),
         cardTheme: CardThemeData(
-          color: Colors.white,
+          color: const Color(0xFFF3F5F2),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-            side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFFE2E5E2), width: 1.2),
           ),
         ),
         navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFFBFDFA),
           elevation: 8,
-          indicatorColor: lightPill,
+          indicatorColor: const Color(0xFFE2E5E2),
           labelTextStyle: MaterialStateProperty.all(
-            const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+            shape: const StadiumBorder(),
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+            shape: const StadiumBorder(),
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
           ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFFF3F5F2),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: const BorderSide(color: Color(0xFFE2E5E2), width: 1.2),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: const BorderSide(color: Color(0xFFE2E5E2), width: 1.2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: const BorderSide(color: Colors.black26, width: 1.5),
+          ),
+          labelStyle: const TextStyle(color: Colors.black87),
+          hintStyle: const TextStyle(color: Colors.black38),
         ),
       ),
       darkTheme: baseDark.copyWith(
@@ -277,38 +328,41 @@ class OnboardingRouter extends ConsumerWidget {
   }
 }
 
-class LoadingScreen extends StatelessWidget {
+class LoadingScreen extends ConsumerWidget {
   const LoadingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    final isDark = themeMode == ThemeMode.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF060606),
+      backgroundColor: isDark ? const Color(0xFF060606) : const Color(0xFFFBFDFA),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/logo/app_logo.png',
+              isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.jpg',
               width: 140,
               height: 140,
-              errorBuilder: (context, error, stackTrace) => const Text(
+              errorBuilder: (context, error, stackTrace) => Text(
                 'AroundU',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: isDark ? Colors.white : Colors.black,
                   letterSpacing: -1.0,
                 ),
               ),
             ),
             const SizedBox(height: 32),
-            const SizedBox(
+            SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2.0,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white38),
+                valueColor: AlwaysStoppedAnimation<Color>(isDark ? Colors.white38 : Colors.black38),
               ),
             ),
           ],

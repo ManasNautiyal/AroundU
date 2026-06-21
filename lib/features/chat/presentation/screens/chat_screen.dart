@@ -157,8 +157,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
 
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF060606),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
         ),
         child: Column(
           children: [
@@ -202,12 +202,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
   }
 
   Widget _buildMessageBubble(MessageModel message, bool isMe, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     final bubbleColor = isMe
         ? theme.colorScheme.primary
-        : const Color(0xFF262626);
+        : (isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2));
     final textColor = isMe
         ? theme.colorScheme.onPrimary
-        : Colors.white;
+        : (isDark ? Colors.white : Colors.black);
 
     final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final margin = isMe
@@ -251,7 +252,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                 formattedTime,
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontSize: 10.5,
-                  color: Colors.white54,
+                  color: isDark ? Colors.white54 : Colors.black54,
                 ),
               ),
             ),
@@ -264,8 +265,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
   Widget _buildInputArea(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Color(0xFF060606),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(
             color: Color(0xFF262626),

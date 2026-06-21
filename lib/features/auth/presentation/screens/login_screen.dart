@@ -469,12 +469,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       body: Container(
         height: size.height,
         width: size.width,
-        decoration: const BoxDecoration(
-          color: Color(0xFF060606),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -485,7 +487,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 const SizedBox(height: 16),
                 Center(
                   child: Image.asset(
-                    'assets/logo/app_logo.png',
+                    isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.jpg',
                     height: 100,
                     width: 100,
                     errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),

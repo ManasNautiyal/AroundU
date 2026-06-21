@@ -53,12 +53,18 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
     final currentUser = ref.watch(currentUserModelProvider).valueOrNull;
     final hasActiveBeacon = currentUser != null && currentUser.beaconEmoji != null;
 
+    final isDark = theme.brightness == Brightness.dark;
+    final sheetColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
+    final borderColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final unselectedBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final unselectedText = isDark ? Colors.white70 : Colors.black87;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF121212),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: sheetColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-          top: BorderSide(color: Color(0xFF262626), width: 1.5),
+          top: BorderSide(color: borderColor, width: 1.5),
         ),
       ),
       padding: EdgeInsets.only(
@@ -162,10 +168,10 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
                       margin: const EdgeInsets.only(right: 8.0),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.white : const Color(0xFF262626),
+                        color: isSelected ? theme.colorScheme.primary : unselectedBg,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isSelected ? Colors.white : const Color(0xFF262626),
+                          color: isSelected ? theme.colorScheme.primary : unselectedBg,
                           width: 1,
                         ),
                       ),
@@ -173,7 +179,7 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
                         child: Text(
                           '$emoji $label',
                           style: TextStyle(
-                            color: isSelected ? Colors.black : Colors.white70,
+                            color: isSelected ? theme.colorScheme.onPrimary : unselectedText,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             fontSize: 13,
                           ),

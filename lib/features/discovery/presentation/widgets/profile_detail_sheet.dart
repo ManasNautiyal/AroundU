@@ -25,6 +25,10 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     final theme = Theme.of(context);
     final reasons = ['Spam', 'Harassment', 'Inappropriate Content'];
 
+    final isDark = theme.brightness == Brightness.dark;
+    final sheetColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
+    final borderColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -32,11 +36,11 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
       ),
       builder: (modalContext) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF121212),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: sheetColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border(
-              top: BorderSide(color: Color(0xFF262626), width: 1.5),
+              top: BorderSide(color: borderColor, width: 1.5),
             ),
           ),
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
@@ -111,6 +115,10 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     final theme = Theme.of(context);
     final textController = TextEditingController();
 
+    final isDark = theme.brightness == Brightness.dark;
+    final sheetColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
+    final borderColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -124,11 +132,11 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
           ),
           child: SingleChildScrollView(
             child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF121212),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: sheetColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 border: Border(
-                  top: BorderSide(color: Color(0xFF262626), width: 1.5),
+                  top: BorderSide(color: borderColor, width: 1.5),
                 ),
               ),
               padding: const EdgeInsets.all(24),
@@ -225,6 +233,10 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     final size = MediaQuery.of(context).size;
     final user = widget.userModel;
 
+    final isDark = theme.brightness == Brightness.dark;
+    final sheetColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
+    final borderColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+
     // Filter out empty picture paths
     final images = user.profilePictures.where((pic) => pic.isNotEmpty).toList();
     if (images.isEmpty) {
@@ -237,13 +249,13 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF121212),
-            borderRadius: BorderRadius.vertical(
+          decoration: BoxDecoration(
+            color: sheetColor,
+            borderRadius: const BorderRadius.vertical(
               top: Radius.circular(24),
             ),
             border: Border(
-              top: BorderSide(color: Color(0xFF262626), width: 1.5),
+              top: BorderSide(color: borderColor, width: 1.5),
             ),
           ),
           child: Stack(
@@ -342,9 +354,9 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                                   ),
                                   const SizedBox(width: 8),
                                   IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.flag_outlined,
-                                      color: Colors.white60,
+                                      color: theme.colorScheme.onSurfaceVariant,
                                     ),
                                     tooltip: 'Report / Block User',
                                     onPressed: () => _showReportBottomSheet(context),
@@ -393,9 +405,9 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                             Container(
                               height: 8,
                               width: 8,
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.white,
+                                color: theme.colorScheme.primary,
                               ),
                             ),
                             const SizedBox(width: 6),

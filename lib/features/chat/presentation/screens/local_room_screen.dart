@@ -47,6 +47,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isInRoom = ref.watch(inLocalRoomProvider);
     final messages = ref.watch(localRoomMessagesProvider);
 
@@ -76,7 +77,9 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
             children: [
               Icon(
                 isInRoom ? Icons.location_on : Icons.location_off,
-                color: isInRoom ? Colors.white : Colors.white30,
+                color: isInRoom
+                    ? theme.colorScheme.primary
+                    : (isDark ? Colors.white30 : Colors.black26),
                 size: 18,
               ),
               const SizedBox(width: 4),
@@ -85,10 +88,10 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                 onChanged: (val) {
                   ref.read(inLocalRoomProvider.notifier).setInRoom(val);
                 },
-                activeThumbColor: Colors.white,
-                activeTrackColor: Colors.white30,
-                inactiveThumbColor: Colors.grey.shade600,
-                inactiveTrackColor: const Color(0xFF262626),
+                activeThumbColor: theme.colorScheme.onPrimary,
+                activeTrackColor: theme.colorScheme.primary.withOpacity(0.4),
+                inactiveThumbColor: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                inactiveTrackColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
               ),
             ],
           ),
@@ -96,8 +99,8 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF060606),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
         ),
         child: Column(
           children: [
@@ -106,20 +109,20 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
               duration: const Duration(milliseconds: 350),
               height: isInRoom ? 0 : 70,
               curve: Curves.easeInOut,
-              color: const Color(0xFF1C1C1E),
+              color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFE2E5E2),
               child: isInRoom
                   ? const SizedBox.shrink()
-                  : const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Row(
                         children: [
-                          Icon(Icons.warning_amber_rounded, color: Colors.white70),
-                          SizedBox(width: 12),
+                          Icon(Icons.warning_amber_rounded, color: theme.colorScheme.onSurfaceVariant),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'You left the Downtown Coffee Shop zone. Messages cleared.',
                               style: TextStyle(
-                                color: Colors.white70,
+                                color: theme.colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -177,10 +180,10 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                 shape: BoxShape.circle,
                 color: Color(0xFF1C1C1E),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.location_off_rounded,
                 size: 64,
-                color: Colors.white54,
+                color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
               ),
             ),
             const SizedBox(height: 24),
@@ -210,12 +213,13 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
         final senderAsync = ref.watch(userProfileProvider(senderId));
         final sender = senderAsync.valueOrNull;
 
+        final isDark = theme.brightness == Brightness.dark;
         final bubbleColor = isMe
             ? theme.colorScheme.primary
-            : const Color(0xFF262626);
+            : (isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2));
         final textColor = isMe
             ? theme.colorScheme.onPrimary
-            : Colors.white;
+            : (isDark ? Colors.white : Colors.black);
 
         final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
         final margin = isMe
@@ -285,7 +289,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                           formattedTime,
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontSize: 10,
-                            color: Colors.white54,
+                            color: isDark ? Colors.white54 : Colors.black54,
                           ),
                         ),
                       ),
@@ -303,8 +307,8 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
   Widget _buildInputArea(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Color(0xFF060606),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(
             color: Color(0xFF262626),

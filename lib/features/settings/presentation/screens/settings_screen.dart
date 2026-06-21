@@ -125,13 +125,23 @@ class SettingsScreen extends ConsumerWidget {
         return Consumer(
           builder: (context, ref, child) {
             final isGhostMode = ref.watch(ghostModeControllerProvider);
+            final themeMode = ref.watch(themeModeProvider);
+            final isDark = themeMode == ThemeMode.dark;
+
+            final sheetBgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
+            final borderBgColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+            final textThemeColor = isDark ? Colors.white : Colors.black;
+            final subtitleColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+            final iconThemeColor = isDark ? Colors.white70 : Colors.black54;
+            final chevronThemeColor = isDark ? Colors.white30 : Colors.black26;
+            final dividerColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
 
             return Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF121212), // Premium AMOLED dark sheet
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: sheetBgColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 border: Border(
-                  top: BorderSide(color: Color(0xFF262626), width: 1.5),
+                  top: BorderSide(color: borderBgColor, width: 1.5),
                 ),
               ),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -145,7 +155,7 @@ class SettingsScreen extends ConsumerWidget {
                       width: 40,
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade800,
+                        color: isDark ? Colors.grey.shade800 : Colors.grey.shade400,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -154,7 +164,7 @@ class SettingsScreen extends ConsumerWidget {
                     'Settings',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: textThemeColor,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -162,34 +172,62 @@ class SettingsScreen extends ConsumerWidget {
                   
                   // Ghost Mode Toggle Switch Tile
                   SwitchListTile(
-                    title: const Row(
+                    title: Row(
                       children: [
-                        Icon(Icons.visibility_off_outlined, color: Colors.white70),
-                        SizedBox(width: 12),
+                        Icon(Icons.visibility_off_outlined, color: iconThemeColor),
+                        const SizedBox(width: 12),
                         Text(
                           'Ghost Mode',
-                          style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                          style: TextStyle(fontWeight: FontWeight.w600, color: textThemeColor),
                         ),
                       ],
                     ),
                     subtitle: Text(
                       'Disappear from radars. Your location stops updating.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                      style: TextStyle(fontSize: 12, color: subtitleColor),
                     ),
                     value: isGhostMode,
-                    activeColor: Colors.white,
-                    activeTrackColor: Colors.white30,
+                    activeColor: isDark ? Colors.white : Colors.black,
+                    activeTrackColor: isDark ? Colors.white30 : Colors.black38,
                     onChanged: (val) {
                       ref.read(ghostModeControllerProvider.notifier).toggle();
                     },
                   ),
-                  const Divider(color: Color(0xFF262626)),
+                  const Divider(color: Colors.transparent, height: 4),
+
+                  // Theme Mode Toggle Switch Tile
+                  SwitchListTile(
+                    title: Row(
+                      children: [
+                        Icon(
+                          isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                          color: iconThemeColor,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Light Mode',
+                          style: TextStyle(fontWeight: FontWeight.w600, color: textThemeColor),
+                        ),
+                      ],
+                    ),
+                    subtitle: Text(
+                      'Switch between light and dark monochrome themes.',
+                      style: TextStyle(fontSize: 12, color: subtitleColor),
+                    ),
+                    value: !isDark,
+                    activeColor: isDark ? Colors.white : Colors.black,
+                    activeTrackColor: isDark ? Colors.white30 : Colors.black38,
+                    onChanged: (val) {
+                      ref.read(themeModeProvider.notifier).toggleTheme();
+                    },
+                  ),
+                  Divider(color: dividerColor),
 
                   // Edit Profile
                   ListTile(
-                    leading: const Icon(Icons.person_outline_rounded, color: Colors.white70),
-                    title: const Text('Edit Profile', style: TextStyle(color: Colors.white)),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white30),
+                    leading: Icon(Icons.person_outline_rounded, color: iconThemeColor),
+                    title: Text('Edit Profile', style: TextStyle(color: textThemeColor)),
+                    trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
                     onTap: () {
                       Navigator.pop(modalContext);
                       Navigator.push(
@@ -203,9 +241,9 @@ class SettingsScreen extends ConsumerWidget {
                   
                   // Notifications
                   ListTile(
-                    leading: const Icon(Icons.notifications_none_rounded, color: Colors.white70),
-                    title: const Text('Notifications', style: TextStyle(color: Colors.white)),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white30),
+                    leading: Icon(Icons.notifications_none_rounded, color: iconThemeColor),
+                    title: Text('Notifications', style: TextStyle(color: textThemeColor)),
+                    trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
                     onTap: () {
                       Navigator.pop(modalContext);
                     },
@@ -213,9 +251,9 @@ class SettingsScreen extends ConsumerWidget {
 
                   // Privacy
                   ListTile(
-                    leading: const Icon(Icons.privacy_tip_outlined, color: Colors.white70),
-                    title: const Text('Privacy Policy', style: TextStyle(color: Colors.white)),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white30),
+                    leading: Icon(Icons.privacy_tip_outlined, color: iconThemeColor),
+                    title: Text('Privacy Policy', style: TextStyle(color: textThemeColor)),
+                    trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
                     onTap: () {
                       Navigator.pop(modalContext);
                     },
@@ -223,21 +261,21 @@ class SettingsScreen extends ConsumerWidget {
 
                   // Terms
                   ListTile(
-                    leading: const Icon(Icons.description_outlined, color: Colors.white70),
-                    title: const Text('Terms of Service', style: TextStyle(color: Colors.white)),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white30),
+                    leading: Icon(Icons.description_outlined, color: iconThemeColor),
+                    title: Text('Terms of Service', style: TextStyle(color: textThemeColor)),
+                    trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
                     onTap: () {
                       Navigator.pop(modalContext);
                     },
                   ),
-                  const Divider(color: Color(0xFF262626)),
+                  Divider(color: dividerColor),
                   const SizedBox(height: 16),
 
                   // Log Out Button
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF262626),
-                      foregroundColor: Colors.white,
+                      backgroundColor: borderBgColor,
+                      foregroundColor: textThemeColor,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: const StadiumBorder(),
                     ),
@@ -271,25 +309,25 @@ class SettingsScreen extends ConsumerWidget {
                         }
                       }
                     },
-                    icon: const Icon(Icons.logout_rounded, size: 18),
-                    label: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
+                    icon: Icon(Icons.logout_rounded, size: 18, color: iconThemeColor),
+                    label: Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold, color: textThemeColor)),
                   ),
                   const SizedBox(height: 12),
 
                   // Delete Account Button
                   TextButton.icon(
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.white60,
+                      foregroundColor: isDark ? Colors.white60 : Colors.black54,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: const StadiumBorder(
-                        side: BorderSide(color: Colors.white24, width: 1),
+                      shape: StadiumBorder(
+                        side: BorderSide(color: isDark ? Colors.white24 : Colors.black26, width: 1),
                       ),
                     ),
                     onPressed: () {
                       Navigator.pop(modalContext); // Close sheet
                       _showDeleteAccountDialog(context, ref);
                     },
-                    icon: const Icon(Icons.delete_forever_rounded, size: 18),
+                    icon: Icon(Icons.delete_forever_rounded, size: 18, color: isDark ? Colors.white60 : Colors.black54),
                     label: const Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -301,17 +339,17 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatColumn(String label, int value) {
+  Widget _buildStatColumn(String label, int value, ThemeData theme) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           '$value',
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: Colors.white,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 2),
@@ -319,7 +357,7 @@ class SettingsScreen extends ConsumerWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade400,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -336,14 +374,14 @@ class SettingsScreen extends ConsumerWidget {
         title: currentUserAsync.when(
           data: (user) => Text(
             user?.name ?? 'Profile',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18),
+            style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface, fontSize: 18),
           ),
-          loading: () => const Text('Loading...', style: TextStyle(color: Colors.white70)),
-          error: (_, __) => const Text('Error', style: TextStyle(color: Colors.white70)),
+          loading: () => Text('Loading...', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+          error: (_, __) => Text('Error', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.white),
+            icon: Icon(Icons.settings_outlined, color: theme.colorScheme.onSurface),
             onPressed: () => _showSettingsBottomSheet(context, ref),
           ),
         ],
@@ -351,8 +389,8 @@ class SettingsScreen extends ConsumerWidget {
       body: currentUserAsync.when(
         data: (user) {
           if (user == null) {
-            return const Center(
-              child: Text('No profile found. Please register.', style: TextStyle(color: Colors.white70)),
+            return Center(
+              child: Text('No profile found. Please register.', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
             );
           }
 
@@ -373,18 +411,18 @@ class SettingsScreen extends ConsumerWidget {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: const Color(0xFF262626),
+                    backgroundColor: theme.colorScheme.surface,
                     backgroundImage: getUserImageProvider(avatarUrl),
                   ),
                   const Spacer(),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildStatColumn('Photos', validPics.length),
+                      _buildStatColumn('Photos', validPics.length, theme),
                       const SizedBox(width: 24),
-                      _buildStatColumn('Waves', wavesCount),
+                      _buildStatColumn('Waves', wavesCount, theme),
                       const SizedBox(width: 24),
-                      _buildStatColumn('Matches', matchesCount),
+                      _buildStatColumn('Matches', matchesCount, theme),
                     ],
                   ),
                   const SizedBox(width: 12),
@@ -395,10 +433,10 @@ class SettingsScreen extends ConsumerWidget {
               // Name and Bio Section
               Text(
                 user.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -406,7 +444,7 @@ class SettingsScreen extends ConsumerWidget {
                 user.bio,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade300,
+                  color: theme.colorScheme.onSurfaceVariant,
                   height: 1.3,
                 ),
               ),
@@ -423,34 +461,34 @@ class SettingsScreen extends ConsumerWidget {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.grey.shade800),
+                  side: BorderSide(color: theme.colorScheme.outlineVariant),
                   minimumSize: const Size(double.infinity, 40),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Edit Profile',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
               const SizedBox(height: 20),
 
               // Tab Divider matching Instagram grid look
-              const Divider(color: Color(0xFF262626), height: 1),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12.0),
+              Divider(color: theme.colorScheme.outlineVariant, height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.grid_on_sharp, color: Colors.white, size: 22),
+                    Icon(Icons.grid_on_sharp, color: theme.colorScheme.onSurface, size: 22),
                   ],
                 ),
               ),
-              const Divider(color: Color(0xFF262626), height: 1),
+              Divider(color: theme.colorScheme.outlineVariant, height: 1),
               const SizedBox(height: 12),
 
               // Image Grid Section
@@ -461,13 +499,13 @@ class SettingsScreen extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.camera_alt_outlined, color: Colors.grey.shade600, size: 48),
+                            Icon(Icons.camera_alt_outlined, color: theme.colorScheme.onSurfaceVariant, size: 48),
                             const SizedBox(height: 12),
                             Text(
                               'No Photos Yet',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade600,
+                                color: theme.colorScheme.onSurfaceVariant,
                                 fontSize: 16,
                               ),
                             ),
