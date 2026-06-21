@@ -108,12 +108,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                               width: 8,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.white.withAlpha(
+                                color: Colors.green.withAlpha(
                                   (150 + (100 * _pulseController.value)).toInt(),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.white.withAlpha(80),
+                                    color: Colors.green.withAlpha(80),
                                     blurRadius: 6 * _pulseController.value,
                                     spreadRadius: 1 * _pulseController.value,
                                   ),
@@ -126,7 +126,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                         Text(
                           'Nearby (Within 100m)',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.white,
+                            color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black54,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -263,13 +263,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
   }
 
   Widget _buildInputArea(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
+    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final hintColor = isDark ? Colors.white38 : Colors.black38;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(
-            color: Color(0xFF262626),
+            color: borderBg,
             width: 1.0,
           ),
         ),
@@ -281,10 +288,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF121212),
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: const Color(0xFF262626),
+                    color: borderBg,
                     width: 1.2,
                   ),
                 ),
@@ -293,7 +300,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                   children: [
                     // Image attachment icon
                     IconButton(
-                      icon: const Icon(Icons.add_photo_alternate_outlined, color: Colors.white70, size: 22),
+                      icon: Icon(Icons.add_photo_alternate_outlined, color: subTextColor, size: 22),
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Image sharing coming in a future update!')),
@@ -308,16 +315,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                         textCapitalization: TextCapitalization.sentences,
                         maxLines: 4,
                         minLines: 1,
-                        style: const TextStyle(color: Colors.white, fontSize: 15),
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: textColor, fontSize: 15),
+                        decoration: InputDecoration(
                           hintText: 'Message...',
-                          hintStyle: TextStyle(color: Colors.white38),
+                          hintStyle: TextStyle(color: hintColor),
                           border: InputBorder.none,
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
                           errorBorder: InputBorder.none,
                           disabledBorder: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
                           filled: false,
                         ),
                       ),

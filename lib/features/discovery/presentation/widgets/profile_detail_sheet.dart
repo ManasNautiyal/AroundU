@@ -453,16 +453,16 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                 right: 0,
                 child: Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.transparent,
-                        Colors.black87,
-                        Colors.black,
+                        sheetColor.withOpacity(0.0),
+                        sheetColor.withOpacity(0.85),
+                        sheetColor,
                       ],
-                      stops: [0.0, 0.4, 1.0],
+                      stops: const [0.0, 0.4, 1.0],
                     ),
                   ),
                   child: FilledButton.icon(

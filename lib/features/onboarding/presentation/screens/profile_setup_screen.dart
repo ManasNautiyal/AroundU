@@ -327,6 +327,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   }
 
   Widget _buildStep2Pictures(ThemeData theme, OnboardingState state) {
+    final isDark = theme.brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -364,12 +365,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         width: leftWidth,
                         height: itemHeight,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF121212),
+                          color: isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: state.profilePictures[0] != null
                                 ? theme.colorScheme.primary
-                                : const Color(0xFF262626),
+                                : (isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2)),
                             width: 1.5,
                           ),
                         ),
@@ -389,11 +390,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                       color: theme.colorScheme.primary,
                                     ),
                                     const SizedBox(height: 12),
-                                    const Text(
+                                    Text(
                                       'Primary Photo',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                        color: isDark ? Colors.white : Colors.black87,
                                         fontSize: 13,
                                       ),
                                     ),
@@ -422,10 +423,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               onTap: () => _pickImage(1),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF121212),
+                                  color: isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: const Color(0xFF262626),
+                                    color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
                                     width: 1.2,
                                   ),
                                 ),
@@ -436,11 +437,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                           File(state.profilePictures[1]!),
                                           fit: BoxFit.cover,
                                         )
-                                      : const Center(
+                                      : Center(
                                           child: Icon(
                                             Icons.add_photo_alternate_outlined,
                                             size: 24,
-                                            color: Colors.white54,
+                                            color: isDark ? Colors.white30 : Colors.black26,
                                           ),
                                         ),
                                 ),
@@ -455,10 +456,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               onTap: () => _pickImage(2),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF121212),
+                                  color: isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: const Color(0xFF262626),
+                                    color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
                                     width: 1.2,
                                   ),
                                 ),
@@ -469,11 +470,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                           File(state.profilePictures[2]!),
                                           fit: BoxFit.cover,
                                         )
-                                      : const Center(
+                                      : Center(
                                           child: Icon(
                                             Icons.add_photo_alternate_outlined,
                                             size: 24,
-                                            color: Colors.white54,
+                                            color: isDark ? Colors.white30 : Colors.black26,
                                           ),
                                         ),
                                 ),

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
 import '../../../../core/widgets/image_helper.dart';
-import '../../../discovery/data/models/nearby_user.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -128,7 +127,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
+    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final iconColor = isDark ? Colors.white30 : Colors.black26;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -173,7 +177,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   'Profile Pictures',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -195,12 +199,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               width: leftWidth,
                               height: itemHeight,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF121212),
+                                color: cardBg,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color: _profilePictures[0] != null
                                       ? theme.colorScheme.primary
-                                      : const Color(0xFF262626),
+                                      : borderBg,
                                   width: 1.5,
                                 ),
                               ),
@@ -208,15 +212,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 borderRadius: BorderRadius.circular(15),
                                 child: _profilePictures[0] != null
                                     ? _buildImageWidget(_profilePictures[0]!)
-                                    : const Center(
+                                    : Center(
                                         child: Column(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
-                                            Icon(Icons.add_a_photo_outlined, color: Colors.white, size: 32),
-                                            SizedBox(height: 8),
+                                            Icon(Icons.add_a_photo_outlined, color: isDark ? Colors.white70 : Colors.black54, size: 32),
+                                            const SizedBox(height: 8),
                                             Text(
                                               'Primary Photo',
-                                              style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                                              style: TextStyle(color: subTextColor, fontSize: 12, fontWeight: FontWeight.bold),
                                             ),
                                           ],
                                         ),
@@ -236,16 +240,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     onTap: () => _pickImage(1),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF121212),
+                                        color: cardBg,
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: const Color(0xFF262626), width: 1.2),
+                                        border: Border.all(color: borderBg, width: 1.2),
                                       ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(11),
                                         child: _profilePictures[1] != null
                                             ? _buildImageWidget(_profilePictures[1]!)
-                                            : const Center(
-                                                child: Icon(Icons.add_photo_alternate_outlined, color: Colors.white30, size: 24),
+                                            : Center(
+                                                child: Icon(Icons.add_photo_alternate_outlined, color: iconColor, size: 24),
                                               ),
                                       ),
                                     ),
@@ -259,16 +263,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     onTap: () => _pickImage(2),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF121212),
+                                        color: cardBg,
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: const Color(0xFF262626), width: 1.2),
+                                        border: Border.all(color: borderBg, width: 1.2),
                                       ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(11),
                                         child: _profilePictures[2] != null
                                             ? _buildImageWidget(_profilePictures[2]!)
-                                            : const Center(
-                                                child: Icon(Icons.add_photo_alternate_outlined, color: Colors.white30, size: 24),
+                                            : Center(
+                                                child: Icon(Icons.add_photo_alternate_outlined, color: iconColor, size: 24),
                                               ),
                                       ),
                                     ),

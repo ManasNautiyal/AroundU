@@ -135,6 +135,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   }
 
   Widget _buildMessagesList(List<MatchModel> connections, String currentUserId, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     if (connections.isEmpty) {
       return _buildEmptyState(
         theme: theme,
@@ -147,8 +148,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: connections.length,
-      separatorBuilder: (context, index) => const Divider(
-        color: Color(0xFF262626),
+      separatorBuilder: (context, index) => Divider(
+        color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
         height: 1,
         thickness: 1.0,
       ),
@@ -163,6 +164,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   }
 
   Widget _buildRequestsList(List<MessageRequestModel> requests, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     if (requests.isEmpty) {
       return _buildEmptyState(
         theme: theme,
@@ -175,8 +177,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: requests.length,
-      separatorBuilder: (context, index) => const Divider(
-        color: Color(0xFF262626),
+      separatorBuilder: (context, index) => Divider(
+        color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
         height: 1,
         thickness: 1.0,
       ),
@@ -251,6 +253,10 @@ class MatchTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = theme.brightness == Brightness.dark;
+    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+
     final targetUserId = connection.user1Id == currentUserId ? connection.user2Id : connection.user1Id;
     final userAsync = ref.watch(userProfileProvider(targetUserId));
 
@@ -303,14 +309,14 @@ class MatchTile extends ConsumerWidget {
                               width: 6,
                               decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.white,
+                                color: Colors.green,
                               ),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               'Active now',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: Colors.white54,
+                                color: subTextColor,
                               ),
                             ),
                           ],
@@ -324,7 +330,7 @@ class MatchTile extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF262626), width: 1.0),
+                      border: Border.all(color: borderBg, width: 1.0),
                     ),
                     child: Row(
                       children: [
@@ -356,7 +362,7 @@ class MatchTile extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: const Color(0xFF121212),
+              backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -367,7 +373,7 @@ class MatchTile extends ConsumerWidget {
                     height: 16,
                     width: 100,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF121212),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -376,7 +382,7 @@ class MatchTile extends ConsumerWidget {
                     height: 12,
                     width: 60,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF121212),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -405,6 +411,11 @@ class MessageRequestTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
+    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+
     final senderAsync = ref.watch(userProfileProvider(request.senderId));
 
     return senderAsync.when(
@@ -444,7 +455,7 @@ class MessageRequestTile extends ConsumerWidget {
                           Text(
                             'Sent a message request',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white54,
+                              color: subTextColor,
                             ),
                           ),
                         ],
@@ -458,16 +469,16 @@ class MessageRequestTile extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF121212),
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF262626), width: 1.0),
+                    border: Border.all(color: borderBg, width: 1.0),
                   ),
                   child: Text(
                     request.introMessage,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontStyle: FontStyle.italic,
                       height: 1.4,
-                      color: Colors.white70,
+                      color: subTextColor,
                     ),
                   ),
                 ),
@@ -493,8 +504,8 @@ class MessageRequestTile extends ConsumerWidget {
                           }
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                          side: const BorderSide(color: Color(0xFF262626)),
+                          foregroundColor: subTextColor,
+                          side: BorderSide(color: borderBg),
                           shape: const StadiumBorder(),
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                         ),
@@ -520,8 +531,8 @@ class MessageRequestTile extends ConsumerWidget {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
+                          backgroundColor: isDark ? Colors.white : Colors.black,
+                          foregroundColor: isDark ? Colors.black : Colors.white,
                           shape: const StadiumBorder(),
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           elevation: 0,
@@ -546,7 +557,7 @@ class MessageRequestTile extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: const Color(0xFF121212),
+                  backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -554,7 +565,7 @@ class MessageRequestTile extends ConsumerWidget {
                     height: 16,
                     width: 100,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF121212),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -566,7 +577,7 @@ class MessageRequestTile extends ConsumerWidget {
               height: 48,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFF121212),
+                color: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
                 borderRadius: BorderRadius.circular(12),
               ),
             ),

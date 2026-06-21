@@ -123,7 +123,7 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
                     icon: const Icon(Icons.delete_outline_rounded, size: 18),
                     label: const Text('Clear'),
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.white70,
+                      foregroundColor: isDark ? Colors.white70 : Colors.black54,
                     ),
                   ),
               ],
@@ -235,7 +235,7 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
                 '${_textController.text.length}/40',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: _textController.text.length >= 40
-                      ? Colors.white
+                      ? theme.colorScheme.error
                       : theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.bold,
                 ),

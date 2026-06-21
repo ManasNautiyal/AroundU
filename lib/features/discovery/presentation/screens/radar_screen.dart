@@ -7,7 +7,6 @@ import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../chat/presentation/screens/local_room_screen.dart';
 import '../../data/models/nearby_user.dart';
 import '../../data/repositories/discovery_repository.dart';
-import '../../data/repositories/user_repository.dart';
 import '../controllers/discovery_providers.dart';
 import '../widgets/beacon_sheet.dart';
 import '../widgets/profile_detail_sheet.dart';
@@ -115,6 +114,12 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
 
   void _showVibeFilterSheet() {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
+    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+
     final presetVibes = [
       '☕ Coffee',
       '🎵 Music',
@@ -133,11 +138,11 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
           builder: (context, setModalState) {
             final currentSelected = ref.watch(selectedVibeFilterProvider);
             return Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF121212),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 border: Border(
-                  top: BorderSide(color: Color(0xFF262626), width: 1.5),
+                  top: BorderSide(color: borderBg, width: 1.5),
                 ),
               ),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -151,7 +156,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                       width: 40,
                       margin: const EdgeInsets.only(bottom: 20),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade800,
+                        color: isDark ? Colors.grey.shade800 : Colors.grey.shade400,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -160,7 +165,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                     'Filter by Vibe',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: textColor,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -180,17 +185,17 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: isSelected ? theme.colorScheme.primary : const Color(0xFF262626),
+                              color: isSelected ? theme.colorScheme.primary : borderBg,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isSelected ? theme.colorScheme.primary : const Color(0xFF262626),
+                                color: isSelected ? theme.colorScheme.primary : borderBg,
                                 width: 1.2,
                               ),
                             ),
                             child: Text(
                               vibe,
                               style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.white70,
+                                color: isSelected ? theme.colorScheme.onPrimary : subTextColor,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 fontSize: 13,
                               ),
@@ -225,6 +230,13 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   }
 
   Widget _buildHeader(ThemeData theme, String? selectedVibe) {
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
+    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final hintColor = isDark ? Colors.white38 : Colors.black38;
+
     return Column(
       children: [
         Row(
@@ -233,22 +245,22 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               child: Container(
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF121212),
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFF262626), width: 1.2),
+                  border: Border.all(color: borderBg, width: 1.2),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
+                    Icon(Icons.search_rounded, color: hintColor, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: _searchController,
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: textColor, fontSize: 14),
+                        decoration: InputDecoration(
                           hintText: 'Search people...',
-                          hintStyle: TextStyle(color: Colors.white38, fontSize: 14),
+                          hintStyle: TextStyle(color: hintColor, fontSize: 14),
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding: EdgeInsets.zero,
@@ -268,7 +280,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                             _searchQuery = '';
                           });
                         },
-                        child: const Icon(Icons.close_rounded, color: Colors.white54, size: 18),
+                        child: Icon(Icons.close_rounded, color: hintColor, size: 18),
                       ),
                   ],
                 ),
@@ -279,10 +291,10 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               height: 44,
               width: 44,
               decoration: BoxDecoration(
-                color: selectedVibe != null ? theme.colorScheme.primary : const Color(0xFF121212),
+                color: selectedVibe != null ? theme.colorScheme.primary : cardBg,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: selectedVibe != null ? theme.colorScheme.primary : const Color(0xFF262626),
+                  color: selectedVibe != null ? theme.colorScheme.primary : borderBg,
                   width: 1.2,
                 ),
               ),
@@ -290,7 +302,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                 padding: EdgeInsets.zero,
                 icon: Icon(
                   Icons.filter_list_rounded,
-                  color: selectedVibe != null ? Colors.white : Colors.white70,
+                  color: selectedVibe != null ? theme.colorScheme.onPrimary : subTextColor,
                   size: 20,
                 ),
                 onPressed: _showVibeFilterSheet,
@@ -303,6 +315,11 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   }
 
   Widget _buildProfileCard(NearbyUser nearbyUser) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
+    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+
     final user = nearbyUser.user;
     final primaryPhoto = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
 
@@ -310,9 +327,9 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
       onTap: () => _handleConnect(user),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF121212),
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF262626), width: 1.2),
+          border: Border.all(color: borderBg, width: 1.2),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(15),
@@ -323,16 +340,16 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                 primaryPhoto,
                 fit: BoxFit.cover,
                 errorWidget: Container(
-                  color: const Color(0xFF1C1C1E),
-                  child: const Icon(Icons.person, size: 40, color: Colors.white24),
+                  color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFE2E5E2),
+                  child: Icon(Icons.person, size: 40, color: isDark ? Colors.white24 : Colors.black26),
                 ),
                 placeholder: Container(
-                  color: const Color(0xFF1C1C1E),
-                  child: const Center(
+                  color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFE2E5E2),
+                  child: Center(
                     child: SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white38)),
+                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(isDark ? Colors.white38 : Colors.black26)),
                     ),
                   ),
                 ),
@@ -423,6 +440,11 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
+    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     final selectedVibe = ref.watch(selectedVibeFilterProvider);
     final isInLocalRoom = ref.watch(inLocalRoomProvider);
@@ -446,14 +468,14 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                     children: [
                       Icon(
                         isGhostMode ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                        color: Colors.white70,
+                        color: subTextColor,
                         size: 18,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         isGhostMode ? 'Ghost Mode (Hidden)' : 'Visible (Scanning)',
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: subTextColor,
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
@@ -464,10 +486,10 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                     height: 28,
                     child: Switch(
                       value: isGhostMode,
-                      activeColor: Colors.white,
-                      activeTrackColor: Colors.white38,
-                      inactiveThumbColor: Colors.grey.shade600,
-                      inactiveTrackColor: const Color(0xFF262626),
+                      activeColor: isDark ? Colors.white : Colors.black,
+                      activeTrackColor: isDark ? Colors.white38 : Colors.black38,
+                      inactiveThumbColor: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                      inactiveTrackColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
                       onChanged: (val) {
                         ref.read(ghostModeControllerProvider.notifier).toggle();
                       },
@@ -479,10 +501,10 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               if (isInLocalRoom) ...[
                 Material(
                   elevation: 0,
-                  color: const Color(0xFF1C1C1E),
+                  color: cardBg,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    side: const BorderSide(color: Color(0xFF262626), width: 1.2),
+                    side: BorderSide(color: borderBg, width: 1.2),
                   ),
                   child: InkWell(
                     onTap: () {
@@ -500,13 +522,13 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.pin_drop_rounded,
-                              color: Colors.black,
+                              color: theme.colorScheme.onPrimary,
                               size: 18,
                             ),
                           ),
@@ -515,11 +537,11 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   "Downtown Coffee Shop Zone",
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: theme.colorScheme.onSurface,
                                     fontSize: 14,
                                   ),
                                 ),
@@ -527,7 +549,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                                 Text(
                                   "📍 You are in the zone. Join Chat ➔",
                                   style: TextStyle(
-                                    color: Colors.grey.shade400,
+                                    color: theme.colorScheme.onSurfaceVariant,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -566,14 +588,14 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.people_outline_rounded, size: 48, color: Colors.white30),
+                            Icon(Icons.people_outline_rounded, size: 48, color: isDark ? Colors.white30 : Colors.black26),
                             const SizedBox(height: 12),
                             Text(
                               _searchQuery.isNotEmpty || selectedVibe != null
                                   ? 'No matching profiles found nearby.'
                                   : 'No one is nearby right now.\nTap recenter to scan your area.',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white54, fontSize: 14, height: 1.4),
+                              style: TextStyle(color: subTextColor, fontSize: 14, height: 1.4),
                             ),
                           ],
                         ),
@@ -625,7 +647,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                 );
               },
               backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.black,
+              foregroundColor: theme.colorScheme.onPrimary,
               child: const Icon(Icons.add_location_alt_rounded),
             ),
             const SizedBox(width: 8),
@@ -633,18 +655,18 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               height: 40,
               width: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
+                color: cardBg,
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF262626), width: 1.2),
+                border: Border.all(color: borderBg, width: 1.2),
               ),
               child: _isUpdatingLocation
-                  ? const Padding(
-                      padding: EdgeInsets.all(10.0),
-                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                  ? Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary)),
                     )
                   : IconButton(
                       padding: EdgeInsets.zero,
-                      icon: const Icon(Icons.near_me_rounded, color: Colors.white, size: 20),
+                      icon: Icon(Icons.near_me_rounded, color: theme.colorScheme.primary, size: 20),
                       onPressed: _updateLocation,
                     ),
             ),

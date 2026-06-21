@@ -176,9 +176,9 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Color(0xFF1C1C1E),
+                color: theme.brightness == Brightness.dark ? const Color(0xFF1C1C1E) : const Color(0xFFE2E5E2),
               ),
               child: Icon(
                 Icons.location_off_rounded,
@@ -305,13 +305,19 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
   }
 
   Widget _buildInputArea(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
+    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final hintColor = isDark ? Colors.white38 : Colors.black38;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(
-            color: Color(0xFF262626),
+            color: borderBg,
             width: 1.0,
           ),
         ),
@@ -323,10 +329,10 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF121212),
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: const Color(0xFF262626),
+                    color: borderBg,
                     width: 1.2,
                   ),
                 ),
@@ -341,16 +347,16 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                         textCapitalization: TextCapitalization.sentences,
                         maxLines: 4,
                         minLines: 1,
-                        style: const TextStyle(color: Colors.white, fontSize: 15),
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: textColor, fontSize: 15),
+                        decoration: InputDecoration(
                           hintText: 'Share something with the zone...',
-                          hintStyle: TextStyle(color: Colors.white38),
+                          hintStyle: TextStyle(color: hintColor),
                           border: InputBorder.none,
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
                           errorBorder: InputBorder.none,
                           disabledBorder: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
                           filled: false,
                         ),
                         onSubmitted: (_) => _sendMessage(),
