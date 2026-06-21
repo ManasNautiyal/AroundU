@@ -474,7 +474,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
         height: size.height,
         width: size.width,
         decoration: const BoxDecoration(
-          color: Colors.black,
+          color: Color(0xFF060606),
         ),
         child: SafeArea(
           child: SingleChildScrollView(

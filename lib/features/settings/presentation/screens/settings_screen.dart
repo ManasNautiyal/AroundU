@@ -6,6 +6,7 @@ import '../../../discovery/data/repositories/user_repository.dart';
 import '../../../connections/data/repositories/interaction_repository.dart';
 import '../../../../core/widgets/image_helper.dart';
 import 'edit_profile_screen.dart';
+import '../../../../main.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -100,7 +101,10 @@ class SettingsScreen extends ConsumerWidget {
     await ref.read(authRepositoryProvider).signOut();
 
     if (context.mounted) {
-      Navigator.pop(context); // Close loading spinner
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const OnboardingRouter()),
+        (route) => false,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Account successfully deleted. All data has been wiped.'),
@@ -259,6 +263,12 @@ class SettingsScreen extends ConsumerWidget {
 
                       if (confirm == true) {
                         await ref.read(authRepositoryProvider).signOut();
+                        if (context.mounted) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (context) => const OnboardingRouter()),
+                            (route) => false,
+                          );
+                        }
                       }
                     },
                     icon: const Icon(Icons.logout_rounded, size: 18),

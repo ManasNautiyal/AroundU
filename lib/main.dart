@@ -41,9 +41,9 @@ class MyApp extends StatelessWidget {
         onPrimary: Colors.black,
         secondary: Colors.white70,
         onSecondary: Colors.black,
-        surface: Colors.black,
+        surface: Color(0xFF060606),
         onSurface: Colors.white,
-        background: Colors.black,
+        background: Color(0xFF060606),
         onBackground: Colors.white,
       ),
     );
@@ -56,9 +56,9 @@ class MyApp extends StatelessWidget {
         onPrimary: Colors.black,
         secondary: Colors.white70,
         onSecondary: Colors.black,
-        surface: Colors.black,
+        surface: Color(0xFF060606),
         onSurface: Colors.white,
-        background: Colors.black,
+        background: Color(0xFF060606),
         onBackground: Colors.white,
       ),
     );
@@ -117,7 +117,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       darkTheme: baseDark.copyWith(
-        scaffoldBackgroundColor: Colors.black,
+        scaffoldBackgroundColor: const Color(0xFF060606),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -139,7 +139,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: Colors.black,
+          backgroundColor: const Color(0xFF060606),
           elevation: 8,
           indicatorColor: const Color(0xFF262626), // Premium dark grey indicator
           labelTextStyle: MaterialStateProperty.all(
@@ -283,7 +283,7 @@ class LoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF060606),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

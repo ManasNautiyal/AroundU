@@ -97,7 +97,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
       ),
       body: Container(
         decoration: const BoxDecoration(
-          color: Colors.black,
+          color: Color(0xFF060606),
         ),
         child: Column(
           children: [
@@ -304,7 +304,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: const BoxDecoration(
-        color: Colors.black,
+        color: Color(0xFF060606),
         border: Border(
           top: BorderSide(
             color: Color(0xFF262626),

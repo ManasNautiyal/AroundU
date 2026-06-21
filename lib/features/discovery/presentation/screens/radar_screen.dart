@@ -430,7 +430,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     final nearbyUsersAsync = ref.watch(nearbyUsersProvider(currentUserId: currentUserId));
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF060606),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),

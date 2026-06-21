@@ -37,7 +37,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     final pendingRequestsAsync = ref.watch(connectionRequestsStreamProvider(currentUserId: currentUserId));
 
     const decoration = BoxDecoration(
-      color: Colors.black,
+      color: Color(0xFF060606),
     );
 
     // If split navigation overrides the view, render only the specific tab list
