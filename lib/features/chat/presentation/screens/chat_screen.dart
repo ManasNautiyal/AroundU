@@ -108,12 +108,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                               width: 8,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.green.withAlpha(
+                                color: Colors.white.withAlpha(
                                   (150 + (100 * _pulseController.value)).toInt(),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.green.withAlpha(80),
+                                    color: Colors.white.withAlpha(80),
                                     blurRadius: 6 * _pulseController.value,
                                     spreadRadius: 1 * _pulseController.value,
                                   ),
@@ -126,7 +126,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                         Text(
                           'Nearby (Within 100m)',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.green,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -136,7 +136,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                           width: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.grey.shade400,
+                            color: Colors.grey.shade600,
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -205,7 +205,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
     final bubbleColor = isMe
         ? theme.colorScheme.primary
         : const Color(0xFF262626);
-    final textColor = Colors.white;
+    final textColor = isMe
+        ? theme.colorScheme.onPrimary
+        : Colors.white;
 
     final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final margin = isMe

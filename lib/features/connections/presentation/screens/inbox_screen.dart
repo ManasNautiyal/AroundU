@@ -303,7 +303,7 @@ class MatchTile extends ConsumerWidget {
                               width: 6,
                               decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.green,
+                                color: Colors.white,
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -493,8 +493,8 @@ class MessageRequestTile extends ConsumerWidget {
                           }
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.redAccent,
-                          side: const BorderSide(color: Colors.redAccent),
+                          foregroundColor: Colors.white70,
+                          side: const BorderSide(color: Color(0xFF262626)),
                           shape: const StadiumBorder(),
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                         ),
@@ -520,8 +520,8 @@ class MessageRequestTile extends ConsumerWidget {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
                           shape: const StadiumBorder(),
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           elevation: 0,

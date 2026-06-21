@@ -342,9 +342,9 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                                   ),
                                   const SizedBox(width: 8),
                                   IconButton(
-                                    icon: Icon(
+                                    icon: const Icon(
                                       Icons.flag_outlined,
-                                      color: theme.colorScheme.error,
+                                      color: Colors.white60,
                                     ),
                                     tooltip: 'Report / Block User',
                                     onPressed: () => _showReportBottomSheet(context),
@@ -395,7 +395,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                               width: 8,
                               decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.green,
+                                color: Colors.white,
                               ),
                             ),
                             const SizedBox(width: 6),

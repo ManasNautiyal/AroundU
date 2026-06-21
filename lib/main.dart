@@ -35,27 +35,31 @@ class MyApp extends StatelessWidget {
 
     final baseLight = ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryBlue,
-        primary: primaryBlue,
-        secondary: darkBlue,
-        surface: Colors.white,
-        background: const Color(0xFFF8FAFC),
-        brightness: Brightness.light,
+      brightness: Brightness.dark,
+      colorScheme: const ColorScheme.dark(
+        primary: Colors.white,
+        onPrimary: Colors.black,
+        secondary: Colors.white70,
+        onSecondary: Colors.black,
+        surface: Colors.black,
+        onSurface: Colors.white,
+        background: Colors.black,
+        onBackground: Colors.white,
       ),
     );
 
     final baseDark = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryBlue,
-        primary: const Color(0xFF3B82F6),
-        secondary: const Color(0xFF60A5FA),
+      colorScheme: const ColorScheme.dark(
+        primary: Colors.white,
+        onPrimary: Colors.black,
+        secondary: Colors.white70,
+        onSecondary: Colors.black,
         surface: Colors.black,
+        onSurface: Colors.white,
         background: Colors.black,
-        brightness: Brightness.dark,
+        onBackground: Colors.white,
       ),
     );
 

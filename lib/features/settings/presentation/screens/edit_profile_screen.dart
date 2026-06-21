@@ -212,7 +212,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                         child: Column(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
-                                            Icon(Icons.add_a_photo_outlined, color: Colors.blueAccent, size: 32),
+                                            Icon(Icons.add_a_photo_outlined, color: Colors.white, size: 32),
                                             SizedBox(height: 8),
                                             Text(
                                               'Primary Photo',

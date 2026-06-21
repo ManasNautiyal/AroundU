@@ -232,7 +232,7 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
                             ),
                             child: const Icon(
                               Icons.favorite_rounded,
-                              color: Colors.white,
+                              color: Colors.black,
                               size: 28,
                             ),
                           ),

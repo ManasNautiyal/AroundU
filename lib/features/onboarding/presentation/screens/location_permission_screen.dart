@@ -161,10 +161,10 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
                             ),
                           ],
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.location_on_rounded,
                           size: 44,
-                          color: Colors.white,
+                          color: theme.colorScheme.onPrimary,
                         ),
                       ),
                     ],
@@ -202,12 +202,12 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 icon: _isRequesting
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                          valueColor: AlwaysStoppedAnimation(theme.colorScheme.onPrimary),
                         ),
                       )
                     : const Icon(Icons.share_location_rounded),

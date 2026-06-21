@@ -76,7 +76,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
             children: [
               Icon(
                 isInRoom ? Icons.location_on : Icons.location_off,
-                color: isInRoom ? Colors.green : theme.colorScheme.error,
+                color: isInRoom ? Colors.white : Colors.white30,
                 size: 18,
               ),
               const SizedBox(width: 4),
@@ -85,10 +85,10 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                 onChanged: (val) {
                   ref.read(inLocalRoomProvider.notifier).setInRoom(val);
                 },
-                activeThumbColor: Colors.green,
-                activeTrackColor: Colors.green.withAlpha(100),
-                inactiveThumbColor: theme.colorScheme.error,
-                inactiveTrackColor: theme.colorScheme.errorContainer,
+                activeThumbColor: Colors.white,
+                activeTrackColor: Colors.white30,
+                inactiveThumbColor: Colors.grey.shade600,
+                inactiveTrackColor: const Color(0xFF262626),
               ),
             ],
           ),
@@ -106,20 +106,20 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
               duration: const Duration(milliseconds: 350),
               height: isInRoom ? 0 : 70,
               curve: Curves.easeInOut,
-              color: theme.colorScheme.errorContainer,
+              color: const Color(0xFF1C1C1E),
               child: isInRoom
                   ? const SizedBox.shrink()
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  : const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
                       child: Row(
                         children: [
-                          Icon(Icons.warning_amber_rounded, color: theme.colorScheme.onErrorContainer),
-                          const SizedBox(width: 12),
+                          Icon(Icons.warning_amber_rounded, color: Colors.white70),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'You left the Downtown Coffee Shop zone. Messages cleared.',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onErrorContainer,
+                              style: TextStyle(
+                                color: Colors.white70,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -173,14 +173,14 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: theme.colorScheme.errorContainer.withAlpha(80),
+                color: Color(0xFF1C1C1E),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.location_off_rounded,
                 size: 64,
-                color: theme.colorScheme.error,
+                color: Colors.white54,
               ),
             ),
             const SizedBox(height: 24),
@@ -213,7 +213,9 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
         final bubbleColor = isMe
             ? theme.colorScheme.primary
             : const Color(0xFF262626);
-        const textColor = Colors.white;
+        final textColor = isMe
+            ? theme.colorScheme.onPrimary
+            : Colors.white;
 
         final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
         final margin = isMe

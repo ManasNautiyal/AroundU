@@ -117,7 +117,7 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
                     icon: const Icon(Icons.delete_outline_rounded, size: 18),
                     label: const Text('Clear'),
                     style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.error,
+                      foregroundColor: Colors.white70,
                     ),
                   ),
               ],
@@ -142,42 +142,43 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
 
             // Preset chips row (horizontal scrolling)
             SizedBox(
-              height: 48,
+              height: 38,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: _presets.length,
                 itemBuilder: (context, index) {
                   final preset = _presets[index];
                   final emoji = preset['emoji']!;
+                  final label = preset['label']!;
                   final isSelected = _selectedEmoji == emoji;
 
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: ChoiceChip(
-                      label: Text(
-                        '$emoji ${preset['label']}',
-                        style: TextStyle(
-                          color: isSelected
-                              ? theme.colorScheme.onPrimaryContainer
-                              : theme.colorScheme.onSurface,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedEmoji = emoji;
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.white : const Color(0xFF262626),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? Colors.white : const Color(0xFF262626),
+                          width: 1,
                         ),
                       ),
-                      selected: isSelected,
-                      selectedColor: theme.colorScheme.primaryContainer,
-                      backgroundColor: theme.colorScheme.surfaceContainerHighest.withAlpha(120),
-                      side: BorderSide(
-                        color: isSelected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.outlineVariant.withAlpha(80),
+                      child: Center(
+                        child: Text(
+                          '$emoji $label',
+                          style: TextStyle(
+                            color: isSelected ? Colors.black : Colors.white70,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() {
-                            _selectedEmoji = emoji;
-                          });
-                        }
-                      },
                     ),
                   );
                 },
@@ -228,7 +229,7 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
                 '${_textController.text.length}/40',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: _textController.text.length >= 40
-                      ? theme.colorScheme.error
+                      ? Colors.white
                       : theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.bold,
                 ),
@@ -271,7 +272,7 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   shape: const StadiumBorder(),
                   elevation: 0,
                 ),

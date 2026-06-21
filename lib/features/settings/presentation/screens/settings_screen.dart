@@ -173,7 +173,8 @@ class SettingsScreen extends ConsumerWidget {
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
                     ),
                     value: isGhostMode,
-                    activeColor: Colors.blueAccent,
+                    activeColor: Colors.white,
+                    activeTrackColor: Colors.white30,
                     onChanged: (val) {
                       ref.read(ghostModeControllerProvider.notifier).toggle();
                     },
@@ -268,10 +269,10 @@ class SettingsScreen extends ConsumerWidget {
                   // Delete Account Button
                   TextButton.icon(
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white60,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: const StadiumBorder(
-                        side: BorderSide(color: Colors.redAccent, width: 1),
+                        side: BorderSide(color: Colors.white24, width: 1),
                       ),
                     ),
                     onPressed: () {

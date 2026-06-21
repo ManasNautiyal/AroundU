@@ -88,7 +88,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.location_off_rounded, color: Theme.of(context).colorScheme.error),
+            const Icon(Icons.location_off_rounded, color: Colors.white70),
             const SizedBox(width: 8),
             const Text('Location Error'),
           ],
@@ -332,7 +332,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                     child: SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white38)),
                     ),
                   ),
                 ),
@@ -393,7 +393,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                         const Icon(
                           Icons.location_on,
                           size: 11,
-                          color: Colors.blueAccent,
+                          color: Colors.white70,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
@@ -446,7 +446,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                     children: [
                       Icon(
                         isGhostMode ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                        color: isGhostMode ? Colors.amber : Colors.blueAccent,
+                        color: Colors.white70,
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -464,10 +464,10 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                     height: 28,
                     child: Switch(
                       value: isGhostMode,
-                      activeColor: Colors.amber,
-                      activeTrackColor: Colors.amber.withOpacity(0.3),
-                      inactiveThumbColor: Colors.blueAccent,
-                      inactiveTrackColor: Colors.blueAccent.withOpacity(0.3),
+                      activeColor: Colors.white,
+                      activeTrackColor: Colors.white38,
+                      inactiveThumbColor: Colors.grey.shade600,
+                      inactiveTrackColor: const Color(0xFF262626),
                       onChanged: (val) {
                         ref.read(ghostModeControllerProvider.notifier).toggle();
                       },
@@ -502,12 +502,12 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: const BoxDecoration(
-                              color: Colors.blueAccent,
+                              color: Colors.white,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.pin_drop_rounded,
-                              color: Colors.white,
+                              color: Colors.black,
                               size: 18,
                             ),
                           ),
@@ -626,7 +626,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                 );
               },
               backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: Colors.black,
               child: const Icon(Icons.add_location_alt_rounded),
             ),
             const SizedBox(width: 8),
@@ -641,11 +641,11 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               child: _isUpdatingLocation
                   ? const Padding(
                       padding: EdgeInsets.all(10.0),
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
                     )
                   : IconButton(
                       padding: EdgeInsets.zero,
-                      icon: const Icon(Icons.near_me_rounded, color: Colors.blueAccent, size: 20),
+                      icon: const Icon(Icons.near_me_rounded, color: Colors.white, size: 20),
                       onPressed: _updateLocation,
                     ),
             ),
