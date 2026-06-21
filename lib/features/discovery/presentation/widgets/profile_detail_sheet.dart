@@ -458,8 +458,8 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        sheetColor.withOpacity(0.0),
-                        sheetColor.withOpacity(0.85),
+                        sheetColor.withValues(alpha: 0.0),
+                        sheetColor.withValues(alpha: 0.85),
                         sheetColor,
                       ],
                       stops: const [0.0, 0.4, 1.0],

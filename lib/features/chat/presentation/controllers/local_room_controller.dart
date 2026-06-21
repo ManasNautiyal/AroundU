@@ -9,6 +9,11 @@ part 'local_room_controller.g.dart';
 class LocalRoomMessages extends _$LocalRoomMessages {
   @override
   List<MessageModel> build() {
+    ref.listen<bool>(inLocalRoomProvider, (previous, next) {
+      if (!next) {
+        clearMessages();
+      }
+    });
     return [];
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../discovery/presentation/controllers/discovery_providers.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
@@ -94,6 +95,16 @@ class SettingsScreen extends ConsumerWidget {
       final authRepo = ref.read(authRepositoryProvider);
       final user = authRepo.currentUser;
       if (user != null) {
+        // Scrub profile information in Firestore first (since delete is disallowed by rules)
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'name': '[Deleted Account]',
+          'bio': 'This account has been deleted.',
+          'profilePictures': FieldValue.delete(),
+          'beaconEmoji': FieldValue.delete(),
+          'beaconMessage': FieldValue.delete(),
+          'location': FieldValue.delete(),
+          'isGhostMode': true,
+        });
         await user.delete();
       }
     } catch (_) {}
@@ -187,7 +198,7 @@ class SettingsScreen extends ConsumerWidget {
                       style: TextStyle(fontSize: 12, color: subtitleColor),
                     ),
                     value: isGhostMode,
-                    activeColor: isDark ? Colors.white : Colors.black,
+                    activeThumbColor: isDark ? Colors.white : Colors.black,
                     activeTrackColor: isDark ? Colors.white30 : Colors.black38,
                     onChanged: (val) {
                       ref.read(ghostModeControllerProvider.notifier).toggle();
@@ -215,7 +226,7 @@ class SettingsScreen extends ConsumerWidget {
                       style: TextStyle(fontSize: 12, color: subtitleColor),
                     ),
                     value: !isDark,
-                    activeColor: isDark ? Colors.white : Colors.black,
+                    activeThumbColor: isDark ? Colors.white : Colors.black,
                     activeTrackColor: isDark ? Colors.white30 : Colors.black38,
                     onChanged: (val) {
                       ref.read(themeModeProvider.notifier).toggleTheme();
@@ -377,7 +388,7 @@ class SettingsScreen extends ConsumerWidget {
             style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface, fontSize: 18),
           ),
           loading: () => Text('Loading...', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
-          error: (_, __) => Text('Error', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+          error: (err, stack) => Text('Error', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
         ),
         actions: [
           IconButton(

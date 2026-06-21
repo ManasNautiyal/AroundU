@@ -7,6 +7,7 @@ import 'features/onboarding/presentation/screens/profile_setup_screen.dart';
 import 'features/connections/presentation/screens/main_layout.dart';
 import 'features/onboarding/presentation/controllers/onboarding_providers.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
@@ -48,7 +49,13 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase initialization failed or unsupported on this platform: $e');
+  }
   runApp(
     const ProviderScope(
       child: MyApp(),
@@ -73,8 +80,6 @@ class MyApp extends ConsumerWidget {
         onSecondary: Colors.white,
         surface: Color(0xFFF3F5F2),
         onSurface: Colors.black,
-        background: Color(0xFFFBFDFA),
-        onBackground: Colors.black,
       ),
     );
 
@@ -88,8 +93,6 @@ class MyApp extends ConsumerWidget {
         onSecondary: Colors.black,
         surface: Color(0xFF060606),
         onSurface: Colors.white,
-        background: Color(0xFF060606),
-        onBackground: Colors.white,
       ),
     );
 
@@ -123,7 +126,7 @@ class MyApp extends ConsumerWidget {
           backgroundColor: const Color(0xFFFBFDFA),
           elevation: 8,
           indicatorColor: const Color(0xFFE2E5E2),
-          labelTextStyle: MaterialStateProperty.all(
+          labelTextStyle: WidgetStateProperty.all(
             const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
         ),
@@ -193,7 +196,7 @@ class MyApp extends ConsumerWidget {
           backgroundColor: const Color(0xFF060606),
           elevation: 8,
           indicatorColor: const Color(0xFF262626), // Premium dark grey indicator
-          labelTextStyle: MaterialStateProperty.all(
+          labelTextStyle: WidgetStateProperty.all(
             const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),

@@ -363,7 +363,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                       stops: const [0.55, 1.0],
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.95),
+                        Colors.black.withValues(alpha: 0.95),
                       ],
                     ),
                   ),
@@ -376,7 +376,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.75),
+                      color: Colors.black.withValues(alpha: 0.75),
                       shape: BoxShape.circle,
                       border: Border.all(color: const Color(0xFF262626), width: 1.0),
                     ),
@@ -486,7 +486,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                     height: 28,
                     child: Switch(
                       value: isGhostMode,
-                      activeColor: isDark ? Colors.white : Colors.black,
+                      activeThumbColor: isDark ? Colors.white : Colors.black,
                       activeTrackColor: isDark ? Colors.white38 : Colors.black38,
                       inactiveThumbColor: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
                       inactiveTrackColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),

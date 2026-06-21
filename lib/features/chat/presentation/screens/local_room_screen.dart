@@ -89,7 +89,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                   ref.read(inLocalRoomProvider.notifier).setInRoom(val);
                 },
                 activeThumbColor: theme.colorScheme.onPrimary,
-                activeTrackColor: theme.colorScheme.primary.withOpacity(0.4),
+                activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.4),
                 inactiveThumbColor: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
                 inactiveTrackColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
               ),
@@ -183,7 +183,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
               child: Icon(
                 Icons.location_off_rounded,
                 size: 64,
-                color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(height: 24),

@@ -17,23 +17,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
 
-  final List<String> _predefinedTags = [
-    '☕ Coffee',
-    '🎵 Music',
-    '✈️ Travel',
-    '🏋️ Gym',
-    '🐶 Dogs',
-    '🍷 Wine',
-    '🎮 Gaming',
-    '🍕 Foodie',
-    '📚 Reading',
-    '🎬 Movies',
-    '🎨 Art',
-    '📷 Photography',
-    '⚽ Sports',
-    '💻 Coding',
-    '🌲 Nature',
-  ];
+
 
   @override
   void initState() {

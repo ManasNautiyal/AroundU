@@ -191,18 +191,19 @@ class InteractionRepository {
           ? '${request.senderId}_${request.receiverId}'
           : '${request.receiverId}_${request.senderId}';
 
-      final batch = _firestore.batch();
-      
-      // 1. Create match
+      // 1. Create match first and await its completion so that it exists in the database
+      // when the message write security rule checks for its existence.
       final matchRef = _firestore.collection('matches').doc(matchId);
-      batch.set(matchRef, {
+      await matchRef.set({
         'user1Id': request.senderId,
         'user2Id': request.receiverId,
         'userIds': [request.senderId, request.receiverId],
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      // 2. Add intro message as first chat message
+      // 2. Add intro message as first chat message and delete connection request
+      final batch = _firestore.batch();
+      
       final messageRef = _firestore
           .collection('chats')
           .doc(matchId)
