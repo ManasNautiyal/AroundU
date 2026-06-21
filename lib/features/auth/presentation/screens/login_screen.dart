@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../../onboarding/presentation/controllers/onboarding_providers.dart';
 
+enum AuthMode { signIn, signUp, phoneOtp }
+
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -15,11 +17,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _otpController = TextEditingController();
   
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
-  bool _isSignUp = false; // Toggle state between sign in and sign up
+  
+  AuthMode _authMode = AuthMode.signIn;
+
+  // Phone OTP specific variables
+  String? _verificationId;
+  bool _otpSent = false;
 
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
@@ -48,6 +57,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _phoneController.dispose();
+    _otpController.dispose();
     _shakeController.dispose();
     super.dispose();
   }
@@ -234,7 +245,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
 
     try {
       final authRepo = ref.read(authRepositoryProvider);
-      if (_isSignUp) {
+      if (_authMode == AuthMode.signUp) {
         await authRepo.signUp(
           _emailController.text.trim(),
           _passwordController.text.trim(),
@@ -250,7 +261,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isSignUp ? 'Registration successful!' : 'Login successful!'),
+            content: Text(_authMode == AuthMode.signUp ? 'Registration successful!' : 'Login successful!'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -279,14 +290,184 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     }
   }
 
-  Future<void> _handleSocialLogin(String platform) async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 1200));
-    
-    if (mounted) {
-      setState(() => _isLoading = false);
-      ref.read(onboardingStepProvider.notifier).setStep(1);
+  Future<void> _handlePhoneAuth() async {
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      _shakeForm();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid phone number')),
+      );
+      return;
     }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.verifyPhoneNumber(
+        phoneNumber: phone,
+        onVerificationFailed: (e) {
+          _shakeForm();
+          setState(() => _isLoading = false);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Verification failed: ${e.message}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+        onCodeSent: (verificationId, resendToken) {
+          setState(() {
+            _verificationId = verificationId;
+            _otpSent = true;
+            _isLoading = false;
+          });
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('OTP sent successfully! Check your SMS.'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+        onVerificationCompletedAutomatically: (verificationId) {
+          setState(() {
+            _isLoading = false;
+          });
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Phone verified automatically!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          ref.read(onboardingStepProvider.notifier).setStep(1);
+        },
+      );
+    } catch (e) {
+      _shakeForm();
+      setState(() => _isLoading = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleVerifyOtp() async {
+    final smsCode = _otpController.text.trim();
+    if (smsCode.isEmpty || smsCode.length < 6) {
+      _shakeForm();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter the 6-digit OTP code')),
+      );
+      return;
+    }
+
+    if (_verificationId == null) {
+      _shakeForm();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Verification session expired. Please resend code.')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.signInWithPhoneCode(
+        verificationId: _verificationId!,
+        smsCode: smsCode,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Phone login successful!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        ref.read(onboardingStepProvider.notifier).setStep(1);
+      }
+    } catch (e) {
+      _shakeForm();
+      if (mounted) {
+        String errorMsg = e.toString();
+        if (errorMsg.contains(']')) {
+          errorMsg = errorMsg.substring(errorMsg.indexOf(']') + 1).trim();
+        }
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Verification failed: $errorMsg'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.signInWithGoogle();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google Login successful!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        ref.read(onboardingStepProvider.notifier).setStep(1);
+      }
+    } catch (e) {
+      _shakeForm();
+      if (mounted) {
+        String errorMsg = e.toString();
+        if (errorMsg.contains(']')) {
+          errorMsg = errorMsg.substring(errorMsg.indexOf(']') + 1).trim();
+        }
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google Sign-In failed: $errorMsg'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleSocialLogin(String provider) async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$provider Sign-In is not configured yet.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -381,232 +562,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                           );
                         },
                         child: KeyedSubtree(
-                          key: ValueKey<bool>(_isSignUp),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                _isSignUp ? 'Create Account' : 'Welcome Back',
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Email Field
-                              TextFormField(
-                                controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                  labelText: 'Email Address',
-                                  prefixIcon: const Icon(Icons.email_outlined),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: BorderSide(
-                                      color: theme.colorScheme.outlineVariant,
-                                    ),
-                                  ),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your email';
-                                  }
-                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                                    return 'Please enter a valid email';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Password Field
-                              TextFormField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                decoration: InputDecoration(
-                                  labelText: 'Password',
-                                  prefixIcon: const Icon(Icons.lock_outline_rounded),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_off_outlined
-                                          : Icons.visibility_outlined,
-                                    ),
-                                    onPressed: () {
-                                      setState(() => _obscurePassword = !_obscurePassword);
-                                    },
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: BorderSide(
-                                      color: theme.colorScheme.outlineVariant,
-                                    ),
-                                  ),
-                                ),
-                                onChanged: (val) {
-                                  if (_isSignUp) {
-                                    setState(() {}); // refresh strength indicator
-                                  }
-                                },
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your password';
-                                  }
-                                  if (value.length < 6) {
-                                    return 'Password must be at least 6 characters';
-                                  }
-                                  return null;
-                                },
-                              ),
-
-                              // Password Strength bar (Sign Up only)
-                              if (_isSignUp && _passwordController.text.isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(4),
-                                        child: LinearProgressIndicator(
-                                          value: _getPasswordStrength(),
-                                          color: _getStrengthColor(_getPasswordStrength()),
-                                          backgroundColor: theme.colorScheme.outlineVariant.withAlpha(50),
-                                          minHeight: 6,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _getStrengthText(_getPasswordStrength()),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: _getStrengthColor(_getPasswordStrength()),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-
-                              // Confirm Password Field (Sign Up only)
-                              if (_isSignUp) ...[
-                                const SizedBox(height: 20),
-                                TextFormField(
-                                  controller: _confirmPasswordController,
-                                  obscureText: _obscureConfirmPassword,
-                                  decoration: InputDecoration(
-                                    labelText: 'Confirm Password',
-                                    prefixIcon: const Icon(Icons.lock_reset_rounded),
-                                    suffixIcon: IconButton(
-                                      icon: Icon(
-                                        _obscureConfirmPassword
-                                            ? Icons.visibility_off_outlined
-                                            : Icons.visibility_outlined,
-                                      ),
-                                      onPressed: () {
-                                        setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
-                                      },
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                      borderSide: BorderSide(
-                                        color: theme.colorScheme.outlineVariant,
-                                      ),
-                                    ),
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please confirm your password';
-                                    }
-                                    if (value != _passwordController.text) {
-                                      return 'Passwords do not match';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ],
-
-                              // Forgot Password (Sign In only)
-                              if (!_isSignUp)
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: _showForgotPasswordSheet,
-                                    style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                                    ),
-                                    child: Text(
-                                      'Forgot Password?',
-                                      style: TextStyle(
-                                        color: theme.colorScheme.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              else
-                                const SizedBox(height: 24),
-
-                              // Submit Button
-                              FilledButton(
-                                onPressed: _isLoading ? null : _handleLogin,
-                                style: FilledButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                                        ),
-                                      )
-                                    : Text(
-                                        _isSignUp ? 'Sign Up' : 'Sign In',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Auth Toggle Switch Link
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _isSignUp = !_isSignUp;
-                                    _passwordController.clear();
-                                    _confirmPasswordController.clear();
-                                  });
-                                },
-                                child: Text(
-                                  _isSignUp
-                                      ? 'Already have an account? Sign In'
-                                      : 'Don\'t have an account? Sign Up',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                          key: ValueKey<AuthMode>(_authMode),
+                          child: _buildFormContent(theme),
                         ),
                       ),
                     ),
@@ -638,7 +595,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
 
                 // Social Auth Buttons
                 OutlinedButton.icon(
-                  onPressed: _isLoading ? null : () => _handleSocialLogin('Google'),
+                  onPressed: _isLoading ? null : _handleGoogleSignIn,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -687,6 +644,452 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFormContent(ThemeData theme) {
+    switch (_authMode) {
+      case AuthMode.signUp:
+        return _buildSignUpForm(theme);
+      case AuthMode.phoneOtp:
+        return _buildPhoneOtpForm(theme);
+      case AuthMode.signIn:
+        return _buildSignInForm(theme);
+    }
+  }
+
+  Widget _buildSignInForm(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Welcome Back',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+
+        // Email Field
+        TextFormField(
+          key: const ValueKey('signin_email'),
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            labelText: 'Email Address',
+            prefixIcon: const Icon(Icons.email_outlined),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter your email';
+            }
+            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              return 'Please enter a valid email';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+
+        // Password Field
+        TextFormField(
+          key: const ValueKey('signin_password'),
+          controller: _passwordController,
+          obscureText: _obscurePassword,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outline_rounded),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              ),
+              onPressed: () {
+                setState(() => _obscurePassword = !_obscurePassword);
+              },
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter your password';
+            }
+            if (value.length < 6) {
+              return 'Password must be at least 6 characters';
+            }
+            return null;
+          },
+        ),
+
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: _showForgotPasswordSheet,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            ),
+            child: Text(
+              'Forgot Password?',
+              style: TextStyle(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+
+        FilledButton(
+          onPressed: _isLoading ? null : _handleLogin,
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'Sign In',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+        ),
+        const SizedBox(height: 16),
+
+        // Switching buttons
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _authMode = AuthMode.signUp;
+                  _passwordController.clear();
+                  _confirmPasswordController.clear();
+                });
+              },
+              child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _authMode = AuthMode.phoneOtp;
+                  _phoneController.clear();
+                  _otpController.clear();
+                  _otpSent = false;
+                });
+              },
+              icon: const Icon(Icons.phone_iphone_rounded, size: 16),
+              label: const Text('Use Phone OTP', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignUpForm(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Create Account',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+
+        // Email Field
+        TextFormField(
+          key: const ValueKey('signup_email'),
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            labelText: 'Email Address',
+            prefixIcon: const Icon(Icons.email_outlined),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter your email';
+            }
+            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              return 'Please enter a valid email';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+
+        // Password Field
+        TextFormField(
+          key: const ValueKey('signup_password'),
+          controller: _passwordController,
+          obscureText: _obscurePassword,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outline_rounded),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              ),
+              onPressed: () {
+                setState(() => _obscurePassword = !_obscurePassword);
+              },
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          onChanged: (val) => setState(() {}),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter your password';
+            }
+            if (value.length < 6) {
+              return 'Password must be at least 6 characters';
+            }
+            return null;
+          },
+        ),
+
+        // Password Strength bar (Sign Up only)
+        if (_passwordController.text.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: _getPasswordStrength(),
+                    color: _getStrengthColor(_getPasswordStrength()),
+                    backgroundColor: theme.colorScheme.outlineVariant.withAlpha(50),
+                    minHeight: 6,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _getStrengthText(_getPasswordStrength()),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: _getStrengthColor(_getPasswordStrength()),
+                ),
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 20),
+
+        // Confirm Password Field
+        TextFormField(
+          key: const ValueKey('signup_confirmpassword'),
+          controller: _confirmPasswordController,
+          obscureText: _obscureConfirmPassword,
+          decoration: InputDecoration(
+            labelText: 'Confirm Password',
+            prefixIcon: const Icon(Icons.lock_reset_rounded),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              ),
+              onPressed: () {
+                setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+              },
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please confirm your password';
+            }
+            if (value != _passwordController.text) {
+              return 'Passwords do not match';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 24),
+
+        FilledButton(
+          onPressed: _isLoading ? null : _handleLogin,
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'Sign Up',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+        ),
+        const SizedBox(height: 16),
+
+        // Switching buttons
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _authMode = AuthMode.signIn;
+                });
+              },
+              child: const Text('Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _authMode = AuthMode.phoneOtp;
+                  _phoneController.clear();
+                  _otpController.clear();
+                  _otpSent = false;
+                });
+              },
+              icon: const Icon(Icons.phone_iphone_rounded, size: 16),
+              label: const Text('Use Phone OTP', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhoneOtpForm(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _otpSent ? 'Enter Verification Code' : 'Phone Authentication',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+
+        if (!_otpSent) ...[
+          // Phone Input
+          TextFormField(
+            key: const ValueKey('phone_number_input'),
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              labelText: 'Phone Number',
+              hintText: 'e.g. +1 555-010-0000',
+              prefixIcon: const Icon(Icons.phone_rounded),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: _isLoading ? null : _handlePhoneAuth,
+            icon: const Icon(Icons.send_rounded, size: 16),
+            label: const Text('Send Verification Code', style: TextStyle(fontWeight: FontWeight.bold)),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ] else ...[
+          // OTP code Input
+          TextFormField(
+            key: const ValueKey('otp_code_input'),
+            controller: _otpController,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            decoration: InputDecoration(
+              labelText: '6-digit OTP Code',
+              prefixIcon: const Icon(Icons.sms_rounded),
+              counterText: '',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: _isLoading ? null : _handleVerifyOtp,
+            icon: const Icon(Icons.verified_user_rounded, size: 16),
+            label: const Text('Verify & Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _otpSent = false;
+                _otpController.clear();
+              });
+            },
+            child: const Text('Back / Edit Phone Number', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _authMode = AuthMode.signIn;
+                });
+              },
+              child: const Text('Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _authMode = AuthMode.signUp;
+                });
+              },
+              child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

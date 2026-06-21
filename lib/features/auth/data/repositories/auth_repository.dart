@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 part 'auth_repository.g.dart';
 
@@ -47,6 +48,77 @@ class AuthRepository {
   Future<void> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_getFriendlyErrorMessage(e));
+    } catch (e) {
+      throw AuthException(e.toString());
+    }
+  }
+
+  /// Sign in using Google Account.
+  Future<UserCredential> signInWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        throw AuthException('Google Sign-In was cancelled by the user.');
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      return await _auth.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_getFriendlyErrorMessage(e));
+    } catch (e) {
+      throw AuthException(e.toString());
+    }
+  }
+
+  /// Requests sending an SMS verification OTP to the given phone number.
+  Future<void> verifyPhoneNumber({
+    required String phoneNumber,
+    required void Function(FirebaseAuthException error) onVerificationFailed,
+    required void Function(String verificationId, int? resendToken) onCodeSent,
+    required void Function(String verificationId) onVerificationCompletedAutomatically,
+  }) async {
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await _auth.signInWithCredential(credential);
+          onVerificationCompletedAutomatically(credential.verificationId ?? '');
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          onVerificationFailed(e);
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          onCodeSent(verificationId, resendToken);
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          // Timeout callback
+        },
+        timeout: const Duration(seconds: 60),
+      );
+    } catch (e) {
+      throw AuthException(e.toString());
+    }
+  }
+
+  /// Signs in the user using the verification code received via SMS.
+  Future<UserCredential> signInWithPhoneCode({
+    required String verificationId,
+    required String smsCode,
+  }) async {
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: smsCode,
+      );
+      return await _auth.signInWithCredential(credential);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_getFriendlyErrorMessage(e));
     } catch (e) {
