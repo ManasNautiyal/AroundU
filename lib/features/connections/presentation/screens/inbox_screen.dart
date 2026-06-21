@@ -11,7 +11,9 @@ import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../discovery/presentation/controllers/user_providers.dart';
 
 class InboxScreen extends ConsumerStatefulWidget {
-  const InboxScreen({super.key});
+  final int? selectedTabOverride;
+  
+  const InboxScreen({super.key, this.selectedTabOverride});
 
   @override
   ConsumerState<InboxScreen> createState() => _InboxScreenState();
@@ -33,6 +35,56 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     final activeConnectionsAsync = ref.watch(matchesStreamProvider(currentUserId: currentUserId));
     final pendingRequestsAsync = ref.watch(connectionRequestsStreamProvider(currentUserId: currentUserId));
+
+    final decoration = BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          theme.colorScheme.surface,
+          theme.colorScheme.primaryContainer.withAlpha(20),
+        ],
+      ),
+    );
+
+    // If split navigation overrides the view, render only the specific tab list
+    if (widget.selectedTabOverride != null) {
+      if (widget.selectedTabOverride == 0) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              'Chats',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          body: Container(
+            decoration: decoration,
+            child: activeConnectionsAsync.when(
+              data: (connections) => _buildMessagesList(connections, currentUserId, theme),
+              error: (err, _) => Center(child: Text('Error loading messages: $err')),
+              loading: () => const Center(child: CircularProgressIndicator()),
+            ),
+          ),
+        );
+      } else {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              'People',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          body: Container(
+            decoration: decoration,
+            child: pendingRequestsAsync.when(
+              data: (requests) => _buildRequestsList(requests, theme),
+              error: (err, _) => Center(child: Text('Error loading requests: $err')),
+              loading: () => const Center(child: CircularProgressIndicator()),
+            ),
+          ),
+        );
+      }
+    }
 
     return DefaultTabController(
       length: 2,
@@ -66,16 +118,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           ),
         ),
         body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                theme.colorScheme.surface,
-                theme.colorScheme.primaryContainer.withAlpha(20),
-              ],
-            ),
-          ),
+          decoration: decoration,
           child: TabBarView(
             children: [
               // Messages Tab: List of active connections

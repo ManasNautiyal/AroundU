@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../discovery/presentation/screens/radar_screen.dart';
 import '../../presentation/screens/inbox_screen.dart';
+import '../../../settings/presentation/screens/settings_screen.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -14,7 +15,9 @@ class _MainLayoutState extends State<MainLayout> {
 
   final List<Widget> _tabs = const [
     RadarScreen(),
-    InboxScreen(),
+    InboxScreen(selectedTabOverride: 0),
+    InboxScreen(selectedTabOverride: 1),
+    SettingsScreen(),
   ];
 
   @override
@@ -32,17 +35,26 @@ class _MainLayoutState extends State<MainLayout> {
           });
         },
         elevation: 8,
-        shadowColor: Colors.black,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.radar_outlined),
-            selectedIcon: Icon(Icons.radar_rounded),
-            label: 'Radar',
+            icon: Icon(Icons.location_on_outlined),
+            selectedIcon: Icon(Icons.location_on_rounded),
+            label: 'Map',
           ),
           NavigationDestination(
-            icon: Icon(Icons.mail_outline_rounded),
-            selectedIcon: Icon(Icons.mail_rounded),
-            label: 'Inbox',
+            icon: Icon(Icons.chat_bubble_outline_rounded),
+            selectedIcon: Icon(Icons.chat_bubble_rounded),
+            label: 'Chats',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.group_outlined),
+            selectedIcon: Icon(Icons.group_rounded),
+            label: 'People',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
+            label: 'Profile',
           ),
         ],
       ),

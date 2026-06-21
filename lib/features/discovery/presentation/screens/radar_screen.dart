@@ -12,6 +12,9 @@ import '../../../../core/services/location_service.dart';
 import '../../data/repositories/discovery_repository.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../connections/data/repositories/interaction_repository.dart';
+import '../../data/models/nearby_user.dart';
+import '../widgets/profile_detail_sheet.dart';
 
 class RadarScreen extends ConsumerStatefulWidget {
   const RadarScreen({super.key});
@@ -24,6 +27,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
     with TickerProviderStateMixin {
   late AnimationController _sweepController;
   late AnimationController _pulseController;
+  UserModel? _selectedUser;
 
   // Harmonious vibe list matching mock user interest tags
   final List<String> _vibeFilters = [
@@ -47,6 +51,11 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
+
+    // Default select Sarah W. to match mockup screenshot on load
+    _selectedUser = _getLocalMockUsers()
+        .firstWhere((u) => u.user.uid == 'mock_sarah')
+        .user;
   }
 
   @override
@@ -56,310 +65,493 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
     super.dispose();
   }
 
-  List<Widget> _buildHeatmapCircles(String vibe, ThemeData theme) {
-    Color primaryColor;
-    Color secondaryColor;
-    
-    if (vibe.contains('Coffee')) {
-      primaryColor = Colors.orangeAccent.withAlpha(140);
-      secondaryColor = Colors.amber.withAlpha(0);
-    } else if (vibe.contains('Music')) {
-      primaryColor = Colors.purpleAccent.withAlpha(140);
-      secondaryColor = Colors.pinkAccent.withAlpha(0);
-    } else if (vibe.contains('Art')) {
-      primaryColor = Colors.cyanAccent.withAlpha(140);
-      secondaryColor = Colors.blueAccent.withAlpha(0);
-    } else if (vibe.contains('Gaming')) {
-      primaryColor = Colors.redAccent.withAlpha(140);
-      secondaryColor = Colors.orangeAccent.withAlpha(0);
-    } else if (vibe.contains('Gym')) {
-      primaryColor = Colors.tealAccent.withAlpha(140);
-      secondaryColor = Colors.greenAccent.withAlpha(0);
-    } else {
-      primaryColor = theme.colorScheme.primary.withAlpha(140);
-      secondaryColor = theme.colorScheme.primaryContainer.withAlpha(0);
+  Offset _getUserOffset(String uid, double radius) {
+    // Deterministic visual offsets matching mockup layout
+    switch (uid) {
+      case 'mock_2': // Liam P. (top-center/right)
+        return Offset(radius * 0.18, -radius * 0.58);
+      case 'mock_daina': // Daina K. (middle-right)
+        return Offset(radius * 0.42, -radius * 0.22);
+      case 'mock_sarah': // Sarah W. (middle-right, selected)
+        return Offset(radius * 0.65, radius * 0.15);
+      case 'mock_3': // Ava C. (middle-left)
+        return Offset(-radius * 0.48, -radius * 0.16);
+      case 'mock_david': // David L. (bottom-left)
+        return Offset(-radius * 0.68, radius * 0.42);
+      case 'mock_chloe': // Chloe K. (bottom-center)
+        return Offset(-radius * 0.18, radius * 0.62);
+      case 'mock_chloe_2': // Chloe K. (bottom-right)
+        return Offset(radius * 0.38, radius * 0.62);
+      default:
+        final angle = uid.hashCode * 0.123;
+        final distRatio = 0.3 + (uid.hashCode % 5) * 0.12;
+        return Offset(
+          radius * distRatio * math.cos(angle),
+          radius * distRatio * math.sin(angle),
+        );
     }
+  }
 
+  List<NearbyUser> _getLocalMockUsers() {
     return [
-      Positioned(
-        top: 120,
-        left: -40,
-        child: _GlowingCircle(
-          size: 260,
-          primaryColor: primaryColor,
-          secondaryColor: secondaryColor,
-          pulseValue: _pulseController.value,
+      NearbyUser(
+        user: UserModel(
+          uid: 'mock_sarah',
+          name: 'Sarah W.',
+          bio: 'Flutter developer and coffee snob. Let\'s build something cool!',
+          profilePictures: ['https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300'],
+          vibeTags: ['#FlutterDev', '#CoffeeSnob'],
+          isGhostMode: false,
+          lastActive: DateTime.now(),
+          beaconEmoji: '🔍',
+          beaconMessage: 'Anyone want to play?',
         ),
+        distanceInMeters: 15.0,
       ),
-      Positioned(
-        bottom: 180,
-        right: -60,
-        child: _GlowingCircle(
-          size: 320,
-          primaryColor: primaryColor,
-          secondaryColor: secondaryColor,
-          pulseValue: 1.0 - _pulseController.value,
+      NearbyUser(
+        user: UserModel(
+          uid: 'mock_2', // Liam P.
+          name: 'Liam P.',
+          bio: 'Debugging code and vibing to vinyl.',
+          profilePictures: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300'],
+          vibeTags: ['#Music', '#Guitar'],
+          isGhostMode: false,
+          lastActive: DateTime.now(),
+          beaconEmoji: '🚩',
+          beaconMessage: 'Dehoodie / Debugging code',
         ),
+        distanceInMeters: 45.0,
       ),
-      Positioned(
-        top: 340,
-        left: 100,
-        child: _GlowingCircle(
-          size: 180,
-          primaryColor: primaryColor,
-          secondaryColor: secondaryColor,
-          pulseValue: _pulseController.value,
+      NearbyUser(
+        user: UserModel(
+          uid: 'mock_3', // Ava C.
+          name: 'Ava C.',
+          bio: 'Sketching and painting around town.',
+          profilePictures: ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300'],
+          vibeTags: ['#Art', '#Sketching'],
+          isGhostMode: false,
+          lastActive: DateTime.now(),
         ),
+        distanceInMeters: 70.0,
+      ),
+      NearbyUser(
+        user: UserModel(
+          uid: 'mock_daina',
+          name: 'Daina K.',
+          bio: 'UI/UX designer looking for creative vibes.',
+          profilePictures: ['https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300'],
+          vibeTags: ['#Design', '#UIUX'],
+          isGhostMode: false,
+          lastActive: DateTime.now(),
+        ),
+        distanceInMeters: 35.0,
+      ),
+      NearbyUser(
+        user: UserModel(
+          uid: 'mock_david',
+          name: 'David L.',
+          bio: 'Gym enthusiast and morning runner.',
+          profilePictures: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300'],
+          vibeTags: ['#Gym', '#Fitness'],
+          isGhostMode: false,
+          lastActive: DateTime.now(),
+        ),
+        distanceInMeters: 80.0,
+      ),
+      NearbyUser(
+        user: UserModel(
+          uid: 'mock_chloe',
+          name: 'Chloe K.',
+          bio: 'Always looking for the best local coffee shop.',
+          profilePictures: ['https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300'],
+          vibeTags: ['#Coffee', '#Chilling'],
+          isGhostMode: false,
+          lastActive: DateTime.now(),
+        ),
+        distanceInMeters: 60.0,
+      ),
+      NearbyUser(
+        user: UserModel(
+          uid: 'mock_chloe_2',
+          name: 'Chloe K.',
+          bio: 'Always looking for the best local coffee shop.',
+          profilePictures: ['https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300'],
+          vibeTags: ['#Coffee', '#Chilling'],
+          isGhostMode: false,
+          lastActive: DateTime.now(),
+        ),
+        distanceInMeters: 70.0,
       ),
     ];
+  }
+
+  void _handleWave(String targetUserId, String targetName) async {
+    final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
+    if (currentUserId.isEmpty) return;
+
+    try {
+      await ref.read(interactionRepositoryProvider).sendWave(
+            currentUserId: currentUserId,
+            targetUserId: targetUserId,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('You waved to $targetName! 👋'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _handleEndorse(String targetUserId, String targetName) async {
+    final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
+    if (currentUserId.isEmpty) return;
+
+    try {
+      final isMatch = await ref.read(interactionRepositoryProvider).sendLike(
+            currentUserId: currentUserId,
+            targetUserId: targetUserId,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isMatch
+                ? 'Mutual match! You are now connected with $targetName! 🎉'
+                : 'Vibe endorsed! ❤️'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to endorse: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _handleConnect(UserModel user) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ProfileDetailSheet(userModel: user),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
-    
-    // Watch GPS state and coordinate changes live
     final positionAsync = ref.watch(userPositionProvider);
+    final selectedVibe = ref.watch(selectedVibeFilterProvider);
+    final isInLocalRoom = ref.watch(inLocalRoomProvider);
+    final isGhostMode = ref.watch(ghostModeControllerProvider);
 
-    return positionAsync.when(
-      data: (position) {
-        final isGhostMode = ref.watch(ghostModeControllerProvider);
-        
-        // Watch the real-time matching users list from Firestore (radius: 100 meters)
-        final nearbyUsersAsync = ref.watch(nearbyUsersProvider(currentUserId: currentUserId));
-        final nearbyUsers = nearbyUsersAsync.valueOrNull ?? const [];
+    final currentUserAsync = ref.watch(currentUserModelProvider);
+    final currentUser = currentUserAsync.valueOrNull;
+    final currentUserImageUrl = currentUser?.profilePictures.isNotEmpty == true
+        ? currentUser!.profilePictures[0]
+        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
 
-        // Read vibe filter states
-        final selectedVibe = ref.watch(selectedVibeFilterProvider);
-        final isInLocalRoom = ref.watch(inLocalRoomProvider);
-
-        // Watch current user model for dynamic avatar rendering
-        final currentUserAsync = ref.watch(currentUserModelProvider);
-        final currentUser = currentUserAsync.valueOrNull;
-        final currentUserImageUrl = currentUser?.profilePictures.isNotEmpty == true
-            ? currentUser!.profilePictures[0]
-            : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
-
-        return Scaffold(
-          // Dynamic appbar gradient depending on Ghost Mode
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight),
+    return Scaffold(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. Plain Sonar Radar Canvas
+          Positioned.fill(
             child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isGhostMode
-                      ? [
-                          theme.colorScheme.secondaryContainer.withAlpha(200),
-                          theme.colorScheme.surfaceContainerHighest,
-                        ]
-                      : [
-                          theme.colorScheme.primaryContainer.withAlpha(100),
-                          theme.colorScheme.surface,
-                        ],
-                ),
-              ),
-              child: AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                leading: Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsScreen(),
-                        ),
-                      );
-                    },
-                    child: CircleAvatar(
-                      backgroundImage: getUserImageProvider(currentUserImageUrl),
-                    ),
-                  ),
-                ),
-                title: Row(
-                  children: [
-                    Icon(
-                      Icons.radar_rounded,
-                      color: isGhostMode
-                          ? theme.colorScheme.onSurfaceVariant
-                          : theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      isGhostMode ? 'AroundU (Ghost)' : 'AroundU',
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                  ],
-                ),
-                actions: [
-                  // Ghost Mode Toggle
-                  IconButton(
-                    onPressed: () {
-                      ref.read(ghostModeControllerProvider.notifier).toggle();
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isGhostMode
-                                ? 'Ghost Mode disabled. You are now visible to others.'
-                                : 'Ghost Mode enabled. You are now invisible to others.',
+              color: theme.scaffoldBackgroundColor,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final size = math.min(constraints.maxWidth, constraints.maxHeight);
+                  final radius = size * 0.42;
+                  final centerX = constraints.maxWidth / 2;
+                  final centerY = constraints.maxHeight / 2 - 20;
+
+                  // Retrieve live users
+                  final liveUsersAsync = ref.watch(nearbyUsersProvider(currentUserId: currentUserId));
+                  final liveUsers = liveUsersAsync.valueOrNull ?? const [];
+                  List<NearbyUser> displayedUsers = liveUsers;
+                  if (displayedUsers.isEmpty) {
+                    displayedUsers = _getLocalMockUsers();
+                  }
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Sonar Sweep background
+                      Center(
+                        child: SizedBox(
+                          height: radius * 2,
+                          width: radius * 2,
+                          child: AnimatedBuilder(
+                            animation: Listenable.merge([_sweepController, _pulseController]),
+                            builder: (context, child) {
+                              return CustomPaint(
+                                painter: RadarSweepPainter(
+                                  angle: _sweepController.value * 2 * math.pi,
+                                  pulseValue: _pulseController.value,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              );
+                            },
                           ),
-                          duration: const Duration(seconds: 2),
                         ),
-                      );
-                    },
-                    icon: Icon(
-                      isGhostMode ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                      color: isGhostMode
-                          ? theme.colorScheme.secondary
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                    tooltip: 'Toggle Ghost Mode',
-                  ),
-                  const SizedBox(width: 12),
-                ],
+                      ),
+
+                      // Center 'YOU' indicator
+                      Positioned(
+                        left: centerX - 30,
+                        top: centerY - 30,
+                        child: _buildCenterYouMarker(theme),
+                      ),
+
+                      // Plotted User Avatars and speech bubbles
+                      ...displayedUsers.map((nearby) {
+                        final user = nearby.user;
+                        final offset = _getUserOffset(user.uid, radius);
+                        final x = centerX + offset.dx;
+                        final y = centerY + offset.dy;
+
+                        final isSelected = _selectedUser?.uid == user.uid;
+                        final isVibeMatch = selectedVibe == null ||
+                            user.vibeTags.any((t) => t
+                                .toLowerCase()
+                                .contains(selectedVibe.split(' ').last.toLowerCase()));
+
+                        final primaryPhoto = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
+
+                        return Positioned(
+                          left: x - 40,
+                          top: y - 55,
+                          child: Opacity(
+                            opacity: isVibeMatch ? 1.0 : 0.35,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Speech bubble if user has a beacon
+                                if (user.beaconEmoji != null && user.beaconMessage != null)
+                                  _buildBeaconBubble(user, theme, isSelected),
+
+                                // Glowing Ring Avatar
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedUser = user;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.primary.withAlpha(80),
+                                        width: isSelected ? 3 : 1.5,
+                                      ),
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: theme.colorScheme.primary.withAlpha(100),
+                                                blurRadius: 8,
+                                                spreadRadius: 2,
+                                              )
+                                            ]
+                                          : null,
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 20,
+                                      backgroundImage: getUserImageProvider(primaryPhoto),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+
+                                // Name label
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: theme.brightness == Brightness.light
+                                        ? Colors.white.withAlpha(220)
+                                        : theme.colorScheme.surface.withAlpha(220),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    user.name.split(' ').first,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  );
+                },
               ),
             ),
           ),
-          body: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Background Gradient decoration
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        theme.colorScheme.surface,
-                        theme.colorScheme.primaryContainer.withAlpha(30),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
 
-              // Glowing Vibe Heatmap Circles (Pulsing background)
-              if (selectedVibe != null)
-                AnimatedBuilder(
-                  animation: _pulseController,
-                  builder: (context, child) {
-                    return Stack(
-                      children: _buildHeatmapCircles(selectedVibe, theme),
-                    );
-                  },
-                ),
+          // 2. Safe Area Controls (Header & Overlays)
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Search & Filter Header
+                  _buildHeader(theme),
 
-              // Main Discovery Grid (Dimmed when Vibe Heatmap mode is active)
-              Positioned.fill(
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 300),
-                  opacity: selectedVibe != null ? 0.30 : 1.0,
-                  child: nearbyUsers.isEmpty
-                      ? _buildEmptyRadarState(theme, isScanning: false)
-                      : _buildDiscoveryGrid(nearbyUsers),
-                ),
-              ),
+                  const SizedBox(height: 16),
 
-              // Floating Proximity Chat Zone Banner at the very top
-              Positioned(
-                top: 16,
-                left: 16,
-                right: 16,
-                child: AnimatedSlide(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeOutBack,
-                  offset: isInLocalRoom ? Offset.zero : const Offset(0, -2.0),
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 300),
-                    opacity: isInLocalRoom ? 1.0 : 0.0,
-                    child: Material(
-                      elevation: 8,
-                      borderRadius: BorderRadius.circular(20),
-                      color: theme.colorScheme.tertiaryContainer,
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LocalRoomScreen(),
-                            ),
-                          );
-                        },
+                  // Floating Proximity Chat Zone Banner
+                  AnimatedSlide(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOutBack,
+                    offset: isInLocalRoom ? Offset.zero : const Offset(0, -2.0),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: isInLocalRoom ? 1.0 : 0.0,
+                      child: Material(
+                        elevation: 4,
                         borderRadius: BorderRadius.circular(20),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.pin_drop_rounded,
-                                color: theme.colorScheme.onTertiaryContainer,
+                        color: theme.colorScheme.tertiaryContainer,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LocalRoomScreen(),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Downtown Coffee Shop Zone",
-                                      style: theme.textTheme.labelMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: theme.colorScheme.onTertiaryContainer.withAlpha(200),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      "📍 You are in the zone. Join Chat ➔",
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: theme.colorScheme.onTertiaryContainer,
-                                      ),
-                                    ),
-                                  ],
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.pin_drop_rounded,
+                                  color: theme.colorScheme.onTertiaryContainer,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Downtown Coffee Shop Zone",
+                                        style: theme.textTheme.labelMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.onTertiaryContainer.withAlpha(200),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        "📍 You are in the zone. Join Chat ➔",
+                                        style: theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.onTertiaryContainer,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
 
-              // Bottom Vibe Filter Chips Row
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        theme.colorScheme.surface.withAlpha(0),
-                        theme.colorScheme.surface.withAlpha(240),
-                        theme.colorScheme.surface,
-                      ],
-                    ),
+                  const Spacer(),
+
+                  // Recenter / Compass & Drop Beacon Action Buttons Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // Drop Beacon Button
+                      FloatingActionButton.small(
+                        heroTag: 'drop_beacon_fab',
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => const BeaconSheet(),
+                          );
+                        },
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        child: const Icon(Icons.add_location_alt_rounded),
+                      ),
+                      const SizedBox(width: 8),
+                      // Recenter Compass Button
+                      Container(
+                        height: 40,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: theme.dividerColor.withAlpha(50)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(30),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: Icon(Icons.near_me_rounded, color: theme.colorScheme.primary, size: 20),
+                          onPressed: () {
+                            ref.invalidate(userPositionProvider);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: 12),
+
+                  // Bottom Vibe Chips bar
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+                        padding: const EdgeInsets.only(left: 4.0, bottom: 6.0),
                         child: Text(
                           selectedVibe != null ? 'Vibe Heatmap Active' : 'Filter by Vibe Heatmap',
                           style: theme.textTheme.labelMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: selectedVibe != null 
-                                ? theme.colorScheme.primary 
+                            color: selectedVibe != null
+                                ? theme.colorScheme.primary
                                 : theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
@@ -391,191 +583,346 @@ class _RadarScreenState extends ConsumerState<RadarScreen>
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
-
-
-            ],
-          ),
-          floatingActionButton: Padding(
-            padding: const EdgeInsets.only(bottom: 84.0), // Elevate FAB above the bottom filter chips bar
-            child: FloatingActionButton.extended(
-              heroTag: 'drop_beacon_fab',
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => const BeaconSheet(),
-                );
-              },
-              icon: const Icon(Icons.radar_rounded),
-              label: const Text('Drop Beacon'),
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
             ),
           ),
-        );
-      },
-      loading: () => Scaffold(
-        appBar: AppBar(
-          title: Row(
-            children: [
-              Icon(Icons.radar_rounded, color: theme.colorScheme.primary),
-              const SizedBox(width: 8),
-              const Text(
-                'AroundU',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-            ],
-          ),
-          elevation: 0,
-        ),
-        body: _buildEmptyRadarState(theme, isScanning: true),
+
+          // 3. Selection Profile Detail Panel (Sticky at bottom)
+          if (_selectedUser != null)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildSelectedUserCard(_selectedUser!, theme),
+            ),
+        ],
       ),
-      error: (error, stack) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Location Required'),
-            elevation: 0,
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.errorContainer.withAlpha(50),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.location_off_rounded,
-                      size: 72,
-                      color: theme.colorScheme.error,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  'GPS Location Offline',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'AroundU requires active GPS services and precise location permissions to calculate relative distances to other users within 100 meters. Without location permission, you cannot discover matching vibes nearby.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 48),
-                FilledButton.icon(
-                  onPressed: () async {
-                    try {
-                      final locService = ref.read(locationServiceProvider);
-                      await locService.requestPermission();
-                      ref.invalidate(userPositionProvider);
-                    } catch (e) {
-                      // ignore
-                    }
-                  },
-                  icon: const Icon(Icons.share_location_rounded),
-                  label: const Text(
-                    'Grant Permission & Retry',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () {
-                    Geolocator.openLocationSettings();
-                  },
-                  child: const Text('Open Device Settings'),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
-  Widget _buildEmptyRadarState(ThemeData theme, {bool isScanning = false}) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Custom Canvas Pulsing Sonar Sweep Radar
-            SizedBox(
-              height: 240,
-              width: 240,
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_sweepController, _pulseController]),
-                builder: (context, child) {
-                  return CustomPaint(
-                    painter: RadarSweepPainter(
-                      angle: _sweepController.value * 2 * math.pi,
-                      pulseValue: _pulseController.value,
-                      color: theme.colorScheme.primary,
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 40),
-            Text(
-              isScanning ? 'Scanning the area...' : 'No one nearby',
-              style: theme.textTheme.headlineSmall?.copyWith(
+  Widget _buildCenterYouMarker(ThemeData theme) {
+    return Container(
+      height: 60,
+      width: 60,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: theme.colorScheme.primary.withAlpha(25),
+      ),
+      child: Container(
+        height: 24,
+        width: 24,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+        ),
+        alignment: Alignment.center,
+        child: Container(
+          height: 14,
+          width: 14,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBeaconBubble(UserModel user, ThemeData theme, bool isSelected) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      constraints: const BoxConstraints(maxWidth: 140),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.outlineVariant.withAlpha(80),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(15),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            user.beaconEmoji!,
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              user.beaconMessage!,
+              style: theme.textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.bold,
+                fontSize: 9,
+                color: theme.colorScheme.onSurface,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: theme.brightness == Brightness.light
+                      ? const Color(0xFFF0F4F9)
+                      : const Color(0xFF232931),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Find people or #VibeTags...',
+                          hintStyle: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant.withAlpha(150),
+                            fontSize: 14,
+                          ),
+                          border: InputBorder.none,
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              isScanning
-                  ? 'Searching for vibes within 100 meters of your current GPS location.'
-                  : 'No one is within 100 meters of your location yet. Try moving to a new spot!',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            const SizedBox(width: 12),
+            Container(
+              height: 48,
+              width: 48,
+              decoration: BoxDecoration(
+                color: theme.brightness == Brightness.light
+                    ? const Color(0xFFF0F4F9)
+                    : const Color(0xFF232931),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.filter_list, size: 20),
+                onPressed: () {},
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Ghost Mode',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+            Switch(
+              value: ref.watch(ghostModeControllerProvider),
+              onChanged: (val) {
+                ref.read(ghostModeControllerProvider.notifier).toggle();
+              },
+            ),
+          ],
+        ),
+      ],
     );
   }
 
-  Widget _buildDiscoveryGrid(List<dynamic> users) {
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16.0,
-              crossAxisSpacing: 16.0,
-              childAspectRatio: 0.75, // Sleek card profile format
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return NearbyUserCard(nearbyUser: users[index]);
-              },
-              childCount: users.length,
-            ),
-          ),
+  Widget _buildSelectedUserCard(UserModel user, ThemeData theme) {
+    final primaryPhoto = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
+    return Card(
+      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+      elevation: 6,
+      shadowColor: Colors.black.withAlpha(30),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(
+          color: theme.brightness == Brightness.light
+              ? const Color(0xFFE2E8F0)
+              : const Color(0xFF334155),
+          width: 1,
         ),
-      ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                height: 4,
+                width: 36,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurfaceVariant.withAlpha(80),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundImage: getUserImageProvider(primaryPhoto),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            user.name,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 20),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                _selectedUser = null;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: user.vibeTags.map((tag) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: theme.brightness == Brightness.light
+                                  ? const Color(0xFFE8F0FE)
+                                  : const Color(0xFF1E3A8A).withAlpha(120),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              tag,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: theme.brightness == Brightness.light
+                                    ? const Color(0xFF1A73E8)
+                                    : const Color(0xFF60A5FA),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '3-Tier Interaction System',
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                // Wave Button
+                Expanded(
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF25C5C),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: TextButton.icon(
+                      onPressed: () => _handleWave(user.uid, user.name),
+                      icon: const Icon(Icons.back_hand_rounded, color: Colors.white, size: 16),
+                      label: const Text(
+                        'Wave',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Endorse Vibe Button
+                Expanded(
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFEE8A42), Color(0xFFFFB074)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: TextButton.icon(
+                      onPressed: () => _handleEndorse(user.uid, user.name),
+                      icon: const Icon(Icons.favorite_rounded, color: Colors.white, size: 16),
+                      label: const Text(
+                        'Endorse Vibe',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Message Request Button
+                Expanded(
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: TextButton.icon(
+                      onPressed: () => _handleConnect(user),
+                      icon: const Icon(Icons.mail_rounded, color: Colors.white, size: 16),
+                      label: const Text(
+                        'Message',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -654,41 +1001,3 @@ class RadarSweepPainter extends CustomPainter {
         oldDelegate.color != color;
   }
 }
-
-class _GlowingCircle extends StatelessWidget {
-  final double size;
-  final Color primaryColor;
-  final Color secondaryColor;
-  final double pulseValue;
-
-  const _GlowingCircle({
-    required this.size,
-    required this.primaryColor,
-    required this.secondaryColor,
-    required this.pulseValue,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = 0.92 + (0.16 * pulseValue);
-    return Transform.scale(
-      scale: scale,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              primaryColor,
-              primaryColor.withValues(alpha: primaryColor.a * 0.35),
-              secondaryColor,
-            ],
-            stops: const [0.0, 0.45, 1.0],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
