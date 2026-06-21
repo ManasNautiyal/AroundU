@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../../onboarding/presentation/controllers/onboarding_providers.dart';
 
-enum AuthMode { signIn, signUp, phoneOtp }
+enum AuthMode { signIn, signUp }
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -17,18 +17,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _otpController = TextEditingController();
   
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   
   AuthMode _authMode = AuthMode.signIn;
-
-  // Phone OTP specific variables
-  String? _verificationId;
-  bool _otpSent = false;
 
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
@@ -57,8 +51,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _phoneController.dispose();
-    _otpController.dispose();
     _shakeController.dispose();
     super.dispose();
   }
@@ -286,135 +278,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     }
   }
 
-  Future<void> _handlePhoneAuth() async {
-    final phone = _phoneController.text.trim();
-    if (phone.isEmpty) {
-      _shakeForm();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid phone number')),
-      );
-      return;
-    }
 
-    setState(() => _isLoading = true);
-
-    try {
-      final authRepo = ref.read(authRepositoryProvider);
-      await authRepo.verifyPhoneNumber(
-        phoneNumber: phone,
-        onVerificationFailed: (e) {
-          _shakeForm();
-          setState(() => _isLoading = false);
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Verification failed: ${e.message}'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
-        onCodeSent: (verificationId, resendToken) {
-          setState(() {
-            _verificationId = verificationId;
-            _otpSent = true;
-            _isLoading = false;
-          });
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('OTP sent successfully! Check your SMS.'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
-        onVerificationCompletedAutomatically: (verificationId) {
-          setState(() {
-            _isLoading = false;
-          });
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Phone verified automatically!'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          ref.read(onboardingStepProvider.notifier).setStep(1);
-        },
-      );
-    } catch (e) {
-      _shakeForm();
-      setState(() => _isLoading = false);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  Future<void> _handleVerifyOtp() async {
-    final smsCode = _otpController.text.trim();
-    if (smsCode.isEmpty || smsCode.length < 6) {
-      _shakeForm();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the 6-digit OTP code')),
-      );
-      return;
-    }
-
-    if (_verificationId == null) {
-      _shakeForm();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verification session expired. Please resend code.')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final authRepo = ref.read(authRepositoryProvider);
-      await authRepo.signInWithPhoneCode(
-        verificationId: _verificationId!,
-        smsCode: smsCode,
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Phone login successful!'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        ref.read(onboardingStepProvider.notifier).setStep(1);
-      }
-    } catch (e) {
-      _shakeForm();
-      if (mounted) {
-        String errorMsg = e.toString();
-        if (errorMsg.contains(']')) {
-          errorMsg = errorMsg.substring(errorMsg.indexOf(']') + 1).trim();
-        }
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Verification failed: $errorMsg'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
@@ -638,8 +502,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     switch (_authMode) {
       case AuthMode.signUp:
         return _buildSignUpForm(theme);
-      case AuthMode.phoneOtp:
-        return _buildPhoneOtpForm(theme);
       case AuthMode.signIn:
         return _buildSignInForm(theme);
     }
@@ -747,32 +609,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
         const SizedBox(height: 16),
 
         // Switching buttons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _authMode = AuthMode.signUp;
-                  _passwordController.clear();
-                  _confirmPasswordController.clear();
-                });
-              },
-              child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _authMode = AuthMode.phoneOtp;
-                  _phoneController.clear();
-                  _otpController.clear();
-                  _otpSent = false;
-                });
-              },
-              icon: const Icon(Icons.phone_iphone_rounded, size: 16),
-              label: const Text('Use Phone OTP', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
+        Center(
+          child: TextButton(
+            onPressed: () {
+              setState(() {
+                _authMode = AuthMode.signUp;
+                _passwordController.clear();
+                _confirmPasswordController.clear();
+              });
+            },
+            child: const Text('Don\'t have an account? Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
         ),
       ],
     );
@@ -923,125 +770,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
         const SizedBox(height: 16),
 
         // Switching buttons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _authMode = AuthMode.signIn;
-                });
-              },
-              child: const Text('Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _authMode = AuthMode.phoneOtp;
-                  _phoneController.clear();
-                  _otpController.clear();
-                  _otpSent = false;
-                });
-              },
-              icon: const Icon(Icons.phone_iphone_rounded, size: 16),
-              label: const Text('Use Phone OTP', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPhoneOtpForm(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          _otpSent ? 'Enter Verification Code' : 'Phone Authentication',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-
-        if (!_otpSent) ...[
-          // Phone Input
-          TextFormField(
-            key: const ValueKey('phone_number_input'),
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'Phone Number',
-              hintText: 'e.g. +1 555-010-0000',
-              prefixIcon: Icon(Icons.phone_rounded),
-            ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _isLoading ? null : _handlePhoneAuth,
-            icon: const Icon(Icons.send_rounded, size: 16),
-            label: const Text('Send Verification Code', style: TextStyle(fontWeight: FontWeight.bold)),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-        ] else ...[
-          // OTP code Input
-          TextFormField(
-            key: const ValueKey('otp_code_input'),
-            controller: _otpController,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            decoration: const InputDecoration(
-              labelText: '6-digit OTP Code',
-              prefixIcon: Icon(Icons.sms_rounded),
-              counterText: '',
-            ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _isLoading ? null : _handleVerifyOtp,
-            icon: const Icon(Icons.verified_user_rounded, size: 16),
-            label: const Text('Verify & Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextButton(
+        Center(
+          child: TextButton(
             onPressed: () {
               setState(() {
-                _otpSent = false;
-                _otpController.clear();
+                _authMode = AuthMode.signIn;
               });
             },
-            child: const Text('Back / Edit Phone Number', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Already have an account? Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
-        ],
-
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _authMode = AuthMode.signIn;
-                });
-              },
-              child: const Text('Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _authMode = AuthMode.signUp;
-                });
-              },
-              child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
         ),
       ],
     );
