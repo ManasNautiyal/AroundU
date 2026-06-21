@@ -4,7 +4,6 @@ import 'package:geolocator/geolocator.dart' hide LocationServiceDisabledExceptio
 import '../../../../core/services/location_service.dart';
 import '../../../../core/widgets/image_helper.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
-import '../../../chat/presentation/screens/local_room_screen.dart';
 import '../../data/models/nearby_user.dart';
 import '../../data/repositories/discovery_repository.dart';
 import '../controllers/discovery_providers.dart';
@@ -447,7 +446,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
 
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     final selectedVibe = ref.watch(selectedVibeFilterProvider);
-    final isInLocalRoom = ref.watch(inLocalRoomProvider);
     final isGhostMode = ref.watch(ghostModeControllerProvider);
     final nearbyUsersAsync = ref.watch(nearbyUsersProvider(currentUserId: currentUserId));
 
@@ -498,71 +496,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              if (isInLocalRoom) ...[
-                Material(
-                  elevation: 0,
-                  color: cardBg,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: borderBg, width: 1.2),
-                  ),
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LocalRoomScreen(),
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.pin_drop_rounded,
-                              color: theme.colorScheme.onPrimary,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Downtown Coffee Shop Zone",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onSurface,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  "📍 You are in the zone. Join Chat ➔",
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
               Expanded(
                 child: nearbyUsersAsync.when(
                   data: (nearbyUsers) {
@@ -582,6 +515,9 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                       }
                       return true;
                     }).toList();
+
+                    // Sort filtered users by likesCount in descending order
+                    filteredUsers.sort((a, b) => b.user.likesCount.compareTo(a.user.likesCount));
 
                     if (filteredUsers.isEmpty) {
                       return Center(

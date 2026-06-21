@@ -9,6 +9,7 @@ import '../../../chat/presentation/screens/chat_screen.dart';
 import '../../data/repositories/interaction_repository.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../discovery/presentation/controllers/user_providers.dart';
+import '../widgets/match_overlay.dart';
 
 class InboxScreen extends ConsumerStatefulWidget {
   final int? selectedTabOverride;
@@ -20,6 +21,8 @@ class InboxScreen extends ConsumerStatefulWidget {
 }
 
 class _InboxScreenState extends ConsumerState<InboxScreen> {
+  bool _showReceivedLikes = true;
+
   void _showProfileDetail(BuildContext context, UserModel user) {
     showModalBottomSheet(
       context: context,
@@ -60,6 +63,10 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           ),
         );
       } else {
+        final receivedLikesAsync = ref.watch(receivedLikesStreamProvider(currentUserId: currentUserId));
+        final sentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: currentUserId));
+        final isDark = theme.brightness == Brightness.dark;
+
         return Scaffold(
           appBar: AppBar(
             title: const Text(
@@ -69,10 +76,81 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           ),
           body: Container(
             decoration: decoration,
-            child: pendingRequestsAsync.when(
-              data: (requests) => _buildRequestsList(requests, theme),
-              error: (err, _) => Center(child: Text('Error loading requests: $err')),
-              loading: () => const Center(child: CircularProgressIndicator()),
+            child: Column(
+              children: [
+                // Choice Chips filter
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ChoiceChip(
+                          label: Center(
+                            child: Text(
+                              'Liked Me (${receivedLikesAsync.valueOrNull?.length ?? 0})',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _showReceivedLikes ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          selected: _showReceivedLikes,
+                          selectedColor: theme.colorScheme.primary,
+                          backgroundColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+                          checkmarkColor: theme.colorScheme.onPrimary,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _showReceivedLikes = true;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ChoiceChip(
+                          label: Center(
+                            child: Text(
+                              'Liked by Me (${sentLikesAsync.valueOrNull?.length ?? 0})',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: !_showReceivedLikes ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          selected: !_showReceivedLikes,
+                          selectedColor: theme.colorScheme.primary,
+                          backgroundColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+                          checkmarkColor: theme.colorScheme.onPrimary,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _showReceivedLikes = false;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Tab Content
+                Expanded(
+                  child: _showReceivedLikes
+                      ? receivedLikesAsync.when(
+                          data: (likes) => _buildReceivedLikesList(likes, currentUserId, theme),
+                          error: (err, _) => Center(child: Text('Error loading likes: $err')),
+                          loading: () => const Center(child: CircularProgressIndicator()),
+                        )
+                      : sentLikesAsync.when(
+                          data: (likes) => _buildSentLikesList(likes, currentUserId, theme),
+                          error: (err, _) => Center(child: Text('Error loading sent likes: $err')),
+                          loading: () => const Center(child: CircularProgressIndicator()),
+                        ),
+                ),
+              ],
             ),
           ),
         );
@@ -235,6 +313,68 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildReceivedLikesList(List<InteractionModel> likes, String currentUserId, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    if (likes.isEmpty) {
+      return _buildEmptyState(
+        theme: theme,
+        icon: Icons.favorite_border_rounded,
+        title: 'No Likes Yet',
+        body: 'Check out the radar and scan for nearby profiles. People who like you will appear here!',
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      itemCount: likes.length,
+      separatorBuilder: (context, index) => Divider(
+        color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+        height: 1,
+        thickness: 1.0,
+      ),
+      itemBuilder: (context, index) {
+        final like = likes[index];
+        return ReceivedLikeTile(
+          like: like,
+          currentUserId: currentUserId,
+          theme: theme,
+          onShowProfile: (ctx, user) => _showProfileDetail(ctx, user),
+        );
+      },
+    );
+  }
+
+  Widget _buildSentLikesList(List<InteractionModel> likes, String currentUserId, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    if (likes.isEmpty) {
+      return _buildEmptyState(
+        theme: theme,
+        icon: Icons.favorite_outline_rounded,
+        title: 'No Sent Likes',
+        body: 'Likes you send to nearby people will be listed here. You can unlike them at any time.',
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      itemCount: likes.length,
+      separatorBuilder: (context, index) => Divider(
+        color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+        height: 1,
+        thickness: 1.0,
+      ),
+      itemBuilder: (context, index) {
+        final like = likes[index];
+        return SentLikeTile(
+          like: like,
+          currentUserId: currentUserId,
+          theme: theme,
+          onShowProfile: (ctx, user) => _showProfileDetail(ctx, user),
+        );
+      },
     );
   }
 }
@@ -585,6 +725,228 @@ class MessageRequestTile extends ConsumerWidget {
         ),
       ),
       error: (err, _) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class ReceivedLikeTile extends ConsumerWidget {
+  final InteractionModel like;
+  final String currentUserId;
+  final ThemeData theme;
+  final Function(BuildContext, UserModel) onShowProfile;
+
+  const ReceivedLikeTile({
+    super.key,
+    required this.like,
+    required this.currentUserId,
+    required this.theme,
+    required this.onShowProfile,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = theme.brightness == Brightness.dark;
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+
+    final senderAsync = ref.watch(userProfileProvider(like.senderId));
+    final sentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: currentUserId));
+    final hasLikedBack = sentLikesAsync.valueOrNull?.any((l) => l.receiverId == like.senderId) ?? false;
+
+    return senderAsync.when(
+      data: (sender) {
+        if (sender == null) return const SizedBox.shrink();
+        final avatarUrl = sender.profilePictures.isNotEmpty ? sender.profilePictures[0] : '';
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () => onShowProfile(context, sender),
+                child: CircleAvatar(
+                  radius: 24,
+                  backgroundImage: getUserImageProvider(avatarUrl),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sender.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Liked your profile',
+                      style: theme.textTheme.bodySmall?.copyWith(color: subTextColor),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (!hasLikedBack)
+                SizedBox(
+                  height: 36,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final repo = ref.read(interactionRepositoryProvider);
+                      final mutual = await repo.sendLike(
+                        currentUserId: currentUserId,
+                        targetUserId: sender.uid,
+                      );
+                      if (context.mounted) {
+                        if (mutual) {
+                          MatchOverlay.show(
+                            context: context,
+                            matchedUser: sender,
+                            onSendMessage: () {
+                              final matchId = currentUserId.compareTo(sender.uid) < 0
+                                  ? '${currentUserId}_${sender.uid}'
+                                  : '${sender.uid}_$currentUserId';
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatScreen(
+                                    matchId: matchId,
+                                    targetUser: sender,
+                                  ),
+                                ),
+                              );
+                            },
+                            onKeepLooking: () {},
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Liked ${sender.name} back!')),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      shape: const StadiumBorder(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.favorite_rounded, size: 14),
+                    label: const Text('Like Back', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withAlpha(30),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.colorScheme.primary.withAlpha(50)),
+                  ),
+                  child: Text(
+                    'Connected',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox(height: 56),
+      error: (e, s) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class SentLikeTile extends ConsumerWidget {
+  final InteractionModel like;
+  final String currentUserId;
+  final ThemeData theme;
+  final Function(BuildContext, UserModel) onShowProfile;
+
+  const SentLikeTile({
+    super.key,
+    required this.like,
+    required this.currentUserId,
+    required this.theme,
+    required this.onShowProfile,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = theme.brightness == Brightness.dark;
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+
+    final receiverAsync = ref.watch(userProfileProvider(like.receiverId));
+
+    return receiverAsync.when(
+      data: (receiver) {
+        if (receiver == null) return const SizedBox.shrink();
+        final avatarUrl = receiver.profilePictures.isNotEmpty ? receiver.profilePictures[0] : '';
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () => onShowProfile(context, receiver),
+                child: CircleAvatar(
+                  radius: 24,
+                  backgroundImage: getUserImageProvider(avatarUrl),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      receiver.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'You liked their profile',
+                      style: theme.textTheme.bodySmall?.copyWith(color: subTextColor),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                height: 36,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final repo = ref.read(interactionRepositoryProvider);
+                    await repo.unlikeUser(
+                      currentUserId: currentUserId,
+                      targetUserId: receiver.uid,
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Unliked ${receiver.name}.')),
+                      );
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.redAccent,
+                    side: const BorderSide(color: Colors.redAccent, width: 1.0),
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  icon: const Icon(Icons.close_rounded, size: 14),
+                  label: const Text('Unlike', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox(height: 56),
+      error: (e, s) => const SizedBox.shrink(),
     );
   }
 }

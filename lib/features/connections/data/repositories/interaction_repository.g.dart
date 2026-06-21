@@ -434,5 +434,261 @@ class _ConnectionRequestsStreamProviderElement
       (origin as ConnectionRequestsStreamProvider).currentUserId;
 }
 
+String _$receivedLikesStreamHash() =>
+    r'71dc8a1301c3efa6bae203dd21dbca4b463bb702';
+
+/// See also [receivedLikesStream].
+@ProviderFor(receivedLikesStream)
+const receivedLikesStreamProvider = ReceivedLikesStreamFamily();
+
+/// See also [receivedLikesStream].
+class ReceivedLikesStreamFamily
+    extends Family<AsyncValue<List<InteractionModel>>> {
+  /// See also [receivedLikesStream].
+  const ReceivedLikesStreamFamily();
+
+  /// See also [receivedLikesStream].
+  ReceivedLikesStreamProvider call({required String currentUserId}) {
+    return ReceivedLikesStreamProvider(currentUserId: currentUserId);
+  }
+
+  @override
+  ReceivedLikesStreamProvider getProviderOverride(
+    covariant ReceivedLikesStreamProvider provider,
+  ) {
+    return call(currentUserId: provider.currentUserId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'receivedLikesStreamProvider';
+}
+
+/// See also [receivedLikesStream].
+class ReceivedLikesStreamProvider
+    extends AutoDisposeStreamProvider<List<InteractionModel>> {
+  /// See also [receivedLikesStream].
+  ReceivedLikesStreamProvider({required String currentUserId})
+    : this._internal(
+        (ref) => receivedLikesStream(
+          ref as ReceivedLikesStreamRef,
+          currentUserId: currentUserId,
+        ),
+        from: receivedLikesStreamProvider,
+        name: r'receivedLikesStreamProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$receivedLikesStreamHash,
+        dependencies: ReceivedLikesStreamFamily._dependencies,
+        allTransitiveDependencies:
+            ReceivedLikesStreamFamily._allTransitiveDependencies,
+        currentUserId: currentUserId,
+      );
+
+  ReceivedLikesStreamProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.currentUserId,
+  }) : super.internal();
+
+  final String currentUserId;
+
+  @override
+  Override overrideWith(
+    Stream<List<InteractionModel>> Function(ReceivedLikesStreamRef provider)
+    create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: ReceivedLikesStreamProvider._internal(
+        (ref) => create(ref as ReceivedLikesStreamRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        currentUserId: currentUserId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<List<InteractionModel>> createElement() {
+    return _ReceivedLikesStreamProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ReceivedLikesStreamProvider &&
+        other.currentUserId == currentUserId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, currentUserId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ReceivedLikesStreamRef
+    on AutoDisposeStreamProviderRef<List<InteractionModel>> {
+  /// The parameter `currentUserId` of this provider.
+  String get currentUserId;
+}
+
+class _ReceivedLikesStreamProviderElement
+    extends AutoDisposeStreamProviderElement<List<InteractionModel>>
+    with ReceivedLikesStreamRef {
+  _ReceivedLikesStreamProviderElement(super.provider);
+
+  @override
+  String get currentUserId =>
+      (origin as ReceivedLikesStreamProvider).currentUserId;
+}
+
+String _$sentLikesStreamHash() => r'6d25521ffe6e284e903b8145497f9ca17ccd097b';
+
+/// See also [sentLikesStream].
+@ProviderFor(sentLikesStream)
+const sentLikesStreamProvider = SentLikesStreamFamily();
+
+/// See also [sentLikesStream].
+class SentLikesStreamFamily extends Family<AsyncValue<List<InteractionModel>>> {
+  /// See also [sentLikesStream].
+  const SentLikesStreamFamily();
+
+  /// See also [sentLikesStream].
+  SentLikesStreamProvider call({required String currentUserId}) {
+    return SentLikesStreamProvider(currentUserId: currentUserId);
+  }
+
+  @override
+  SentLikesStreamProvider getProviderOverride(
+    covariant SentLikesStreamProvider provider,
+  ) {
+    return call(currentUserId: provider.currentUserId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'sentLikesStreamProvider';
+}
+
+/// See also [sentLikesStream].
+class SentLikesStreamProvider
+    extends AutoDisposeStreamProvider<List<InteractionModel>> {
+  /// See also [sentLikesStream].
+  SentLikesStreamProvider({required String currentUserId})
+    : this._internal(
+        (ref) => sentLikesStream(
+          ref as SentLikesStreamRef,
+          currentUserId: currentUserId,
+        ),
+        from: sentLikesStreamProvider,
+        name: r'sentLikesStreamProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$sentLikesStreamHash,
+        dependencies: SentLikesStreamFamily._dependencies,
+        allTransitiveDependencies:
+            SentLikesStreamFamily._allTransitiveDependencies,
+        currentUserId: currentUserId,
+      );
+
+  SentLikesStreamProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.currentUserId,
+  }) : super.internal();
+
+  final String currentUserId;
+
+  @override
+  Override overrideWith(
+    Stream<List<InteractionModel>> Function(SentLikesStreamRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: SentLikesStreamProvider._internal(
+        (ref) => create(ref as SentLikesStreamRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        currentUserId: currentUserId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<List<InteractionModel>> createElement() {
+    return _SentLikesStreamProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SentLikesStreamProvider &&
+        other.currentUserId == currentUserId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, currentUserId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin SentLikesStreamRef
+    on AutoDisposeStreamProviderRef<List<InteractionModel>> {
+  /// The parameter `currentUserId` of this provider.
+  String get currentUserId;
+}
+
+class _SentLikesStreamProviderElement
+    extends AutoDisposeStreamProviderElement<List<InteractionModel>>
+    with SentLikesStreamRef {
+  _SentLikesStreamProviderElement(super.provider);
+
+  @override
+  String get currentUserId => (origin as SentLikesStreamProvider).currentUserId;
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

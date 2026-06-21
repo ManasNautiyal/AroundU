@@ -165,7 +165,7 @@ class _MessagesStreamProviderElement
   String get matchId => (origin as MessagesStreamProvider).matchId;
 }
 
-String _$proximityStatusHash() => r'530d36aa8442e10e6595b92bb7a0cf819eecc130';
+String _$proximityStatusHash() => r'8bdb90d7902880c8e4fb2ce4fd826c82d89b70fc';
 
 abstract class _$ProximityStatus extends BuildlessAutoDisposeNotifier<bool> {
   late final String userId;

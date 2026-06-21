@@ -12,6 +12,7 @@ class UserModel {
   final Map<String, dynamic>? location; // Contains 'geopoint' and 'geohash'
   final String? beaconEmoji;
   final String? beaconMessage;
+  final int likesCount;
 
   UserModel({
     required this.uid,
@@ -24,6 +25,7 @@ class UserModel {
     this.location,
     this.beaconEmoji,
     this.beaconMessage,
+    this.likesCount = 0,
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map, String uid) {
@@ -38,6 +40,7 @@ class UserModel {
       location: map['location'] as Map<String, dynamic>?,
       beaconEmoji: map['beaconEmoji'] as String?,
       beaconMessage: map['beaconMessage'] as String?,
+      likesCount: map['likesCount'] as int? ?? 0,
     );
   }
 
@@ -52,6 +55,7 @@ class UserModel {
       if (location != null) 'location': location,
       if (beaconEmoji != null) 'beaconEmoji': beaconEmoji,
       if (beaconMessage != null) 'beaconMessage': beaconMessage,
+      'likesCount': likesCount,
     };
   }
 }

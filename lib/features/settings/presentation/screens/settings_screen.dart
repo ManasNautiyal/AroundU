@@ -413,10 +413,10 @@ class SettingsScreen extends ConsumerWidget {
           }
 
           final validPics = user.profilePictures.where((pic) => pic.isNotEmpty).toList();
-          final wavesAsync = ref.watch(incomingWavesStreamProvider(currentUserId: user.uid));
+          final likesAsync = ref.watch(receivedLikesStreamProvider(currentUserId: user.uid));
           final matchesAsync = ref.watch(matchesStreamProvider(currentUserId: user.uid));
 
-          final wavesCount = wavesAsync.valueOrNull?.length ?? 0;
+          final likesCount = likesAsync.valueOrNull?.length ?? 0;
           final matchesCount = matchesAsync.valueOrNull?.length ?? 0;
 
           final avatarUrl = validPics.isNotEmpty ? validPics[0] : '';
@@ -432,18 +432,17 @@ class SettingsScreen extends ConsumerWidget {
                     backgroundColor: theme.colorScheme.surface,
                     backgroundImage: getUserImageProvider(avatarUrl),
                   ),
-                  const Spacer(),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildStatColumn('Photos', validPics.length, theme),
-                      const SizedBox(width: 24),
-                      _buildStatColumn('Waves', wavesCount, theme),
-                      const SizedBox(width: 24),
-                      _buildStatColumn('Matches', matchesCount, theme),
-                    ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatColumn('Posts', validPics.length, theme),
+                        _buildStatColumn('Likes', likesCount, theme),
+                        _buildStatColumn('Connects', matchesCount, theme),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 12),
                 ],
               ),
               const SizedBox(height: 16),
@@ -520,7 +519,7 @@ class SettingsScreen extends ConsumerWidget {
                             Icon(Icons.camera_alt_outlined, color: theme.colorScheme.onSurfaceVariant, size: 48),
                             const SizedBox(height: 12),
                             Text(
-                              'No Photos Yet',
+                              'No Posts Yet',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: theme.colorScheme.onSurfaceVariant,
@@ -533,6 +532,7 @@ class SettingsScreen extends ConsumerWidget {
                     )
                   : GridView.builder(
                       shrinkWrap: true,
+                      padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,

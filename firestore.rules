@@ -25,8 +25,10 @@ service cloud.firestore {
       // Only authenticated users can read profiles
       allow read: if isAuthenticated();
       
-      // Users can only create or update their own profile document
-      allow create, update: if isOwner(userId);
+      // Users can only create their own profile document
+      allow create: if isOwner(userId);
+      // Allow updates by authenticated users (e.g. for incrementing/decrementing likes count)
+      allow update: if isAuthenticated();
       
       // Prevent deletion of profile documents entirely to protect collection integrity
       allow delete: if false;
@@ -50,7 +52,8 @@ service cloud.firestore {
     match /likes/{likeId} {
       allow read: if isAuthenticated() && 
         (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
-      allow write: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+      allow create, update: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.senderId == request.auth.uid;
     }
 
     // --- Matches ---

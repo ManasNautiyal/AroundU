@@ -26,6 +26,8 @@ class InteractionRepository {
   // StreamControllers to notify changes in Mock Streams
   final _matchesController = StreamController<List<MatchModel>>.broadcast();
   final _incomingWavesController = StreamController<List<InteractionModel>>.broadcast();
+  final _incomingLikesController = StreamController<List<InteractionModel>>.broadcast();
+  final _sentLikesController = StreamController<List<InteractionModel>>.broadcast();
 
   InteractionRepository(this._firestore);
 
@@ -46,6 +48,11 @@ class InteractionRepository {
         'senderId': currentUserId,
         'receiverId': targetUserId,
         'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Increment target user's likesCount
+      await _firestore.collection('users').doc(targetUserId).update({
+        'likesCount': FieldValue.increment(1),
       });
 
       // 2. Check if mutual like exists
@@ -81,6 +88,9 @@ class InteractionRepository {
         type: InteractionType.like,
         timestamp: DateTime.now(),
       ));
+
+      _sentLikesController.add(_mockLikes.where((l) => l.senderId == currentUserId).toList());
+      _incomingLikesController.add(_mockLikes.where((l) => l.receiverId == targetUserId).toList());
 
       if (hasLikedMe) {
         final match = MatchModel(
@@ -230,6 +240,60 @@ class InteractionRepository {
       await _firestore.collection('connection_requests').doc(requestId).delete();
     }
   }
+
+  /// Unlikes a user.
+  Future<void> unlikeUser({required String currentUserId, required String targetUserId}) async {
+    if (_isFirebaseInitialized) {
+      final likeRef = _firestore.collection('likes').doc('${currentUserId}_$targetUserId');
+      await likeRef.delete();
+
+      // Decrement target user's likesCount
+      await _firestore.collection('users').doc(targetUserId).update({
+        'likesCount': FieldValue.increment(-1),
+      });
+
+      // Also delete the match if it exists
+      final matchId = currentUserId.compareTo(targetUserId) < 0
+          ? '${currentUserId}_$targetUserId'
+          : '${targetUserId}_$currentUserId';
+      await _firestore.collection('matches').doc(matchId).delete();
+    } else {
+      _mockLikes.removeWhere((l) => l.senderId == currentUserId && l.receiverId == targetUserId);
+      _mockMatches.removeWhere((m) => m.id == 'match_${currentUserId}_$targetUserId' || m.id == 'match_${targetUserId}_$currentUserId');
+      _matchesController.add(List.from(_mockMatches));
+      
+      _sentLikesController.add(_mockLikes.where((l) => l.senderId == currentUserId).toList());
+      _incomingLikesController.add(_mockLikes.where((l) => l.receiverId == targetUserId).toList());
+    }
+  }
+
+  /// Streams received likes for a user.
+  Stream<List<InteractionModel>> getReceivedLikesStream(String userId) {
+    if (_isFirebaseInitialized) {
+      return _firestore
+          .collection('likes')
+          .where('receiverId', isEqualTo: userId)
+          .snapshots()
+          .map((snap) => snap.docs.map((d) => InteractionModel.fromMap(d.data(), d.id)).toList());
+    } else {
+      Timer.run(() => _incomingLikesController.add(_mockLikes.where((l) => l.receiverId == userId).toList()));
+      return _incomingLikesController.stream;
+    }
+  }
+
+  /// Streams sent likes by a user.
+  Stream<List<InteractionModel>> getSentLikesStream(String userId) {
+    if (_isFirebaseInitialized) {
+      return _firestore
+          .collection('likes')
+          .where('senderId', isEqualTo: userId)
+          .snapshots()
+          .map((snap) => snap.docs.map((d) => InteractionModel.fromMap(d.data(), d.id)).toList());
+    } else {
+      Timer.run(() => _sentLikesController.add(_mockLikes.where((l) => l.senderId == userId).toList()));
+      return _sentLikesController.stream;
+    }
+  }
 }
 
 @riverpod
@@ -253,4 +317,16 @@ Stream<List<InteractionModel>> incomingWavesStream(IncomingWavesStreamRef ref, {
 Stream<List<MessageRequestModel>> connectionRequestsStream(ConnectionRequestsStreamRef ref, {required String currentUserId}) {
   final repo = ref.watch(interactionRepositoryProvider);
   return repo.getConnectionRequestsStream(currentUserId);
+}
+
+@riverpod
+Stream<List<InteractionModel>> receivedLikesStream(ReceivedLikesStreamRef ref, {required String currentUserId}) {
+  final repo = ref.watch(interactionRepositoryProvider);
+  return repo.getReceivedLikesStream(currentUserId);
+}
+
+@riverpod
+Stream<List<InteractionModel>> sentLikesStream(SentLikesStreamRef ref, {required String currentUserId}) {
+  final repo = ref.watch(interactionRepositoryProvider);
+  return repo.getSentLikesStream(currentUserId);
 }

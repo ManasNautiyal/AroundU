@@ -5,7 +5,8 @@ import '../../data/models/nearby_user.dart';
 import '../../../connections/data/repositories/interaction_repository.dart';
 import '../../../safety/data/repositories/block_service.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
-
+import '../../../chat/presentation/screens/chat_screen.dart';
+import '../../../connections/presentation/widgets/match_overlay.dart';
 class ProfileDetailSheet extends ConsumerStatefulWidget {
   final UserModel userModel;
 
@@ -232,6 +233,10 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final user = widget.userModel;
+
+    final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
+    final sentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: currentUserId));
+    final hasLiked = sentLikesAsync.valueOrNull?.any((like) => like.receiverId == user.uid) ?? false;
 
     final isDark = theme.brightness == Brightness.dark;
     final sheetColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
@@ -465,19 +470,107 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                       stops: const [0.0, 0.4, 1.0],
                     ),
                   ),
-                  child: FilledButton.icon(
-                    onPressed: _showConnectDialog,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    icon: const Icon(Icons.send_rounded),
-                    label: const Text(
-                      'Connect & Message',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                  child: Row(
+                    children: [
+                      // Like/Unlike Heart Button
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final repo = ref.read(interactionRepositoryProvider);
+                            if (hasLiked) {
+                              await repo.unlikeUser(
+                                currentUserId: currentUserId,
+                                targetUserId: user.uid,
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Unliked ${user.name}'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } else {
+                              final mutual = await repo.sendLike(
+                                currentUserId: currentUserId,
+                                targetUserId: user.uid,
+                              );
+                              if (context.mounted) {
+                                if (mutual) {
+                                  // Show Match Celebration Overlay!
+                                  MatchOverlay.show(
+                                    context: context,
+                                    matchedUser: user,
+                                    onSendMessage: () {
+                                      final matchId = currentUserId.compareTo(user.uid) < 0
+                                          ? '${currentUserId}_${user.uid}'
+                                          : '${user.uid}_$currentUserId';
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ChatScreen(
+                                            matchId: matchId,
+                                            targetUser: user,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    onKeepLooking: () {},
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Liked ${user.name}!'),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: hasLiked ? Colors.redAccent : theme.colorScheme.primary,
+                            side: BorderSide(
+                              color: hasLiked ? Colors.redAccent : theme.colorScheme.primary,
+                              width: 1.5,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: Icon(
+                            hasLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                            color: hasLiked ? Colors.redAccent : theme.colorScheme.primary,
+                          ),
+                          label: Text(
+                            hasLiked ? 'Liked' : 'Like',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      // Connect & Message Button
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: _showConnectDialog,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.send_rounded),
+                          label: const Text(
+                            'Connect',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

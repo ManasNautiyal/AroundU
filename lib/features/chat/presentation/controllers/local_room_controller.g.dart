@@ -6,7 +6,7 @@ part of 'local_room_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$localRoomMessagesHash() => r'0640202eba4adbaececa174067907ec06553e9d7';
+String _$localRoomMessagesHash() => r'932783688c262d18730202eee55d6ce6e52e0f44';
 
 /// See also [LocalRoomMessages].
 @ProviderFor(LocalRoomMessages)
