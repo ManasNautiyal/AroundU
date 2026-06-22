@@ -20,11 +20,29 @@ import 'core/services/app_observers.dart';
 
 final dynamicColorSchemeProvider = FutureProvider.family<ColorScheme, Brightness>((ref, brightness) async {
   final isDark = brightness == Brightness.dark;
-  final assetPath = isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.png';
-  return ColorScheme.fromImageProvider(
-    provider: AssetImage(assetPath),
-    brightness: brightness,
-  );
+  if (isDark) {
+    return const ColorScheme.dark(
+      primary: Colors.white,
+      onPrimary: Colors.black,
+      secondary: Colors.white,
+      onSecondary: Colors.black,
+      surface: Colors.black,
+      onSurface: Colors.white,
+      outline: Colors.white,
+      outlineVariant: Colors.white,
+    );
+  } else {
+    return const ColorScheme.light(
+      primary: Colors.black,
+      onPrimary: Colors.white,
+      secondary: Colors.black,
+      onSecondary: Colors.white,
+      surface: Colors.white,
+      onSurface: Colors.black,
+      outline: Colors.black,
+      outlineVariant: Colors.black,
+    );
+  }
 });
 
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
@@ -88,32 +106,30 @@ class MyApp extends ConsumerWidget {
     final lightColorScheme = lightSchemeAsync.valueOrNull ?? const ColorScheme.light(
       primary: Colors.black,
       onPrimary: Colors.white,
-      secondary: Colors.black87,
+      secondary: Colors.black,
       onSecondary: Colors.white,
-      surface: Color(0xFFF3F5F2),
+      surface: Colors.white,
       onSurface: Colors.black,
+      outline: Colors.black,
+      outlineVariant: Colors.black,
     );
 
     final darkColorScheme = darkSchemeAsync.valueOrNull ?? const ColorScheme.dark(
       primary: Colors.white,
       onPrimary: Colors.black,
-      secondary: Colors.white70,
+      secondary: Colors.white,
       onSecondary: Colors.black,
-      surface: Color(0xFF060606),
+      surface: Colors.black,
       onSurface: Colors.white,
+      outline: Colors.white,
+      outlineVariant: Colors.white,
     );
 
-    final lightCardColor = Color.alphaBlend(
-      lightColorScheme.onSurface.withValues(alpha: 0.05),
-      lightColorScheme.surface,
-    );
-    final lightBorderColor = lightColorScheme.outlineVariant;
+    const lightCardColor = Colors.white;
+    const lightBorderColor = Colors.black;
 
-    final darkCardColor = Color.alphaBlend(
-      darkColorScheme.onSurface.withValues(alpha: 0.08),
-      darkColorScheme.surface,
-    );
-    final darkBorderColor = darkColorScheme.outlineVariant;
+    const darkCardColor = Colors.black;
+    const darkBorderColor = Colors.white;
 
     final baseLight = ThemeData(
       useMaterial3: true,
@@ -383,7 +399,7 @@ class LoadingScreen extends ConsumerWidget {
     final isDark = themeMode == ThemeMode.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF060606) : const Color(0xFFFBFDFA),
+      backgroundColor: isDark ? Colors.black : Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -408,7 +424,7 @@ class LoadingScreen extends ConsumerWidget {
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2.0,
-                valueColor: AlwaysStoppedAnimation<Color>(isDark ? Colors.white38 : Colors.black38),
+                valueColor: AlwaysStoppedAnimation<Color>(isDark ? Colors.white : Colors.black),
               ),
             ),
           ],

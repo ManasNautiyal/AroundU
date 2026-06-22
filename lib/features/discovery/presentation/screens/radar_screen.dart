@@ -38,10 +38,10 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   void _showVibeFilterSheet() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
-    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final cardBg = isDark ? Colors.black : Colors.white;
+    final borderBg = isDark ? Colors.white : Colors.black;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
 
     final presetVibes = [
       '☕ Coffee',
@@ -154,11 +154,11 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
 
   Widget _buildHeader(ThemeData theme, String? selectedVibe) {
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
-    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final subTextColor = isDark ? Colors.white70 : Colors.black54;
-    final hintColor = isDark ? Colors.white38 : Colors.black38;
+    final cardBg = isDark ? Colors.black : Colors.white;
+    final borderBg = isDark ? Colors.white : Colors.black;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
+    final hintColor = isDark ? Colors.white.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.4);
 
     return Column(
       children: [
@@ -244,8 +244,8 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   Widget _buildProfileCard(NearbyUser nearbyUser) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
-    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final cardBg = isDark ? Colors.black : Colors.white;
+    final borderBg = isDark ? Colors.white : Colors.black;
 
     final user = nearbyUser.user;
     final primaryPhoto = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
@@ -267,16 +267,16 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                 primaryPhoto,
                 fit: BoxFit.cover,
                 errorWidget: Container(
-                  color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFE2E5E2),
-                  child: Icon(Icons.person, size: 40, color: isDark ? Colors.white24 : Colors.black26),
+                  color: isDark ? Colors.black : Colors.white,
+                  child: Icon(Icons.person, size: 40, color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3)),
                 ),
                 placeholder: Container(
-                  color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFE2E5E2),
+                  color: isDark ? Colors.black : Colors.white,
                   child: Center(
                     child: SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(isDark ? Colors.white38 : Colors.black26)),
+                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3))),
                     ),
                   ),
                 ),
@@ -305,7 +305,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.75),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF262626), width: 1.0),
+                      border: Border.all(color: isDark ? Colors.white : Colors.black, width: 1.0),
                     ),
                     child: Text(
                       user.beaconEmoji!,
@@ -411,9 +411,9 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                     child: Switch(
                       value: isGhostMode,
                       activeThumbColor: isDark ? Colors.white : Colors.black,
-                      activeTrackColor: isDark ? Colors.white38 : Colors.black38,
-                      inactiveThumbColor: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
-                      inactiveTrackColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+                      activeTrackColor: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.38),
+                      inactiveThumbColor: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                      inactiveTrackColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
                       onChanged: (val) {
                         ref.read(ghostModeControllerProvider.notifier).toggle();
                       },

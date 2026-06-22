@@ -205,7 +205,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
     final isDark = theme.brightness == Brightness.dark;
     final bubbleColor = isMe
         ? theme.colorScheme.primary
-        : (isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2));
+        : (isDark ? Colors.black : Colors.white);
     final textColor = isMe
         ? theme.colorScheme.onPrimary
         : (isDark ? Colors.white : Colors.black);
@@ -234,6 +234,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                   bottomLeft: Radius.circular(isMe ? 18 : 4),
                   bottomRight: Radius.circular(isMe ? 4 : 18),
                 ),
+                border: isMe ? null : Border.all(color: isDark ? Colors.white : Colors.black, width: 1.0),
               ),
               child: Text(
                 message.text,
@@ -264,11 +265,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
 
   Widget _buildInputArea(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
-    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final subTextColor = isDark ? Colors.white70 : Colors.black54;
-    final hintColor = isDark ? Colors.white38 : Colors.black38;
+    final cardBg = isDark ? Colors.black : Colors.white;
+    final borderBg = isDark ? Colors.white : Colors.black;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
+    final hintColor = isDark ? Colors.white.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.4);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

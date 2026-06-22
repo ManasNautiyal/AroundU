@@ -88,16 +88,13 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       decoration: BoxDecoration(
-        color: Color.alphaBlend(
-          theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.05),
-          theme.colorScheme.surface,
-        ),
+        color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
         ),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant,
+          color: theme.colorScheme.outline,
           width: 1.2,
         ),
       ),
@@ -113,7 +110,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white24 : Colors.black12,
+                  color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -178,7 +175,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
             SliderTheme(
               data: SliderThemeData(
                 activeTrackColor: theme.colorScheme.primary,
-                inactiveTrackColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+                inactiveTrackColor: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.15),
                 thumbColor: theme.colorScheme.primary,
                 overlayColor: theme.colorScheme.primary.withAlpha(20),
                 valueIndicatorTextStyle: TextStyle(

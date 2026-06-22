@@ -27,8 +27,8 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     final reasons = ['Spam', 'Harassment', 'Inappropriate Content'];
 
     final isDark = theme.brightness == Brightness.dark;
-    final sheetColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
-    final borderColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final sheetColor = isDark ? Colors.black : Colors.white;
+    final borderColor = isDark ? Colors.white : Colors.black;
 
     showModalBottomSheet(
       context: context,
@@ -117,8 +117,8 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     final textController = TextEditingController();
 
     final isDark = theme.brightness == Brightness.dark;
-    final sheetColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
-    final borderColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final sheetColor = isDark ? Colors.black : Colors.white;
+    final borderColor = isDark ? Colors.white : Colors.black;
 
     showModalBottomSheet(
       context: context,
@@ -239,8 +239,8 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     final hasLiked = sentLikesAsync.valueOrNull?.any((like) => like.receiverId == user.uid) ?? false;
 
     final isDark = theme.brightness == Brightness.dark;
-    final sheetColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
-    final borderColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final sheetColor = isDark ? Colors.black : Colors.white;
+    final borderColor = isDark ? Colors.white : Colors.black;
 
     // Filter out empty picture paths
     final images = user.profilePictures.where((pic) => pic.isNotEmpty).toList();

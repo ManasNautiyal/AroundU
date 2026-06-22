@@ -118,7 +118,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                 activeThumbColor: theme.colorScheme.onPrimary,
                 activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.4),
                 inactiveThumbColor: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
-                inactiveTrackColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+                inactiveTrackColor: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.15),
               ),
             ],
           ),
@@ -340,11 +340,8 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
 
   Widget _buildInputArea(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = Color.alphaBlend(
-      theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.05),
-      theme.colorScheme.surface,
-    );
-    final borderBg = theme.colorScheme.outlineVariant;
+    final cardBg = isDark ? Colors.black : Colors.white;
+    final borderBg = isDark ? Colors.white : Colors.black;
     final textColor = theme.colorScheme.onSurface;
     final hintColor = isDark ? Colors.white38 : Colors.black38;
 

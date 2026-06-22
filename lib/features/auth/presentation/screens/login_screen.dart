@@ -388,10 +388,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2),
+                      color: isDark ? Colors.black : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+                        color: isDark ? Colors.white : Colors.black,
                         width: 1.2,
                       ),
                     ),
@@ -451,7 +451,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   onPressed: _isLoading ? null : _handleGoogleSignIn,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2)),
+                    side: BorderSide(color: isDark ? Colors.white : Colors.black),
                   ),
                   icon: Image.network(
                     'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',

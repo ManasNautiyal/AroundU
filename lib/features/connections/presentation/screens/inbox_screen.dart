@@ -99,7 +99,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                           ),
                           selected: _showReceivedLikes,
                           selectedColor: theme.colorScheme.primary,
-                          backgroundColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+                          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
                           checkmarkColor: theme.colorScheme.onPrimary,
                           onSelected: (selected) {
                             if (selected) {
@@ -124,7 +124,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                           ),
                           selected: !_showReceivedLikes,
                           selectedColor: theme.colorScheme.primary,
-                          backgroundColor: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+                          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
                           checkmarkColor: theme.colorScheme.onPrimary,
                           onSelected: (selected) {
                             if (selected) {
@@ -217,8 +217,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
 
   Widget _buildMessagesList(List<MatchModel> connections, String currentUserId, ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
-    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
-    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final borderBg = isDark ? Colors.white : Colors.black;
+    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
     final proximityRoomsAsync = ref.watch(proximityRoomsProvider);
     final proximityRooms = proximityRoomsAsync.valueOrNull ?? [];
 
@@ -370,7 +370,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: requests.length,
       separatorBuilder: (context, index) => Divider(
-        color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+        color: isDark ? Colors.white : Colors.black,
         height: 1,
         thickness: 1.0,
       ),
@@ -445,7 +445,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: likes.length,
       separatorBuilder: (context, index) => Divider(
-        color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+        color: isDark ? Colors.white : Colors.black,
         height: 1,
         thickness: 1.0,
       ),
@@ -476,7 +476,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: likes.length,
       separatorBuilder: (context, index) => Divider(
-        color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+        color: isDark ? Colors.white : Colors.black,
         height: 1,
         thickness: 1.0,
       ),
@@ -508,8 +508,8 @@ class MatchTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = theme.brightness == Brightness.dark;
-    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
-    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final borderBg = isDark ? Colors.white : Colors.black;
+    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
 
     final targetUserId = connection.user1Id == currentUserId ? connection.user2Id : connection.user1Id;
     final userAsync = ref.watch(userProfileProvider(targetUserId));
@@ -616,7 +616,7 @@ class MatchTile extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
+              backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -627,7 +627,7 @@ class MatchTile extends ConsumerWidget {
                     height: 16,
                     width: 100,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
+                      color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -636,7 +636,7 @@ class MatchTile extends ConsumerWidget {
                     height: 12,
                     width: 60,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
+                      color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -666,9 +666,9 @@ class MessageRequestTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
-    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
-    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final cardBg = isDark ? Colors.black : Colors.white;
+    final borderBg = isDark ? Colors.white : Colors.black;
+    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
 
     final senderAsync = ref.watch(userProfileProvider(request.senderId));
 
@@ -811,7 +811,7 @@ class MessageRequestTile extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
+                  backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -819,7 +819,7 @@ class MessageRequestTile extends ConsumerWidget {
                     height: 16,
                     width: 100,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
+                      color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -831,7 +831,7 @@ class MessageRequestTile extends ConsumerWidget {
               height: 48,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF121212) : const Color(0xFFE2E5E2),
+                color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
             ),

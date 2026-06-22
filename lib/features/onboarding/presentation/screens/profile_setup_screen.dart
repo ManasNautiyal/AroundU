@@ -366,12 +366,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         width: leftWidth,
                         height: itemHeight,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2),
+                          color: isDark ? Colors.black : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: state.profilePictures[0] != null
                                 ? theme.colorScheme.primary
-                                : (isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2)),
+                                : (isDark ? Colors.white : Colors.black),
                             width: 1.5,
                           ),
                         ),
@@ -392,7 +392,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                       'Primary Photo',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: isDark ? Colors.white : Colors.black87,
+                                        color: isDark ? Colors.white : Colors.black,
                                         fontSize: 13,
                                       ),
                                     ),
@@ -421,10 +421,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               onTap: () => _pickImage(1),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2),
+                                  color: isDark ? Colors.black : Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+                                    color: isDark ? Colors.white : Colors.black,
                                     width: 1.2,
                                   ),
                                 ),
@@ -436,7 +436,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                           child: Icon(
                                             Icons.add_photo_alternate_outlined,
                                             size: 24,
-                                            color: isDark ? Colors.white30 : Colors.black26,
+                                            color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3),
                                           ),
                                         ),
                                 ),
@@ -451,10 +451,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               onTap: () => _pickImage(2),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2),
+                                  color: isDark ? Colors.black : Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+                                    color: isDark ? Colors.white : Colors.black,
                                     width: 1.2,
                                   ),
                                 ),
@@ -466,7 +466,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                           child: Icon(
                                             Icons.add_photo_alternate_outlined,
                                             size: 24,
-                                            color: isDark ? Colors.white30 : Colors.black26,
+                                            color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3),
                                           ),
                                         ),
                                 ),
