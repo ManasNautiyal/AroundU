@@ -60,7 +60,7 @@ final selectedVibeFilterProvider =
     );
 
 typedef _$SelectedVibeFilter = AutoDisposeNotifier<String?>;
-String _$inLocalRoomHash() => r'c6ecbdc972622dad46e8cb0c69f0db9bce07f8b7';
+String _$inLocalRoomHash() => r'73ffb32af70ca04e824e4c998a28c1a77f4e045d';
 
 /// See also [InLocalRoom].
 @ProviderFor(InLocalRoom)

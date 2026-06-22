@@ -23,7 +23,7 @@ final locationServiceProvider = AutoDisposeProvider<LocationService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef LocationServiceRef = AutoDisposeProviderRef<LocationService>;
-String _$userPositionHash() => r'15d0ebf99addee46f68d8a0ffa6f62607afe0868';
+String _$userPositionHash() => r'3e2b8ae5552e417d8ecd307b6e2ea1de573c0a37';
 
 /// See also [userPosition].
 @ProviderFor(userPosition)

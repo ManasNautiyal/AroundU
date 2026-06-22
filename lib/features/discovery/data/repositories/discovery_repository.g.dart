@@ -25,7 +25,7 @@ final discoveryRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef DiscoveryRepositoryRef = AutoDisposeProviderRef<DiscoveryRepository>;
-String _$nearbyUsersHash() => r'b27d296bb2a5b43ac1c8928d76168fcd748a8917';
+String _$nearbyUsersHash() => r'1dbcfc6656bd72d8d443a8c52f2cccfe8a02332d';
 
 /// Copied from Dart SDK
 class _SystemHash {
