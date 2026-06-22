@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/widgets/image_helper.dart';
-import '../controllers/local_room_controller.dart';
-import '../../../discovery/presentation/controllers/discovery_providers.dart';
+import '../../data/models/proximity_room_model.dart';
+import '../../data/repositories/chat_repository.dart';
+import '../controllers/proximity_room_chat_controller.dart';
 import '../../../discovery/presentation/controllers/user_providers.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
+import '../../../../core/services/location_service.dart';
 
 class LocalRoomScreen extends ConsumerStatefulWidget {
-  const LocalRoomScreen({super.key});
+  final ProximityRoomModel room;
+  const LocalRoomScreen({super.key, required this.room});
 
   @override
   ConsumerState<LocalRoomScreen> createState() => _LocalRoomScreenState();
@@ -17,13 +22,19 @@ class LocalRoomScreen extends ConsumerStatefulWidget {
 class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
+  bool? _manualProximityOverride;
 
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
     _messageController.clear();
-    ref.read(localRoomMessagesProvider.notifier).sendMessage(text);
+    final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? 'me';
+    ref.read(chatRepositoryProvider).sendProximityRoomMessage(
+      roomId: widget.room.id,
+      senderId: currentUserId,
+      text: text,
+    );
 
     // Scroll to bottom after new message is sent
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -48,20 +59,34 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isInRoom = ref.watch(inLocalRoomProvider);
-    final messages = ref.watch(localRoomMessagesProvider);
 
-    // Standard list reversed so new messages flow from bottom
-    final reversedMessages = messages.reversed.toList();
+    final positionAsync = ref.watch(userPositionProvider);
+    final isInRange = positionAsync.maybeWhen(
+      data: (position) {
+        final geopoint = widget.room.location['geopoint'] as GeoPoint?;
+        if (geopoint == null) return false;
+        final distance = Geolocator.distanceBetween(
+          position.latitude,
+          position.longitude,
+          geopoint.latitude,
+          geopoint.longitude,
+        );
+        return distance <= widget.room.radiusInMeters;
+      },
+      orElse: () => true, // default to true if location is loading
+    );
+
+    final isInRoom = _manualProximityOverride ?? isInRange;
+    final messagesAsync = ref.watch(proximityRoomMessagesProvider(roomId: widget.room.id));
 
     return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '📍 Downtown Coffee Shop',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            Text(
+              '📍 ${widget.room.name}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
               'Proximity Chat Room',
@@ -86,7 +111,9 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
               Switch(
                 value: isInRoom,
                 onChanged: (val) {
-                  ref.read(inLocalRoomProvider.notifier).setInRoom(val);
+                  setState(() {
+                    _manualProximityOverride = val;
+                  });
                 },
                 activeThumbColor: theme.colorScheme.onPrimary,
                 activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.4),
@@ -120,7 +147,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'You left the Downtown Coffee Shop zone. Messages cleared.',
+                              'You left the ${widget.room.name} zone.',
                               style: TextStyle(
                                 color: theme.colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
@@ -136,27 +163,34 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
             Expanded(
               child: !isInRoom
                   ? _buildLeftZoneState(theme)
-                  : messages.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No messages yet. Say hi! 👋',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                  : messagesAsync.when(
+                      data: (roomMessages) {
+                        if (roomMessages.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'No messages yet. Say hi! 👋',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
-                          ),
-                        )
-                      : ListView.builder(
+                          );
+                        }
+                        return ListView.builder(
                           controller: _scrollController,
                           reverse: true,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          itemCount: reversedMessages.length,
+                          itemCount: roomMessages.length,
                           itemBuilder: (context, index) {
-                            final message = reversedMessages[index];
+                            final message = roomMessages[index];
                             final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
                             final isMe = message.senderId == currentUserId;
                             return _buildGroupMessageBubble(message, isMe, message.senderId, theme);
                           },
-                        ),
+                        );
+                      },
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (err, _) => Center(child: Text('Error loading messages: $err')),
+                    ),
             ),
 
             // Input Area

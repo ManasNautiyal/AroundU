@@ -7,6 +7,7 @@ import '../../data/repositories/discovery_repository.dart';
 import '../controllers/discovery_providers.dart';
 import '../widgets/beacon_sheet.dart';
 import '../widgets/profile_detail_sheet.dart';
+import '../../../chat/presentation/widgets/create_room_sheet.dart';
 
 class RadarScreen extends ConsumerStatefulWidget {
   const RadarScreen({super.key});
@@ -490,19 +491,39 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 12.0),
-        child: FloatingActionButton.small(
-          heroTag: 'drop_beacon_fab',
-          onPressed: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) => const BeaconSheet(),
-            );
-          },
-          backgroundColor: theme.colorScheme.primary,
-          foregroundColor: theme.colorScheme.onPrimary,
-          child: const Icon(Icons.add_location_alt_rounded),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton.small(
+              heroTag: 'drop_beacon_fab',
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => const BeaconSheet(),
+                );
+              },
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              child: const Icon(Icons.add_location_alt_rounded),
+            ),
+            const SizedBox(width: 8),
+            FloatingActionButton.small(
+              heroTag: 'create_room_fab',
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => const CreateRoomSheet(),
+                );
+              },
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              child: const Icon(Icons.store_rounded),
+            ),
+          ],
         ),
       ),
     );

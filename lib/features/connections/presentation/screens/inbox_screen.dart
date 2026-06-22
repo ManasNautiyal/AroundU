@@ -10,7 +10,8 @@ import '../../../chat/presentation/screens/local_room_screen.dart';
 import '../../data/repositories/interaction_repository.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../discovery/presentation/controllers/user_providers.dart';
-import '../../../discovery/presentation/controllers/discovery_providers.dart';
+import '../../../chat/data/models/proximity_room_model.dart';
+import '../../../chat/presentation/controllers/proximity_rooms_controller.dart';
 import '../widgets/match_overlay.dart';
 
 class InboxScreen extends ConsumerStatefulWidget {
@@ -218,17 +219,19 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
     final subTextColor = isDark ? Colors.white70 : Colors.black54;
-    final isInRoom = ref.watch(inLocalRoomProvider);
+    final proximityRoomsAsync = ref.watch(proximityRoomsProvider);
+    final proximityRooms = proximityRoomsAsync.valueOrNull ?? [];
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      itemCount: connections.length + (isInRoom ? 1 : 0),
+      itemCount: connections.length + proximityRooms.length,
       itemBuilder: (context, index) {
-        if (isInRoom && index == 0) {
+        if (index < proximityRooms.length) {
+          final room = proximityRooms[index];
           return Column(
             children: [
-              _buildLocalRoomTile(theme, borderBg, subTextColor),
-              if (connections.isNotEmpty)
+              _buildProximityRoomTile(room, theme, borderBg, subTextColor),
+              if (index < proximityRooms.length - 1 || connections.isNotEmpty)
                 Divider(
                   color: borderBg,
                   height: 1,
@@ -238,7 +241,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           );
         }
         
-        final connectionIndex = isInRoom ? index - 1 : index;
+        final connectionIndex = index - proximityRooms.length;
         return Column(
           children: [
             MatchTile(
@@ -258,7 +261,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     );
   }
 
-  Widget _buildLocalRoomTile(ThemeData theme, Color borderBg, Color subTextColor) {
+  Widget _buildProximityRoomTile(ProximityRoomModel room, ThemeData theme, Color borderBg, Color subTextColor) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -266,7 +269,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const LocalRoomScreen(),
+              builder: (context) => LocalRoomScreen(room: room),
             ),
           );
         },
@@ -289,7 +292,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '📍 Downtown Coffee Shop',
+                      '📍 ${room.name}',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),

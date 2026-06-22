@@ -13,7 +13,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/discovery/data/repositories/user_repository.dart';
 import 'features/discovery/presentation/controllers/discovery_providers.dart';
-import 'features/chat/presentation/controllers/local_room_controller.dart';
+import 'features/chat/presentation/controllers/proximity_rooms_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
@@ -260,8 +260,7 @@ class OnboardingRouter extends ConsumerWidget {
         ref.invalidate(ghostModeControllerProvider);
         ref.invalidate(mockDiscoveryUsersControllerProvider);
         ref.invalidate(selectedVibeFilterProvider);
-        ref.invalidate(inLocalRoomProvider);
-        ref.invalidate(localRoomMessagesProvider);
+        ref.invalidate(proximityRoomsProvider);
       }
     });
 
