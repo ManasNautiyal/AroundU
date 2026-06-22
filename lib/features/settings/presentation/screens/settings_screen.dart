@@ -289,12 +289,9 @@ class SettingsScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
 
                     // Log Out Button
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: borderBgColor,
-                        foregroundColor: textThemeColor,
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: const StadiumBorder(),
                       ),
                       onPressed: () async {
                         final navigator = Navigator.of(modalContext);
@@ -328,8 +325,8 @@ class SettingsScreen extends ConsumerWidget {
                           }
                         }
                       },
-                      icon: Icon(Icons.logout_rounded, size: 18, color: iconThemeColor),
-                      label: Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold, color: textThemeColor)),
+                      icon: const Icon(Icons.logout_rounded, size: 18),
+                      label: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(height: 12),
 
