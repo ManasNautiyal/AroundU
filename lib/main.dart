@@ -15,6 +15,8 @@ import 'features/discovery/data/repositories/user_repository.dart';
 import 'features/discovery/presentation/controllers/discovery_providers.dart';
 import 'features/chat/presentation/controllers/proximity_rooms_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/services/notification_service.dart';
+import 'core/services/app_observers.dart';
 
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
   return ThemeModeNotifier();
@@ -49,6 +51,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.initialize();
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -250,17 +253,22 @@ class OnboardingRouter extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. Listen for authentication changes to reset/invalidate all local Riverpod states upon logout.
     ref.listen<AsyncValue<User?>>(authStateChangesProvider, (previous, next) {
-      if (next is AsyncData<User?> && next.value == null) {
-        // User logged out: Reset all local/mock providers to clear state.
-        ref.invalidate(onboardingStepProvider);
-        ref.invalidate(onboardingControllerProvider);
-        ref.invalidate(currentUserModelProvider);
-        ref.invalidate(ghostModeControllerProvider);
-        ref.invalidate(mockDiscoveryUsersControllerProvider);
-        ref.invalidate(selectedVibeFilterProvider);
-        ref.invalidate(proximityRoomsProvider);
+      if (next is AsyncData<User?>) {
+        final user = next.value;
+        if (user == null) {
+          ref.invalidate(onboardingStepProvider);
+          ref.invalidate(onboardingControllerProvider);
+          ref.invalidate(currentUserModelProvider);
+          ref.invalidate(ghostModeControllerProvider);
+          ref.invalidate(mockDiscoveryUsersControllerProvider);
+          ref.invalidate(selectedVibeFilterProvider);
+          ref.invalidate(proximityRoomsProvider);
+        } else {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            NotificationService.requestPermissions();
+          });
+        }
       }
     });
 
@@ -271,6 +279,14 @@ class OnboardingRouter extends ConsumerWidget {
         if (user == null) {
           return const LoginScreen();
         }
+
+        // Start tracking and observing if logged in
+        ref.watch(locationTrackerProvider);
+        ref.watch(interactionObserverProvider(user.uid));
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          NotificationService.requestPermissions();
+        });
 
         // 2. If authenticated, fetch and check their Firestore user profile status.
         final userModelAsync = ref.watch(currentUserModelProvider);

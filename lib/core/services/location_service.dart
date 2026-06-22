@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 part 'location_service.g.dart';
 
@@ -55,9 +56,9 @@ class LocationService {
   LocationSettings _getLocationSettings() {
     if (defaultTargetPlatform == TargetPlatform.android) {
       return AndroidSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // Update location if moved more than 10 meters
-        intervalDuration: const Duration(seconds: 15), // Stream update interval
+        accuracy: LocationAccuracy.medium, // Battery-efficient accuracy
+        distanceFilter: 30, // Update location only if moved more than 30 meters
+        intervalDuration: const Duration(minutes: 3), // Check interval (3 minutes)
         foregroundNotificationConfig: const ForegroundNotificationConfig(
           notificationText: "AroundU is running in the background to discover nearby connections.",
           notificationTitle: "AroundU active nearby",
@@ -66,16 +67,16 @@ class LocationService {
       );
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       return AppleSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-        activityType: ActivityType.otherNavigation,
-        pauseLocationUpdatesAutomatically: false,
+        accuracy: LocationAccuracy.medium,
+        distanceFilter: 30,
+        activityType: ActivityType.fitness, // Highly battery optimized
+        pauseLocationUpdatesAutomatically: true, // Automatically pause when stationary
         showBackgroundLocationIndicator: true,
       );
     }
     return const LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 10,
+      accuracy: LocationAccuracy.medium,
+      distanceFilter: 30,
     );
   }
 }
@@ -105,24 +106,10 @@ LocationService locationService(LocationServiceRef ref) {
 
 @riverpod
 Stream<Position> userPosition(UserPositionRef ref) async* {
-  // Overriding/mocking position to match Lalit's location (Dehradun, India)
-  // so they are close enough to discover each other.
-  yield Position(
-    latitude: 30.3004027,
-    longitude: 78.0347056,
-    timestamp: DateTime.now(),
-    accuracy: 1.0,
-    altitude: 0.0,
-    altitudeAccuracy: 0.0,
-    heading: 0.0,
-    headingAccuracy: 0.0,
-    speed: 0.0,
-    speedAccuracy: 0.0,
-  );
-
-  // Automatically update the location every 20 seconds.
-  yield* Stream.periodic(const Duration(seconds: 20), (_) {
-    return Position(
+  final isFirebaseInitialized = Firebase.apps.isNotEmpty;
+  if (!isFirebaseInitialized) {
+    // Yield the starting Lalit's position first
+    yield Position(
       latitude: 30.3004027,
       longitude: 78.0347056,
       timestamp: DateTime.now(),
@@ -134,5 +121,33 @@ Stream<Position> userPosition(UserPositionRef ref) async* {
       speed: 0.0,
       speedAccuracy: 0.0,
     );
-  });
+
+    // Yield slightly offset coordinates every 3 minutes to simulate dynamic movement
+    double lat = 30.3004027;
+    double lng = 78.0347056;
+    int count = 0;
+    
+    yield* Stream.periodic(const Duration(minutes: 3), (_) {
+      count++;
+      final offsetLat = (count % 3 - 1) * 0.0003; // small walk step
+      final offsetLng = (count % 2 - 1) * 0.0003;
+      return Position(
+        latitude: lat + offsetLat,
+        longitude: lng + offsetLng,
+        timestamp: DateTime.now(),
+        accuracy: 1.0,
+        altitude: 0.0,
+        altitudeAccuracy: 0.0,
+        heading: 0.0,
+        headingAccuracy: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+      );
+    });
+    return;
+  }
+
+  // Real location stream using geolocator with the optimized settings above
+  final locService = ref.watch(locationServiceProvider);
+  yield* locService.getPositionStream();
 }
