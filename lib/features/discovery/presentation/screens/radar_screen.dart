@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart' hide LocationServiceDisabledException;
-import '../../../../core/services/location_service.dart';
 import '../../../../core/widgets/image_helper.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../data/models/nearby_user.dart';
@@ -20,86 +18,11 @@ class RadarScreen extends ConsumerStatefulWidget {
 class _RadarScreenState extends ConsumerState<RadarScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
-  bool _isUpdatingLocation = false;
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  Future<void> _updateLocation() async {
-    if (_isUpdatingLocation) return;
-    setState(() {
-      _isUpdatingLocation = true;
-    });
-
-    try {
-      final locService = ref.read(locationServiceProvider);
-
-      final enabled = await locService.isLocationServiceEnabled();
-      if (!enabled) {
-        throw const LocationServiceDisabledException();
-      }
-
-      var permission = await locService.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await locService.requestPermission();
-        if (permission == LocationPermission.denied) {
-          throw const LocationPermissionDeniedException();
-        }
-      }
-      if (permission == LocationPermission.deniedForever) {
-        throw const LocationPermissionDeniedForeverException();
-      }
-
-      ref.invalidate(userPositionProvider);
-      final position = await ref.read(userPositionProvider.future);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Location updated: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        _showLocationErrorDialog(e.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isUpdatingLocation = false;
-        });
-      }
-    }
-  }
-
-  void _showLocationErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.location_off_rounded, color: Colors.white70),
-            const SizedBox(width: 8),
-            const Text('Location Error'),
-          ],
-        ),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _handleConnect(UserModel user) {
@@ -440,8 +363,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
-    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
     final subTextColor = isDark ? Colors.white70 : Colors.black54;
 
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
@@ -569,44 +490,19 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 12.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton.small(
-              heroTag: 'drop_beacon_fab',
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => const BeaconSheet(),
-                );
-              },
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              child: const Icon(Icons.add_location_alt_rounded),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              height: 40,
-              width: 40,
-              decoration: BoxDecoration(
-                color: cardBg,
-                shape: BoxShape.circle,
-                border: Border.all(color: borderBg, width: 1.2),
-              ),
-              child: _isUpdatingLocation
-                  ? Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary)),
-                    )
-                  : IconButton(
-                      padding: EdgeInsets.zero,
-                      icon: Icon(Icons.near_me_rounded, color: theme.colorScheme.primary, size: 20),
-                      onPressed: _updateLocation,
-                    ),
-            ),
-          ],
+        child: FloatingActionButton.small(
+          heroTag: 'drop_beacon_fab',
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => const BeaconSheet(),
+            );
+          },
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+          child: const Icon(Icons.add_location_alt_rounded),
         ),
       ),
     );

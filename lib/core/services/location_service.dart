@@ -105,8 +105,34 @@ LocationService locationService(LocationServiceRef ref) {
 
 @riverpod
 Stream<Position> userPosition(UserPositionRef ref) async* {
-  final locService = ref.watch(locationServiceProvider);
-  final initialPosition = await locService.getCurrentPosition();
-  yield initialPosition;
-  yield* locService.getPositionStream();
+  // Overriding/mocking position to match Lalit's location (Dehradun, India)
+  // so they are close enough to discover each other.
+  yield Position(
+    latitude: 30.3004027,
+    longitude: 78.0347056,
+    timestamp: DateTime.now(),
+    accuracy: 1.0,
+    altitude: 0.0,
+    altitudeAccuracy: 0.0,
+    heading: 0.0,
+    headingAccuracy: 0.0,
+    speed: 0.0,
+    speedAccuracy: 0.0,
+  );
+
+  // Automatically update the location every 20 seconds.
+  yield* Stream.periodic(const Duration(seconds: 20), (_) {
+    return Position(
+      latitude: 30.3004027,
+      longitude: 78.0347056,
+      timestamp: DateTime.now(),
+      accuracy: 1.0,
+      altitude: 0.0,
+      altitudeAccuracy: 0.0,
+      heading: 0.0,
+      headingAccuracy: 0.0,
+      speed: 0.0,
+      speedAccuracy: 0.0,
+    );
+  });
 }

@@ -6,9 +6,11 @@ import '../../../discovery/presentation/widgets/profile_detail_sheet.dart';
 import '../../data/models/interaction_model.dart';
 import '../../data/models/message_request_model.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
+import '../../../chat/presentation/screens/local_room_screen.dart';
 import '../../data/repositories/interaction_repository.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../discovery/presentation/controllers/user_providers.dart';
+import '../../../discovery/presentation/controllers/discovery_providers.dart';
 import '../widgets/match_overlay.dart';
 
 class InboxScreen extends ConsumerStatefulWidget {
@@ -214,30 +216,139 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
 
   Widget _buildMessagesList(List<MatchModel> connections, String currentUserId, ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
-    if (connections.isEmpty) {
-      return _buildEmptyState(
-        theme: theme,
-        icon: Icons.chat_bubble_outline_rounded,
-        title: 'No Chats Yet',
-        body: 'Connect with people nearby on your radar. Approved requests will appear here!',
-      );
-    }
+    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final isInRoom = ref.watch(inLocalRoomProvider);
 
-    return ListView.separated(
+    return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      itemCount: connections.length,
-      separatorBuilder: (context, index) => Divider(
-        color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
-        height: 1,
-        thickness: 1.0,
-      ),
+      itemCount: connections.length + (isInRoom ? 1 : 0),
       itemBuilder: (context, index) {
-        return MatchTile(
-          connection: connections[index],
-          currentUserId: currentUserId,
-          theme: theme,
+        if (isInRoom && index == 0) {
+          return Column(
+            children: [
+              _buildLocalRoomTile(theme, borderBg, subTextColor),
+              if (connections.isNotEmpty)
+                Divider(
+                  color: borderBg,
+                  height: 1,
+                  thickness: 1.0,
+                ),
+            ],
+          );
+        }
+        
+        final connectionIndex = isInRoom ? index - 1 : index;
+        return Column(
+          children: [
+            MatchTile(
+              connection: connections[connectionIndex],
+              currentUserId: currentUserId,
+              theme: theme,
+            ),
+            if (connectionIndex < connections.length - 1)
+              Divider(
+                color: borderBg,
+                height: 1,
+                thickness: 1.0,
+              ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildLocalRoomTile(ThemeData theme, Color borderBg, Color subTextColor) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const LocalRoomScreen(),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: theme.colorScheme.primary.withAlpha(20),
+                child: Icon(
+                  Icons.store_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '📍 Downtown Coffee Shop',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          height: 6,
+                          width: 6,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Proximity Chat Room',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: subTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Trailing Proximity Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderBg, width: 1.0),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_rounded,
+                      size: 12,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Nearby',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

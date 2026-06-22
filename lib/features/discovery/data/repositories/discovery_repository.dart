@@ -117,6 +117,8 @@ Stream<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String curren
   
   return positionAsync.when(
     data: (position) {
+      // ignore: avoid_print
+      print('DEBUG MY CURRENT POSITION: lat=${position.latitude}, lng=${position.longitude}');
       if (!isGhostMode) {
         // Periodic location update to Firestore only when NOT in Ghost Mode
         repository.updateUserLocation(
@@ -132,7 +134,16 @@ Stream<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String curren
         blockedUserIds: blockedUserIds,
       );
     },
-    error: (err, stack) => Stream.value([]),
-    loading: () => Stream.value([]),
+    error: (err, stack) {
+      // ignore: avoid_print
+      print('DEBUG POSITION ERROR: $err');
+      return Stream.value([]);
+    },
+    loading: () {
+      // ignore: avoid_print
+      print('DEBUG POSITION LOADING');
+      return Stream.value([]);
+    },
   );
 }
+
