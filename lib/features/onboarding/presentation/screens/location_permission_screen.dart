@@ -40,9 +40,12 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
       // Request permission using our LocationService
       final permission = await locService.requestPermission();
       
-      if (permission == LocationPermission.whileInUse ||
-          permission == LocationPermission.always) {
+      if (permission == LocationPermission.always) {
         _navigateToProfileSetup();
+      } else if (permission == LocationPermission.whileInUse) {
+        if (mounted) {
+          _showAlwaysLocationDialog();
+        }
       } else {
         // If permission is denied, show a friendly explanation Dialog, but allow them to proceed for now in debug mode
         if (mounted) {
@@ -66,13 +69,43 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     ref.read(onboardingStepProvider.notifier).setStep(2);
   }
 
+  void _showAlwaysLocationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Always-On Location Required'),
+        content: const Text(
+          'To ensure you never miss any nearby connections or local chat zones (even when the app runs in the background), please set location permission to "Always Allow" in your system settings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _navigateToProfileSetup();
+            },
+            child: const Text('Keep "While Using"'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await Geolocator.openAppSettings();
+              _navigateToProfileSetup();
+            },
+            child: const Text('Change to "Always"'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showPermissionDeniedDialog() {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Location Access Required'),
         content: const Text(
-          'AroundU requires precise location permissions to calculate relative distances between you and other users within 100 meters. Without it, you cannot discover matching vibes nearby.',
+          'AroundU requires precise location permissions to calculate relative distances between you and other users. Please enable location services and select "Always Allow".',
         ),
         actions: [
           TextButton(
@@ -185,7 +218,7 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
               ),
               const SizedBox(height: 16),
               Text(
-                'To show you people within 100 meters, AroundU needs access to your precise location. We never share your exact coordinates or track you on a map—only your relative distance to others.',
+                'To discover nearby connections and matching vibes in the background, AroundU needs your location permission set to Always Allow. Please keep your location services enabled to ensure uninterrupted scans.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
