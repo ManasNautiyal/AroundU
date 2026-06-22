@@ -138,16 +138,19 @@ class SettingsScreen extends ConsumerWidget {
         return Consumer(
           builder: (sheetContext, sheetRef, child) {
             final isGhostMode = sheetRef.watch(ghostModeControllerProvider);
-            final themeMode = sheetRef.watch(themeModeProvider);
-            final isDark = themeMode == ThemeMode.dark;
+            final colorScheme = theme.colorScheme;
+            final isDark = theme.brightness == Brightness.dark;
 
-            final sheetBgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF1F3F0);
-            final borderBgColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
-            final textThemeColor = isDark ? Colors.white : Colors.black;
-            final subtitleColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-            final iconThemeColor = isDark ? Colors.white70 : Colors.black54;
-            final chevronThemeColor = isDark ? Colors.white30 : Colors.black26;
-            final dividerColor = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
+            final sheetBgColor = Color.alphaBlend(
+              colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.05),
+              colorScheme.surface,
+            );
+            final borderBgColor = colorScheme.outlineVariant;
+            final textThemeColor = colorScheme.onSurface;
+            final subtitleColor = colorScheme.onSurfaceVariant;
+            final iconThemeColor = colorScheme.onSurfaceVariant;
+            final chevronThemeColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.3);
+            final dividerColor = colorScheme.outlineVariant;
 
             return Material(
               color: sheetBgColor,

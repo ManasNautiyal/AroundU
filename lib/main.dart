@@ -18,6 +18,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/app_observers.dart';
 
+final dynamicColorSchemeProvider = FutureProvider.family<ColorScheme, Brightness>((ref, brightness) async {
+  final isDark = brightness == Brightness.dark;
+  final assetPath = isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.png';
+  return ColorScheme.fromImageProvider(
+    provider: AssetImage(assetPath),
+    brightness: brightness,
+  );
+});
+
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
   return ThemeModeNotifier();
 });
@@ -73,30 +82,49 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
 
+    final lightSchemeAsync = ref.watch(dynamicColorSchemeProvider(Brightness.light));
+    final darkSchemeAsync = ref.watch(dynamicColorSchemeProvider(Brightness.dark));
+
+    final lightColorScheme = lightSchemeAsync.valueOrNull ?? const ColorScheme.light(
+      primary: Colors.black,
+      onPrimary: Colors.white,
+      secondary: Colors.black87,
+      onSecondary: Colors.white,
+      surface: Color(0xFFF3F5F2),
+      onSurface: Colors.black,
+    );
+
+    final darkColorScheme = darkSchemeAsync.valueOrNull ?? const ColorScheme.dark(
+      primary: Colors.white,
+      onPrimary: Colors.black,
+      secondary: Colors.white70,
+      onSecondary: Colors.black,
+      surface: Color(0xFF060606),
+      onSurface: Colors.white,
+    );
+
+    final lightCardColor = Color.alphaBlend(
+      lightColorScheme.onSurface.withValues(alpha: 0.05),
+      lightColorScheme.surface,
+    );
+    final lightBorderColor = lightColorScheme.outlineVariant;
+
+    final darkCardColor = Color.alphaBlend(
+      darkColorScheme.onSurface.withValues(alpha: 0.08),
+      darkColorScheme.surface,
+    );
+    final darkBorderColor = darkColorScheme.outlineVariant;
+
     final baseLight = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: const ColorScheme.light(
-        primary: Colors.black,
-        onPrimary: Colors.white,
-        secondary: Colors.black87,
-        onSecondary: Colors.white,
-        surface: Color(0xFFF3F5F2),
-        onSurface: Colors.black,
-      ),
+      colorScheme: lightColorScheme,
     );
 
     final baseDark = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
-        primary: Colors.white,
-        onPrimary: Colors.black,
-        secondary: Colors.white70,
-        onSecondary: Colors.black,
-        surface: Color(0xFF060606),
-        onSurface: Colors.white,
-      ),
+      colorScheme: darkColorScheme,
     );
 
     return MaterialApp(
@@ -104,33 +132,33 @@ class MyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       theme: baseLight.copyWith(
-        scaffoldBackgroundColor: const Color(0xFFFBFDFA),
-        appBarTheme: const AppBarTheme(
+        scaffoldBackgroundColor: lightColorScheme.surface,
+        appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
           centerTitle: false,
-          iconTheme: IconThemeData(color: Colors.black87),
+          iconTheme: IconThemeData(color: lightColorScheme.onSurface),
           titleTextStyle: TextStyle(
-            color: Colors.black87,
+            color: lightColorScheme.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         cardTheme: CardThemeData(
-          color: const Color(0xFFF3F5F2),
+          color: lightCardColor,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFFE2E5E2), width: 1.2),
+            side: BorderSide(color: lightBorderColor, width: 1.2),
           ),
         ),
         navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: const Color(0xFFFBFDFA),
+          backgroundColor: lightColorScheme.surface,
           elevation: 8,
-          indicatorColor: const Color(0xFFE2E5E2),
+          indicatorColor: lightCardColor,
           labelTextStyle: WidgetStateProperty.all(
-            const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+            TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: lightColorScheme.onSurface),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
@@ -155,52 +183,52 @@ class MyApp extends ConsumerWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFFF3F5F2),
+          fillColor: lightCardColor,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: const BorderSide(color: Color(0xFFE2E5E2), width: 1.2),
+            borderSide: BorderSide(color: lightBorderColor, width: 1.2),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: const BorderSide(color: Color(0xFFE2E5E2), width: 1.2),
+            borderSide: BorderSide(color: lightBorderColor, width: 1.2),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: const BorderSide(color: Colors.black26, width: 1.5),
+            borderSide: BorderSide(color: lightColorScheme.primary.withValues(alpha: 0.5), width: 1.5),
           ),
-          labelStyle: const TextStyle(color: Colors.black87),
-          hintStyle: const TextStyle(color: Colors.black38),
+          labelStyle: TextStyle(color: lightColorScheme.onSurfaceVariant),
+          hintStyle: TextStyle(color: lightColorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
         ),
       ),
       darkTheme: baseDark.copyWith(
-        scaffoldBackgroundColor: const Color(0xFF060606),
-        appBarTheme: const AppBarTheme(
+        scaffoldBackgroundColor: darkColorScheme.surface,
+        appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
           centerTitle: false,
-          iconTheme: IconThemeData(color: Colors.white),
+          iconTheme: IconThemeData(color: darkColorScheme.onSurface),
           titleTextStyle: TextStyle(
-            color: Colors.white,
+            color: darkColorScheme.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         cardTheme: CardThemeData(
-          color: const Color(0xFF121212), // Deep premium dark grey surface
+          color: darkCardColor,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16), // Sleeker corner radius
-            side: const BorderSide(color: Color(0xFF262626), width: 1.2), // Micro thin border
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: darkBorderColor, width: 1.2),
           ),
         ),
         navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: const Color(0xFF060606),
+          backgroundColor: darkColorScheme.surface,
           elevation: 8,
-          indicatorColor: const Color(0xFF262626), // Premium dark grey indicator
+          indicatorColor: darkCardColor,
           labelTextStyle: WidgetStateProperty.all(
-            const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+            TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: darkColorScheme.onSurface),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
@@ -225,22 +253,22 @@ class MyApp extends ConsumerWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFF121212),
+          fillColor: darkCardColor,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30), // Pill style input fields
-            borderSide: const BorderSide(color: Color(0xFF262626), width: 1.2),
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide(color: darkBorderColor, width: 1.2),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: const BorderSide(color: Color(0xFF262626), width: 1.2),
+            borderSide: BorderSide(color: darkBorderColor, width: 1.2),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: const BorderSide(color: Colors.white24, width: 1.5),
+            borderSide: BorderSide(color: darkColorScheme.primary.withValues(alpha: 0.5), width: 1.5),
           ),
-          labelStyle: const TextStyle(color: Colors.white70),
-          hintStyle: const TextStyle(color: Colors.white38),
+          labelStyle: TextStyle(color: darkColorScheme.onSurfaceVariant),
+          hintStyle: TextStyle(color: darkColorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
         ),
       ),
       home: const OnboardingRouter(),

@@ -136,7 +136,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
               duration: const Duration(milliseconds: 350),
               height: isInRoom ? 0 : 70,
               curve: Curves.easeInOut,
-              color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFE2E5E2),
+              color: theme.colorScheme.surfaceContainerHighest,
               child: isInRoom
                   ? const SizedBox.shrink()
                   : Padding(
@@ -212,7 +212,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: theme.brightness == Brightness.dark ? const Color(0xFF1C1C1E) : const Color(0xFFE2E5E2),
+                color: theme.colorScheme.surfaceContainerHighest,
               ),
               child: Icon(
                 Icons.location_off_rounded,
@@ -250,10 +250,10 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
         final isDark = theme.brightness == Brightness.dark;
         final bubbleColor = isMe
             ? theme.colorScheme.primary
-            : (isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2));
+            : theme.colorScheme.surfaceContainerHighest;
         final textColor = isMe
             ? theme.colorScheme.onPrimary
-            : (isDark ? Colors.white : Colors.black);
+            : theme.colorScheme.onSurfaceVariant;
 
         final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
         final margin = isMe
@@ -340,9 +340,12 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
 
   Widget _buildInputArea(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2);
-    final borderBg = isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2);
-    final textColor = isDark ? Colors.white : Colors.black87;
+    final cardBg = Color.alphaBlend(
+      theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.05),
+      theme.colorScheme.surface,
+    );
+    final borderBg = theme.colorScheme.outlineVariant;
+    final textColor = theme.colorScheme.onSurface;
     final hintColor = isDark ? Colors.white38 : Colors.black38;
 
     return Container(

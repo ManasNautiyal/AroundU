@@ -88,13 +88,16 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF121212) : const Color(0xFFF3F5F2),
+        color: Color.alphaBlend(
+          theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.05),
+          theme.colorScheme.surface,
+        ),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
         ),
         border: Border.all(
-          color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E5E2),
+          color: theme.colorScheme.outlineVariant,
           width: 1.2,
         ),
       ),
@@ -144,7 +147,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
                 hintText: 'e.g., Library Study Desk, Table 5',
                 prefixIcon: const Icon(Icons.store_rounded),
                 filled: true,
-                fillColor: isDark ? const Color(0xFF060606) : Colors.white,
+                fillColor: theme.colorScheme.surface,
               ),
               validator: (val) {
                 if (val == null || val.trim().isEmpty) {
