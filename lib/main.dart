@@ -170,12 +170,21 @@ class MyApp extends ConsumerWidget {
           ),
         ),
         navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: lightColorScheme.surface,
+          backgroundColor: Colors.white,
           elevation: 8,
-          indicatorColor: lightCardColor,
-          labelTextStyle: WidgetStateProperty.all(
-            TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: lightColorScheme.onSurface),
-          ),
+          indicatorColor: Colors.black,
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const IconThemeData(color: Colors.white);
+            }
+            return IconThemeData(color: Colors.black.withValues(alpha: 0.5));
+          }),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black);
+            }
+            return TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black.withValues(alpha: 0.5));
+          }),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
@@ -240,12 +249,21 @@ class MyApp extends ConsumerWidget {
           ),
         ),
         navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: darkColorScheme.surface,
+          backgroundColor: Colors.black,
           elevation: 8,
-          indicatorColor: darkCardColor,
-          labelTextStyle: WidgetStateProperty.all(
-            TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: darkColorScheme.onSurface),
-          ),
+          indicatorColor: Colors.white,
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const IconThemeData(color: Colors.black);
+            }
+            return IconThemeData(color: Colors.white.withValues(alpha: 0.5));
+          }),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white);
+            }
+            return TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.5));
+          }),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
