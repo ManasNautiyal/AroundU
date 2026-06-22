@@ -1,6 +1,4 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:geolocator/geolocator.dart';
-import '../../../../core/services/location_service.dart';
 import '../../data/models/nearby_user.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
@@ -53,44 +51,5 @@ class SelectedVibeFilter extends _$SelectedVibeFilter {
   }
 }
 
-@riverpod
-class InLocalRoom extends _$InLocalRoom {
-  // Downtown Coffee Shop coordinates (mocked location center)
-  static const double shopLatitude = 30.3004027;
-  static const double shopLongitude = 78.0347056;
 
-  bool? _manualOverride;
-
-  @override
-  bool build() {
-    final positionAsync = ref.watch(userPositionProvider);
-    return positionAsync.maybeWhen(
-      data: (position) {
-        final distance = Geolocator.distanceBetween(
-          position.latitude,
-          position.longitude,
-          shopLatitude,
-          shopLongitude,
-        );
-        final inRange = distance <= 100.0;
-        final finalState = _manualOverride ?? inRange;
-        // ignore: avoid_print
-        print('DEBUG LOCAL ROOM RANGE CHECK: userLoc=(${position.latitude}, ${position.longitude}), dist=${distance.toStringAsFixed(1)}m, inRange=$inRange, manualOverride=$_manualOverride, finalState=$finalState');
-        return finalState;
-      },
-      orElse: () => _manualOverride ?? true,
-    );
-  }
-
-  void setInRoom(bool value) {
-    _manualOverride = value;
-    state = value;
-  }
-
-  void toggle() {
-    final newValue = !state;
-    _manualOverride = newValue;
-    state = newValue;
-  }
-}
 

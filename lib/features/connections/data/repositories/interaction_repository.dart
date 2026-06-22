@@ -7,25 +7,16 @@ import '../models/message_request_model.dart';
 
 part 'interaction_repository.g.dart';
 
-class DailyWaveLimitExceededException implements Exception {
-  @override
-  String toString() => 'Daily quota exceeded. You can only send 3 waves per day.';
-}
 
 class InteractionRepository {
   final FirebaseFirestore _firestore;
 
   // Local Mock Databases (used if Firebase isn't initialized)
   final List<InteractionModel> _mockLikes = [];
-  final List<InteractionModel> _mockIncomingWaves = [];
   final List<MatchModel> _mockMatches = [];
   
-  // Wave timestamps tracking for current user
-  final List<DateTime> _myWaveTimestamps = [];
-
   // StreamControllers to notify changes in Mock Streams
   final _matchesController = StreamController<List<MatchModel>>.broadcast();
-  final _incomingWavesController = StreamController<List<InteractionModel>>.broadcast();
   final _incomingLikesController = StreamController<List<InteractionModel>>.broadcast();
   final _sentLikesController = StreamController<List<InteractionModel>>.broadcast();
 
@@ -108,28 +99,6 @@ class InteractionRepository {
     }
   }
 
-  /// Sends a Wave. Throws DailyWaveLimitExceededException if quota of 3 waves per 24 hours is exceeded.
-  Future<bool> sendWave({required String currentUserId, required String targetUserId}) async {
-    // Check rolling 24 hour wave quota
-    final now = DateTime.now();
-    _myWaveTimestamps.removeWhere((t) => now.difference(t).inHours >= 24);
-
-    if (_myWaveTimestamps.length >= 3) {
-      throw DailyWaveLimitExceededException();
-    }
-
-    if (_isFirebaseInitialized) {
-      await _firestore.collection('waves').add({
-        'senderId': currentUserId,
-        'receiverId': targetUserId,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-    }
-    
-    // Track sent timestamp (both mock and real)
-    _myWaveTimestamps.add(now);
-    return true;
-  }
 
   /// Streams mutual matches for the user
   Stream<List<MatchModel>> getMatchesStream(String currentUserId) {
@@ -146,20 +115,6 @@ class InteractionRepository {
     }
   }
 
-  /// Streams incoming waves
-  Stream<List<InteractionModel>> getIncomingWavesStream(String currentUserId) {
-    if (_isFirebaseInitialized) {
-      return _firestore
-          .collection('waves')
-          .where('receiverId', isEqualTo: currentUserId)
-          .snapshots()
-          .map((snap) => snap.docs.map((d) => InteractionModel.fromMap(d.data(), d.id)).toList());
-    } else {
-      // Yield current state first
-      Timer.run(() => _incomingWavesController.add(_mockIncomingWaves));
-      return _incomingWavesController.stream;
-    }
-  }
 
   /// Sends a connection request with an intro message note.
   Future<void> sendConnectionRequest({
@@ -307,11 +262,6 @@ Stream<List<MatchModel>> matchesStream(MatchesStreamRef ref, {required String cu
   return repo.getMatchesStream(currentUserId);
 }
 
-@riverpod
-Stream<List<InteractionModel>> incomingWavesStream(IncomingWavesStreamRef ref, {required String currentUserId}) {
-  final repo = ref.watch(interactionRepositoryProvider);
-  return repo.getIncomingWavesStream(currentUserId);
-}
 
 @riverpod
 Stream<List<MessageRequestModel>> connectionRequestsStream(ConnectionRequestsStreamRef ref, {required String currentUserId}) {

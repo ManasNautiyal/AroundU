@@ -62,11 +62,15 @@ service cloud.firestore {
       allow write: if isAuthenticated() && (request.auth.uid in request.resource.data.userIds);
     }
 
-    // --- Waves ---
-    match /waves/{waveId} {
-      allow read: if isAuthenticated() && 
-        (resource.data.receiverId == request.auth.uid || resource.data.senderId == request.auth.uid);
-      allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+    // --- Proximity Rooms ---
+    match /proximity_rooms/{roomId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.creatorId == request.auth.uid;
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+      }
     }
 
     // --- Connection Requests ---

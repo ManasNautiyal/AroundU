@@ -48,19 +48,7 @@ final interactionObserverProvider = Provider.family<void, String>((ref, uid) {
     }
   });
 
-  // 2. Listen to incoming Waves
-  ref.listen<AsyncValue<List<InteractionModel>>>(incomingWavesStreamProvider(currentUserId: uid), (previous, next) {
-    final waves = next.valueOrNull ?? [];
-    for (final wave in waves) {
-      if (wave.timestamp.isAfter(startTime)) {
-        NotificationService.showNotification(
-          id: wave.id.hashCode,
-          title: 'New Wave! 👋',
-          body: 'Someone waved at you.',
-        );
-      }
-    }
-  });
+
 
   // 3. Listen to incoming Connection Requests
   ref.listen<AsyncValue<List<MessageRequestModel>>>(connectionRequestsStreamProvider(currentUserId: uid), (previous, next) {

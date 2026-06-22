@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum InteractionType { like, wave }
+enum InteractionType { like }
 
-/// Represents an interaction (Like or Wave) between two users.
+/// Represents an interaction (Like) between two users.
 class InteractionModel {
   final String id;
   final String senderId;
@@ -23,7 +23,7 @@ class InteractionModel {
       id: id,
       senderId: map['senderId'] ?? '',
       receiverId: map['receiverId'] ?? '',
-      type: map['type'] == 'wave' ? InteractionType.wave : InteractionType.like,
+      type: InteractionType.like,
       timestamp: (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -32,7 +32,7 @@ class InteractionModel {
     return {
       'senderId': senderId,
       'receiverId': receiverId,
-      'type': type == InteractionType.wave ? 'wave' : 'like',
+      'type': 'like',
       'timestamp': Timestamp.fromDate(timestamp),
     };
   }

@@ -56,7 +56,7 @@ class NotificationService {
     const androidDetails = AndroidNotificationDetails(
       'aroundu_interactions',
       'Profile Interactions',
-      channelDescription: 'Notifications for likes, waves, connection requests, and messages.',
+      channelDescription: 'Notifications for likes, connection requests, and messages.',
       importance: Importance.max,
       priority: Priority.high,
       showWhen: true,

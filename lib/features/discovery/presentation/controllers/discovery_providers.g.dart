@@ -60,21 +60,5 @@ final selectedVibeFilterProvider =
     );
 
 typedef _$SelectedVibeFilter = AutoDisposeNotifier<String?>;
-String _$inLocalRoomHash() => r'73ffb32af70ca04e824e4c998a28c1a77f4e045d';
-
-/// See also [InLocalRoom].
-@ProviderFor(InLocalRoom)
-final inLocalRoomProvider =
-    AutoDisposeNotifierProvider<InLocalRoom, bool>.internal(
-      InLocalRoom.new,
-      name: r'inLocalRoomProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$inLocalRoomHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$InLocalRoom = AutoDisposeNotifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
