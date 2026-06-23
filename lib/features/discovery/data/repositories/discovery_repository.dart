@@ -43,17 +43,14 @@ class DiscoveryRepository {
     
     final center = GeoFirePoint(GeoPoint(currentPosition.latitude, currentPosition.longitude));
     
-    // Subscribe to users within 0.1 km (100 meters)
+    // Subscribe to users within 10.0 km (and filter to 100 meters client-side below)
     return geoRef.subscribeWithin(
       center: center,
-      radiusInKm: 0.1,
+      radiusInKm: 10.0,
       field: 'location',
       geopointFrom: (data) {
         final locationMap = data['location'] as Map<String, dynamic>?;
-        if (locationMap == null) {
-          throw Exception('Location field is missing');
-        }
-        return locationMap['geopoint'] as GeoPoint;
+        return locationMap?['geopoint'] as GeoPoint? ?? const GeoPoint(0, 0);
       },
       strictMode: true,
     ).map((snapshots) {
