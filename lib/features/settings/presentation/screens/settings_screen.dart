@@ -204,8 +204,8 @@ class SettingsScreen extends ConsumerWidget {
                         style: TextStyle(fontSize: 12, color: subtitleColor),
                       ),
                       value: isGhostMode,
-                      activeThumbColor: isDark ? Colors.white : Colors.black,
-                      activeTrackColor: isDark ? Colors.white30 : Colors.black38,
+                      activeThumbColor: theme.colorScheme.primary,
+                      activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.4),
                       onChanged: (val) {
                         sheetRef.read(ghostModeControllerProvider.notifier).toggle();
                       },
@@ -232,8 +232,8 @@ class SettingsScreen extends ConsumerWidget {
                         style: TextStyle(fontSize: 12, color: subtitleColor),
                       ),
                       value: !isDark,
-                      activeThumbColor: isDark ? Colors.white : Colors.black,
-                      activeTrackColor: isDark ? Colors.white30 : Colors.black38,
+                      activeThumbColor: theme.colorScheme.primary,
+                      activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.4),
                       onChanged: (val) {
                         sheetRef.read(themeModeProvider.notifier).toggleTheme();
                       },
@@ -333,10 +333,10 @@ class SettingsScreen extends ConsumerWidget {
                     // Delete Account Button
                     TextButton.icon(
                       style: TextButton.styleFrom(
-                        foregroundColor: isDark ? Colors.white60 : Colors.black54,
+                        foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: StadiumBorder(
-                          side: BorderSide(color: isDark ? Colors.white24 : Colors.black26, width: 1),
+                          side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.24), width: 1),
                         ),
                       ),
                       onPressed: () {
@@ -344,7 +344,7 @@ class SettingsScreen extends ConsumerWidget {
                         navigator.pop(); // Close sheet
                         _showDeleteAccountDialog(navigator.context, ref);
                       },
-                      icon: Icon(Icons.delete_forever_rounded, size: 18, color: isDark ? Colors.white60 : Colors.black54),
+                      icon: Icon(Icons.delete_forever_rounded, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                       label: const Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],

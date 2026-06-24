@@ -247,7 +247,6 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
         final senderAsync = ref.watch(userProfileProvider(senderId));
         final sender = senderAsync.valueOrNull;
 
-        final isDark = theme.brightness == Brightness.dark;
         final bubbleColor = isMe
             ? theme.colorScheme.primary
             : theme.colorScheme.surfaceContainerHighest;
@@ -323,7 +322,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                           formattedTime,
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontSize: 10,
-                            color: isDark ? Colors.white54 : Colors.black54,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -339,11 +338,10 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
   }
 
   Widget _buildInputArea(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? Colors.black : Colors.white;
-    final borderBg = isDark ? Colors.white : Colors.black;
+    final cardBg = theme.colorScheme.surface;
+    final borderBg = theme.colorScheme.outline;
     final textColor = theme.colorScheme.onSurface;
-    final hintColor = isDark ? Colors.white38 : Colors.black38;
+    final hintColor = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

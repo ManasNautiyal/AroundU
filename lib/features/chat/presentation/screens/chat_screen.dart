@@ -202,13 +202,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
   }
 
   Widget _buildMessageBubble(MessageModel message, bool isMe, ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
     final bubbleColor = isMe
         ? theme.colorScheme.primary
-        : (isDark ? Colors.black : Colors.white);
+        : theme.colorScheme.surface;
     final textColor = isMe
         ? theme.colorScheme.onPrimary
-        : (isDark ? Colors.white : Colors.black);
+        : theme.colorScheme.onSurface;
 
     final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final margin = isMe
@@ -234,7 +233,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                   bottomLeft: Radius.circular(isMe ? 18 : 4),
                   bottomRight: Radius.circular(isMe ? 4 : 18),
                 ),
-                border: isMe ? null : Border.all(color: isDark ? Colors.white : Colors.black, width: 1.0),
+                border: isMe ? null : Border.all(color: theme.colorScheme.outline, width: 1.0),
               ),
               child: Text(
                 message.text,
@@ -253,7 +252,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                 formattedTime,
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontSize: 10.5,
-                  color: isDark ? Colors.white54 : Colors.black54,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -264,12 +263,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
   }
 
   Widget _buildInputArea(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? Colors.black : Colors.white;
-    final borderBg = isDark ? Colors.white : Colors.black;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
-    final hintColor = isDark ? Colors.white.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.4);
+    final cardBg = theme.colorScheme.surface;
+    final borderBg = theme.colorScheme.outline;
+    final textColor = theme.colorScheme.onSurface;
+    final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
+    final hintColor = theme.colorScheme.onSurface.withValues(alpha: 0.4);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -41,15 +41,7 @@ class MockDiscoveryUsersController extends _$MockDiscoveryUsersController {
 
 
 
-@riverpod
-class SelectedVibeFilter extends _$SelectedVibeFilter {
-  @override
-  String? build() => null;
 
-  void selectFilter(String? filter) {
-    state = filter;
-  }
-}
 
 
 

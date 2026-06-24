@@ -328,7 +328,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   }
 
   Widget _buildStep2Pictures(ThemeData theme, OnboardingState state) {
-    final isDark = theme.brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -366,12 +365,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         width: leftWidth,
                         height: itemHeight,
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.black : Colors.white,
+                          color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: state.profilePictures[0] != null
                                 ? theme.colorScheme.primary
-                                : (isDark ? Colors.white : Colors.black),
+                                : theme.colorScheme.outline,
                             width: 1.5,
                           ),
                         ),
@@ -392,7 +391,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                       'Primary Photo',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: isDark ? Colors.white : Colors.black,
+                                        color: theme.colorScheme.onSurface,
                                         fontSize: 13,
                                       ),
                                     ),
@@ -421,10 +420,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               onTap: () => _pickImage(1),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: isDark ? Colors.black : Colors.white,
+                                  color: theme.colorScheme.surface,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isDark ? Colors.white : Colors.black,
+                                    color: theme.colorScheme.outline,
                                     width: 1.2,
                                   ),
                                 ),
@@ -436,7 +435,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                           child: Icon(
                                             Icons.add_photo_alternate_outlined,
                                             size: 24,
-                                            color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3),
+                                            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                                           ),
                                         ),
                                 ),
@@ -451,10 +450,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               onTap: () => _pickImage(2),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: isDark ? Colors.black : Colors.white,
+                                  color: theme.colorScheme.surface,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isDark ? Colors.white : Colors.black,
+                                    color: theme.colorScheme.outline,
                                     width: 1.2,
                                   ),
                                 ),
@@ -466,7 +465,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                           child: Icon(
                                             Icons.add_photo_alternate_outlined,
                                             size: 24,
-                                            color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3),
+                                            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                                           ),
                                         ),
                                 ),

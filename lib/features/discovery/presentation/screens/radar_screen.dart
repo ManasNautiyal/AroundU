@@ -37,130 +37,13 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     );
   }
 
-  void _showVibeFilterSheet() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? Colors.black : Colors.white;
-    final borderBg = isDark ? Colors.white : Colors.black;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
 
-    final presetVibes = [
-      '☕ Coffee',
-      '🎵 Music',
-      '🏋️ Gym',
-      '📚 Study',
-      '💬 Chatting',
-      '🎮 Gaming',
-      '🍕 Food',
-    ];
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final currentSelected = ref.watch(selectedVibeFilterProvider);
-            return Container(
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(
-                  top: BorderSide(color: borderBg, width: 1.5),
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      height: 4,
-                      width: 40,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey.shade800 : Colors.grey.shade400,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  Text(
-                    'Filter by Vibe',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      ...presetVibes.map((vibe) {
-                        final isSelected = currentSelected == vibe;
-                        return GestureDetector(
-                          onTap: () {
-                            ref.read(selectedVibeFilterProvider.notifier).selectFilter(isSelected ? null : vibe);
-                            setModalState(() {});
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? theme.colorScheme.primary : borderBg,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isSelected ? theme.colorScheme.primary : borderBg,
-                                width: 1.2,
-                              ),
-                            ),
-                            child: Text(
-                              vibe,
-                              style: TextStyle(
-                                color: isSelected ? theme.colorScheme.onPrimary : subTextColor,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                  if (currentSelected != null) ...[
-                    const SizedBox(height: 20),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.redAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: const StadiumBorder(),
-                      ),
-                      onPressed: () {
-                        ref.read(selectedVibeFilterProvider.notifier).selectFilter(null);
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Clear Filter', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildHeader(ThemeData theme, String? selectedVibe) {
-    final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? Colors.black : Colors.white;
-    final borderBg = isDark ? Colors.white : Colors.black;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
-    final hintColor = isDark ? Colors.white.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.4);
+  Widget _buildHeader(ThemeData theme) {
+    final cardBg = theme.colorScheme.surface;
+    final borderBg = theme.colorScheme.outline;
+    final textColor = theme.colorScheme.onSurface;
+    final hintColor = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
 
     return Column(
       children: [
@@ -215,28 +98,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            Container(
-              height: 44,
-              width: 44,
-              decoration: BoxDecoration(
-                color: selectedVibe != null ? theme.colorScheme.primary : cardBg,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: selectedVibe != null ? theme.colorScheme.primary : borderBg,
-                  width: 1.2,
-                ),
-              ),
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                icon: Icon(
-                  Icons.filter_list_rounded,
-                  color: selectedVibe != null ? theme.colorScheme.onPrimary : subTextColor,
-                  size: 20,
-                ),
-                onPressed: _showVibeFilterSheet,
-              ),
-            ),
           ],
         ),
       ],
@@ -246,8 +107,8 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   Widget _buildProfileCard(NearbyUser nearbyUser) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? Colors.black : Colors.white;
-    final borderBg = isDark ? Colors.white : Colors.black;
+    final cardBg = theme.colorScheme.surface;
+    final borderBg = theme.colorScheme.outline;
 
     final user = nearbyUser.user;
     final primaryPhoto = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
@@ -373,7 +234,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     final subTextColor = isDark ? Colors.white70 : Colors.black54;
 
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
-    final selectedVibe = ref.watch(selectedVibeFilterProvider);
     final isGhostMode = ref.watch(ghostModeControllerProvider);
     final nearbyUsersAsync = ref.watch(nearbyUsersProvider(currentUserId: currentUserId));
 
@@ -385,7 +245,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildHeader(theme, selectedVibe),
+              _buildHeader(theme),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -431,17 +291,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                       final user = nearby.user;
                       final nameMatch = user.name.toLowerCase().contains(_searchQuery.toLowerCase());
                       final bioMatch = user.bio.toLowerCase().contains(_searchQuery.toLowerCase());
-                      if (!nameMatch && !bioMatch) return false;
-
-                      if (selectedVibe != null) {
-                        final vibeText = selectedVibe.split(' ').last.toLowerCase();
-                        final vibeInTags = user.vibeTags.any((t) => t.toLowerCase().contains(vibeText));
-                        final vibeInBio = user.bio.toLowerCase().contains(vibeText);
-                        final vibeInBeacon = user.beaconMessage?.toLowerCase().contains(vibeText) ?? false;
-                        final emojiMatch = user.beaconEmoji != null && selectedVibe.contains(user.beaconEmoji!);
-                        return vibeInTags || vibeInBio || vibeInBeacon || emojiMatch;
-                      }
-                      return true;
+                      return nameMatch || bioMatch;
                     }).toList();
 
                     // Sort filtered users by likesCount in descending order
@@ -455,7 +305,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                             Icon(Icons.people_outline_rounded, size: 48, color: isDark ? Colors.white30 : Colors.black26),
                             const SizedBox(height: 12),
                             Text(
-                              _searchQuery.isNotEmpty || selectedVibe != null
+                              _searchQuery.isNotEmpty
                                   ? 'No matching profiles found nearby.'
                                   : 'No one is nearby right now.\nTap recenter to scan your area.',
                               textAlign: TextAlign.center,
@@ -580,10 +430,10 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
       };
     }
 
-    final cardBg = isDark ? Colors.black : Colors.white;
-    final borderBg = isDark ? Colors.white : Colors.black;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final cardBg = theme.colorScheme.surface;
+    final borderBg = theme.colorScheme.outline;
+    final textColor = theme.colorScheme.onSurface;
+    final subTextColor = theme.colorScheme.onSurfaceVariant;
 
     return Center(
       child: Container(

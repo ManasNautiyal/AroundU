@@ -83,7 +83,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                           ),
                           selected: _showPrimaryChats,
                           selectedColor: theme.colorScheme.primary,
-                          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                          backgroundColor: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                           checkmarkColor: theme.colorScheme.onPrimary,
                           onSelected: (selected) {
                             if (selected) {
@@ -108,7 +108,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                           ),
                           selected: !_showPrimaryChats,
                           selectedColor: theme.colorScheme.primary,
-                          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                          backgroundColor: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                           checkmarkColor: theme.colorScheme.onPrimary,
                           onSelected: (selected) {
                             if (selected) {
@@ -175,7 +175,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                           ),
                           selected: _showReceivedLikes,
                           selectedColor: theme.colorScheme.primary,
-                          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                          backgroundColor: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                           checkmarkColor: theme.colorScheme.onPrimary,
                           onSelected: (selected) {
                             if (selected) {
@@ -200,7 +200,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                           ),
                           selected: !_showReceivedLikes,
                           selectedColor: theme.colorScheme.primary,
-                          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                          backgroundColor: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                           checkmarkColor: theme.colorScheme.onPrimary,
                           onSelected: (selected) {
                             if (selected) {
@@ -292,9 +292,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   }
 
   Widget _buildMessagesList(List<MatchModel> connections, String currentUserId, ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    final borderBg = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
+    final borderBg = theme.colorScheme.outline;
+    final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
     final proximityRoomsAsync = ref.watch(proximityRoomsProvider);
     final proximityRooms = proximityRoomsAsync.valueOrNull ?? [];
 
@@ -432,7 +431,6 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   }
 
   Widget _buildRequestsList(List<MessageRequestModel> requests, ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
     if (requests.isEmpty) {
       return _buildEmptyState(
         theme: theme,
@@ -446,7 +444,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: requests.length,
       separatorBuilder: (context, index) => Divider(
-        color: isDark ? Colors.white : Colors.black,
+        color: theme.colorScheme.outline,
         height: 1,
         thickness: 1.0,
       ),
@@ -507,7 +505,6 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   }
 
   Widget _buildReceivedLikesList(List<InteractionModel> likes, String currentUserId, ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
     if (likes.isEmpty) {
       return _buildEmptyState(
         theme: theme,
@@ -521,7 +518,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: likes.length,
       separatorBuilder: (context, index) => Divider(
-        color: isDark ? Colors.white : Colors.black,
+        color: theme.colorScheme.outline,
         height: 1,
         thickness: 1.0,
       ),
@@ -538,7 +535,6 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   }
 
   Widget _buildSentLikesList(List<InteractionModel> likes, String currentUserId, ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
     if (likes.isEmpty) {
       return _buildEmptyState(
         theme: theme,
@@ -552,7 +548,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemCount: likes.length,
       separatorBuilder: (context, index) => Divider(
-        color: isDark ? Colors.white : Colors.black,
+        color: theme.colorScheme.outline,
         height: 1,
         thickness: 1.0,
       ),
@@ -584,8 +580,8 @@ class MatchTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = theme.brightness == Brightness.dark;
-    final borderBg = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
+    final borderBg = theme.colorScheme.outline;
+    final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
 
     final targetUserId = connection.user1Id == currentUserId ? connection.user2Id : connection.user1Id;
     final userAsync = ref.watch(userProfileProvider(targetUserId));
@@ -692,7 +688,7 @@ class MatchTile extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+              backgroundColor: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -703,7 +699,7 @@ class MatchTile extends ConsumerWidget {
                     height: 16,
                     width: 100,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                      color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -712,7 +708,7 @@ class MatchTile extends ConsumerWidget {
                     height: 12,
                     width: 60,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                      color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -742,9 +738,9 @@ class MessageRequestTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? Colors.black : Colors.white;
-    final borderBg = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
+    final cardBg = theme.colorScheme.surface;
+    final borderBg = theme.colorScheme.outline;
+    final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
 
     final senderAsync = ref.watch(userProfileProvider(request.senderId));
 
@@ -885,8 +881,8 @@ class MessageRequestTile extends ConsumerWidget {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark ? Colors.white : Colors.black,
-                          foregroundColor: isDark ? Colors.black : Colors.white,
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
                           shape: const StadiumBorder(),
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           elevation: 0,
@@ -911,7 +907,7 @@ class MessageRequestTile extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                  backgroundColor: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -919,7 +915,7 @@ class MessageRequestTile extends ConsumerWidget {
                     height: 16,
                     width: 100,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                      color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -931,7 +927,7 @@ class MessageRequestTile extends ConsumerWidget {
               height: 48,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
@@ -959,8 +955,7 @@ class ReceivedLikeTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = theme.brightness == Brightness.dark;
-    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final subTextColor = theme.colorScheme.onSurfaceVariant;
 
     final senderAsync = ref.watch(userProfileProvider(like.senderId));
     final sentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: currentUserId));
@@ -1091,8 +1086,7 @@ class SentLikeTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = theme.brightness == Brightness.dark;
-    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final subTextColor = theme.colorScheme.onSurfaceVariant;
 
     final receiverAsync = ref.watch(userProfileProvider(like.receiverId));
 

@@ -128,11 +128,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? Colors.black : Colors.white;
-    final borderBg = isDark ? Colors.white : Colors.black;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
-    final iconColor = isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3);
+    final cardBg = theme.colorScheme.surface;
+    final borderBg = theme.colorScheme.outline;
+    final textColor = theme.colorScheme.onSurface;
+    final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
+    final iconColor = theme.colorScheme.onSurface.withValues(alpha: 0.3);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,

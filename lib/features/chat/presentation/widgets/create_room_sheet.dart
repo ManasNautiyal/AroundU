@@ -78,7 +78,6 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     
     return Container(
       padding: EdgeInsets.only(
@@ -110,7 +109,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -136,7 +135,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
               controller: _nameController,
               autofocus: true,
               style: TextStyle(
-                color: isDark ? Colors.white : Colors.black87,
+                color: theme.colorScheme.onSurface,
                 fontSize: 16,
               ),
               decoration: InputDecoration(
@@ -175,7 +174,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
             SliderTheme(
               data: SliderThemeData(
                 activeTrackColor: theme.colorScheme.primary,
-                inactiveTrackColor: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.15),
+                inactiveTrackColor: theme.colorScheme.onSurface.withValues(alpha: 0.15),
                 thumbColor: theme.colorScheme.primary,
                 overlayColor: theme.colorScheme.primary.withAlpha(20),
                 valueIndicatorTextStyle: TextStyle(
@@ -200,19 +199,19 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
             ElevatedButton(
               onPressed: _isLoading ? null : _createRoom,
               style: ElevatedButton.styleFrom(
-                backgroundColor: isDark ? Colors.white : Colors.black,
-                foregroundColor: isDark ? Colors.black : Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: const StadiumBorder(),
                 elevation: 0,
               ),
               child: _isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
                       ),
                     )
                   : const Text(

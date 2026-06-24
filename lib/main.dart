@@ -324,7 +324,6 @@ class OnboardingRouter extends ConsumerWidget {
           ref.invalidate(currentUserModelProvider);
           ref.invalidate(ghostModeControllerProvider);
           ref.invalidate(mockDiscoveryUsersControllerProvider);
-          ref.invalidate(selectedVibeFilterProvider);
           ref.invalidate(proximityRoomsProvider);
         } else {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -413,11 +412,11 @@ class LoadingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -431,7 +430,7 @@ class LoadingScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
+                  color: theme.colorScheme.onSurface,
                   letterSpacing: -1.0,
                 ),
               ),
@@ -442,7 +441,7 @@ class LoadingScreen extends ConsumerWidget {
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2.0,
-                valueColor: AlwaysStoppedAnimation<Color>(isDark ? Colors.white : Colors.black),
+                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
               ),
             ),
           ],

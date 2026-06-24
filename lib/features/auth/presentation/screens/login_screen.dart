@@ -200,12 +200,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: isResetLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation(Colors.white),
+                                valueColor: AlwaysStoppedAnimation(theme.colorScheme.onPrimary),
                               ),
                             )
                           : const Text(
@@ -388,10 +388,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.black : Colors.white,
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? Colors.white : Colors.black,
+                        color: theme.colorScheme.outline,
                         width: 1.2,
                       ),
                     ),
@@ -451,7 +451,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   onPressed: _isLoading ? null : _handleGoogleSignIn,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: isDark ? Colors.white : Colors.black),
+                    side: BorderSide(color: theme.colorScheme.outline),
                   ),
                   icon: Image.network(
                     'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
@@ -471,12 +471,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 ElevatedButton.icon(
                   onPressed: _isLoading ? null : () => _handleSocialLogin('Apple'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.brightness == Brightness.dark
-                        ? Colors.white
-                        : Colors.black,
-                    foregroundColor: theme.brightness == Brightness.dark
-                        ? Colors.black
-                        : Colors.white,
+                    backgroundColor: theme.colorScheme.onSurface,
+                    foregroundColor: theme.colorScheme.surface,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   icon: const Icon(Icons.apple, size: 20),
@@ -589,12 +585,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
           child: _isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   height: 20,
                   width: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                    valueColor: AlwaysStoppedAnimation(theme.colorScheme.onPrimary),
                   ),
                 )
               : const Text(
@@ -750,12 +746,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
           child: _isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   height: 20,
                   width: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                    valueColor: AlwaysStoppedAnimation(theme.colorScheme.onPrimary),
                   ),
                 )
               : const Text(

@@ -54,10 +54,10 @@ class _BeaconSheetState extends ConsumerState<BeaconSheet> {
     final hasActiveBeacon = currentUser != null && currentUser.beaconEmoji != null;
 
     final isDark = theme.brightness == Brightness.dark;
-    final sheetColor = isDark ? Colors.black : Colors.white;
-    final borderColor = isDark ? Colors.white : Colors.black;
-    final unselectedBg = isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05);
-    final unselectedText = isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.7);
+    final sheetColor = theme.colorScheme.surface;
+    final borderColor = theme.colorScheme.outline;
+    final unselectedBg = theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05);
+    final unselectedText = theme.colorScheme.onSurface.withValues(alpha: 0.7);
 
     return Container(
       decoration: BoxDecoration(
