@@ -25,6 +25,7 @@ class InboxScreen extends ConsumerStatefulWidget {
 
 class _InboxScreenState extends ConsumerState<InboxScreen> {
   bool _showReceivedLikes = true;
+  bool _showPrimaryChats = true;
 
   void _showProfileDetail(BuildContext context, UserModel user) {
     showModalBottomSheet(
@@ -49,6 +50,10 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     // If split navigation overrides the view, render only the specific tab list
     if (widget.selectedTabOverride != null) {
       if (widget.selectedTabOverride == 0) {
+        final requests = pendingRequestsAsync.valueOrNull ?? [];
+        final connections = activeConnectionsAsync.valueOrNull ?? [];
+        final isDark = theme.brightness == Brightness.dark;
+
         return Scaffold(
           appBar: AppBar(
             title: const Text(
@@ -58,10 +63,81 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           ),
           body: Container(
             decoration: decoration,
-            child: activeConnectionsAsync.when(
-              data: (connections) => _buildMessagesList(connections, currentUserId, theme),
-              error: (err, _) => Center(child: Text('Error loading messages: $err')),
-              loading: () => const Center(child: CircularProgressIndicator()),
+            child: Column(
+              children: [
+                // Choice Chips filter
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ChoiceChip(
+                          label: Center(
+                            child: Text(
+                              'Primary (${connections.length})',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _showPrimaryChats ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          selected: _showPrimaryChats,
+                          selectedColor: theme.colorScheme.primary,
+                          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                          checkmarkColor: theme.colorScheme.onPrimary,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _showPrimaryChats = true;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ChoiceChip(
+                          label: Center(
+                            child: Text(
+                              'Requests (${requests.length})',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: !_showPrimaryChats ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          selected: !_showPrimaryChats,
+                          selectedColor: theme.colorScheme.primary,
+                          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                          checkmarkColor: theme.colorScheme.onPrimary,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _showPrimaryChats = false;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Tab Content
+                Expanded(
+                  child: _showPrimaryChats
+                      ? activeConnectionsAsync.when(
+                          data: (connectionsList) => _buildMessagesList(connectionsList, currentUserId, theme),
+                          error: (err, _) => Center(child: Text('Error loading messages: $err')),
+                          loading: () => const Center(child: CircularProgressIndicator()),
+                        )
+                      : pendingRequestsAsync.when(
+                          data: (requestsList) => _buildRequestsList(requestsList, theme),
+                          error: (err, _) => Center(child: Text('Error loading requests: $err')),
+                          loading: () => const Center(child: CircularProgressIndicator()),
+                        ),
+                ),
+              ],
             ),
           ),
         );

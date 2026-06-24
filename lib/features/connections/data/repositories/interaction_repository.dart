@@ -14,11 +14,13 @@ class InteractionRepository {
   // Local Mock Databases (used if Firebase isn't initialized)
   final List<InteractionModel> _mockLikes = [];
   final List<MatchModel> _mockMatches = [];
+  final List<MessageRequestModel> _mockConnectionRequests = [];
   
   // StreamControllers to notify changes in Mock Streams
   final _matchesController = StreamController<List<MatchModel>>.broadcast();
   final _incomingLikesController = StreamController<List<InteractionModel>>.broadcast();
   final _sentLikesController = StreamController<List<InteractionModel>>.broadcast();
+  final _connectionRequestsController = StreamController<List<MessageRequestModel>>.broadcast();
 
   InteractionRepository(this._firestore);
 
@@ -133,6 +135,16 @@ class InteractionRepository {
       // Mock local write log
       // ignore: avoid_print
       print('Mock Connection Request: $currentUserId -> $targetUserId with msg: "$introMessage"');
+      
+      final request = MessageRequestModel(
+        id: 'req_${currentUserId}_${targetUserId}_${DateTime.now().millisecondsSinceEpoch}',
+        senderId: currentUserId,
+        receiverId: targetUserId,
+        introMessage: introMessage,
+        timestamp: DateTime.now(),
+      );
+      _mockConnectionRequests.add(request);
+      _connectionRequestsController.add(_mockConnectionRequests.where((r) => r.receiverId == targetUserId).toList());
     }
   }
 
@@ -145,7 +157,8 @@ class InteractionRepository {
           .snapshots()
           .map((snap) => snap.docs.map((d) => MessageRequestModel.fromMap(d.data(), d.id)).toList());
     } else {
-      return const Stream.empty();
+      Timer.run(() => _connectionRequestsController.add(_mockConnectionRequests.where((r) => r.receiverId == currentUserId).toList()));
+      return _connectionRequestsController.stream;
     }
   }
 
@@ -186,6 +199,21 @@ class InteractionRepository {
       batch.delete(requestRef);
 
       await batch.commit();
+    } else {
+      // Create local match
+      final match = MatchModel(
+        id: 'match_${request.senderId}_${request.receiverId}',
+        user1Id: request.senderId,
+        user2Id: request.receiverId,
+        userIds: [request.senderId, request.receiverId],
+        timestamp: DateTime.now(),
+      );
+      _mockMatches.add(match);
+      _matchesController.add(List.from(_mockMatches));
+
+      // Remove from connection requests
+      _mockConnectionRequests.removeWhere((r) => r.id == request.id);
+      _connectionRequestsController.add(_mockConnectionRequests.where((r) => r.receiverId == request.receiverId).toList());
     }
   }
 
@@ -193,6 +221,10 @@ class InteractionRepository {
   Future<void> declineConnectionRequest(String requestId) async {
     if (_isFirebaseInitialized) {
       await _firestore.collection('connection_requests').doc(requestId).delete();
+    } else {
+      final req = _mockConnectionRequests.firstWhere((r) => r.id == requestId);
+      _mockConnectionRequests.removeWhere((r) => r.id == requestId);
+      _connectionRequestsController.add(_mockConnectionRequests.where((r) => r.receiverId == req.receiverId).toList());
     }
   }
 
