@@ -84,11 +84,13 @@ service cloud.firestore {
 
     // --- Likes ---
     // Read: Users can query likes they sent or received.
-    // Write: Users can only create/update likes where they are the sender.
+    // Create/Update: Users can only create/update likes where they are the sender.
+    // Delete: Users can delete a like they sent.
     match /likes/{likeId} {
       allow read: if isAuthenticated() && 
         (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
-      allow write: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+      allow create, update: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource == null || resource.data.senderId == request.auth.uid);
     }
 
     // --- Matches ---
@@ -98,7 +100,7 @@ service cloud.firestore {
     match /matches/{matchId} {
       allow read: if isAuthenticated() && (request.auth.uid in resource.data.userIds);
       allow create, update: if isAuthenticated() && (request.auth.uid in request.resource.data.userIds);
-      allow delete: if isAuthenticated() && (request.auth.uid in resource.data.userIds);
+      allow delete: if isAuthenticated() && (resource == null || request.auth.uid in resource.data.userIds);
     }
 
     // --- Waves (Short Signal Interactions) ---

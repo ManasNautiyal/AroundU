@@ -232,18 +232,24 @@ class InteractionRepository {
   Future<void> unlikeUser({required String currentUserId, required String targetUserId}) async {
     if (_isFirebaseInitialized) {
       final likeRef = _firestore.collection('likes').doc('${currentUserId}_$targetUserId');
-      await likeRef.delete();
+      final likeDoc = await likeRef.get();
+      if (likeDoc.exists) {
+        await likeRef.delete();
 
-      // Decrement target user's likesCount
-      await _firestore.collection('users').doc(targetUserId).update({
-        'likesCount': FieldValue.increment(-1),
-      });
+        // Decrement target user's likesCount
+        await _firestore.collection('users').doc(targetUserId).update({
+          'likesCount': FieldValue.increment(-1),
+        });
+      }
 
       // Also delete the match if it exists
       final matchId = currentUserId.compareTo(targetUserId) < 0
           ? '${currentUserId}_$targetUserId'
           : '${targetUserId}_$currentUserId';
-      await _firestore.collection('matches').doc(matchId).delete();
+      final matchDoc = await _firestore.collection('matches').doc(matchId).get();
+      if (matchDoc.exists) {
+        await matchDoc.reference.delete();
+      }
     } else {
       _mockLikes.removeWhere((l) => l.senderId == currentUserId && l.receiverId == targetUserId);
       _mockMatches.removeWhere((m) => m.id == 'match_${currentUserId}_$targetUserId' || m.id == 'match_${targetUserId}_$currentUserId');

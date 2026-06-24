@@ -116,7 +116,7 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
                 children: [
                   // Celebration Header
                   Text(
-                    'It\'s a Match!',
+                    'You are friends now!',
                     style: theme.textTheme.headlineLarge?.copyWith(
                       color: theme.colorScheme.primaryContainer,
                       fontWeight: FontWeight.w900,
@@ -215,28 +215,7 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
                           ),
                         ),
 
-                        // Sparkles / Heart badge in middle
-                        Positioned(
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 3),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withAlpha(30),
-                                  blurRadius: 8,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.favorite_rounded,
-                              color: Colors.black,
-                              size: 28,
-                            ),
-                          ),
-                        ),
+
                       ],
                     ),
                   ),

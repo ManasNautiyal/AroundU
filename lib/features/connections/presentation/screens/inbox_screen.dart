@@ -823,14 +823,26 @@ class MessageRequestTile extends ConsumerWidget {
                       child: OutlinedButton.icon(
                         onPressed: () async {
                           final repo = ref.read(interactionRepositoryProvider);
-                          await repo.declineConnectionRequest(request.id);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Declined request from ${sender.name}.'),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
+                          try {
+                            await repo.declineConnectionRequest(request.id);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Declined request from ${sender.name}.'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error declining request: $e'),
+                                  backgroundColor: Colors.redAccent,
+                                  duration: const Duration(seconds: 4),
+                                ),
+                              );
+                            }
                           }
                         },
                         style: OutlinedButton.styleFrom(
@@ -850,14 +862,26 @@ class MessageRequestTile extends ConsumerWidget {
                       child: ElevatedButton.icon(
                         onPressed: () async {
                           final repo = ref.read(interactionRepositoryProvider);
-                          await repo.acceptConnectionRequest(request);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Accepted request! Chat with ${sender.name} is now open.'),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
+                          try {
+                            await repo.acceptConnectionRequest(request);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Accepted request! Chat with ${sender.name} is now open.'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error accepting request: $e'),
+                                  backgroundColor: Colors.redAccent,
+                                  duration: const Duration(seconds: 4),
+                                ),
+                              );
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(
