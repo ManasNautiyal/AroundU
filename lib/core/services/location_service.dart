@@ -149,5 +149,16 @@ Stream<Position> userPosition(UserPositionRef ref) async* {
 
   // Real location stream using geolocator with the optimized settings above
   final locService = ref.watch(locationServiceProvider);
+  try {
+    final currentPos = await locService.getCurrentPosition();
+    yield currentPos;
+  } catch (e) {
+    try {
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null) {
+        yield lastKnown;
+      }
+    } catch (_) {}
+  }
   yield* locService.getPositionStream();
 }

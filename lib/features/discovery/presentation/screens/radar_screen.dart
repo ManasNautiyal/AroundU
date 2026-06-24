@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../../../core/services/location_service.dart';
 import '../../../../core/widgets/image_helper.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../data/models/nearby_user.dart';
@@ -481,12 +483,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                   loading: () => const Center(
                     child: CircularProgressIndicator(),
                   ),
-                  error: (err, stack) => Center(
-                    child: Text(
-                      'Failed to load nearby profiles: $err',
-                      style: const TextStyle(color: Colors.redAccent),
-                    ),
-                  ),
+                  error: (err, stack) => _buildLocationErrorWidget(err, theme, isDark),
                 ),
               ),
             ],
@@ -527,6 +524,123 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               foregroundColor: theme.colorScheme.onPrimary,
               child: const Icon(Icons.store_rounded),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationErrorWidget(dynamic err, ThemeData theme, bool isDark) {
+    final errStr = err.toString();
+    final isPermissionDenied = errStr.contains('permission') || errStr.contains('Permission');
+    final isServiceDisabled = errStr.contains('disabled') || errStr.contains('Disabled');
+
+    IconData iconData = Icons.location_off_rounded;
+    String title = 'Location Error';
+    String description = 'Failed to load nearby profiles. Please ensure location is enabled and permissions are granted.';
+    String primaryBtnLabel = 'Retry';
+    VoidCallback primaryBtnAction = () {
+      final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
+      ref.invalidate(nearbyUsersProvider(currentUserId: currentUserId));
+    };
+    Widget? secondaryBtn;
+
+    if (isPermissionDenied) {
+      iconData = Icons.security_rounded;
+      title = 'Location Access Required';
+      description = 'AroundU uses precise location permissions to discover people and chat zones in your area.';
+      primaryBtnLabel = 'Grant Permission';
+      primaryBtnAction = () async {
+        try {
+          final locService = ref.read(locationServiceProvider);
+          final permission = await locService.requestPermission();
+          if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+            await Geolocator.openAppSettings();
+          } else {
+            final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
+            ref.invalidate(nearbyUsersProvider(currentUserId: currentUserId));
+          }
+        } catch (_) {
+          await Geolocator.openAppSettings();
+        }
+      };
+      secondaryBtn = TextButton(
+        onPressed: () async {
+          await Geolocator.openAppSettings();
+        },
+        child: const Text('Open App Settings'),
+      );
+    } else if (isServiceDisabled) {
+      iconData = Icons.gps_off_rounded;
+      title = 'Location Services Disabled';
+      description = 'Your device\'s GPS or location services are turned off. Please enable them to start scanning your area.';
+      primaryBtnLabel = 'Open Location Settings';
+      primaryBtnAction = () async {
+        await Geolocator.openLocationSettings();
+      };
+    }
+
+    final cardBg = isDark ? Colors.black : Colors.white;
+    final borderBg = isDark ? Colors.white : Colors.black;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderBg, width: 1.5),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(
+              iconData,
+              size: 56,
+              color: textColor,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: subTextColor,
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: primaryBtnAction,
+              style: FilledButton.styleFrom(
+                backgroundColor: textColor,
+                foregroundColor: cardBg,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: const StadiumBorder(),
+              ),
+              child: Text(
+                primaryBtnLabel,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (secondaryBtn != null) ...[
+              const SizedBox(height: 8),
+              secondaryBtn,
+            ],
           ],
         ),
       ),

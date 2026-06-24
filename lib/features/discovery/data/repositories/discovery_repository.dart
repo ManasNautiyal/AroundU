@@ -31,7 +31,7 @@ class DiscoveryRepository {
     }, SetOptions(merge: true));
   }
 
-  /// Streams nearby users within 100 meters (0.1 km) of the current user.
+  /// Streams nearby users within 10.0 km of the current user.
   /// Automatically filters out the current user, ghost mode users, and blocked users.
   Stream<List<NearbyUser>> getNearbyUsersStream({
     required String currentUserId,
@@ -82,8 +82,8 @@ class DiscoveryRepository {
           geopoint.longitude,
         );
         
-        // Strictly filter to users within 100 meters
-        if (distance <= 100.0) {
+        // Filter to users within 10.0 km (10000 meters)
+        if (distance <= 10000.0) {
           nearbyList.add(NearbyUser(
             user: user,
             distanceInMeters: distance,
