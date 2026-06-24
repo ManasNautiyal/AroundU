@@ -93,10 +93,12 @@ service cloud.firestore {
 
     // --- Matches ---
     // Read: Users can read matches that contain their user ID in the `userIds` array.
-    // Write: Created when a mutual like is established. Can only be written if the client auth UID is in the `userIds` list.
+    // Create/Update: Created when a mutual like is established. Can only be written if the client auth UID is in the `userIds` list.
+    // Delete: Users can delete a match they are a participant in.
     match /matches/{matchId} {
       allow read: if isAuthenticated() && (request.auth.uid in resource.data.userIds);
-      allow write: if isAuthenticated() && (request.auth.uid in request.resource.data.userIds);
+      allow create, update: if isAuthenticated() && (request.auth.uid in request.resource.data.userIds);
+      allow delete: if isAuthenticated() && (request.auth.uid in resource.data.userIds);
     }
 
     // --- Waves (Short Signal Interactions) ---
