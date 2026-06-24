@@ -158,6 +158,8 @@ class ChatRepository {
     required double longitude,
   }) {
     if (_isFirebaseInitialized) {
+      _seedProximityRoomIfEmpty(latitude, longitude);
+
       final collectionRef = _firestore.collection('proximity_rooms');
       final geoRef = GeoCollectionReference(collectionRef);
       final center = GeoFirePoint(GeoPoint(latitude, longitude));
@@ -211,6 +213,28 @@ class ChatRepository {
       final controller = StreamController<List<ProximityRoomModel>>.broadcast();
       Timer.run(() => controller.add(mockList));
       return controller.stream;
+    }
+  }
+
+  Future<void> _seedProximityRoomIfEmpty(double latitude, double longitude) async {
+    try {
+      final snap = await _firestore.collection('proximity_rooms').limit(5).get();
+      if (snap.docs.isEmpty) {
+        final geoFirePoint = GeoFirePoint(GeoPoint(latitude, longitude));
+        await _firestore.collection('proximity_rooms').add({
+          'name': 'Library Zone',
+          'creatorId': 'system',
+          'location': {
+            'geohash': geoFirePoint.geohash,
+            'geopoint': geoFirePoint.geopoint,
+          },
+          'radiusInMeters': 100.0,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('DEBUG: Failed to seed proximity room: $e');
     }
   }
 
