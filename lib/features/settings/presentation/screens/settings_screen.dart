@@ -113,18 +113,18 @@ class SettingsScreen extends ConsumerWidget {
 
     await ref.read(authRepositoryProvider).signOut();
 
-    if (parentContext.mounted) {
-      Navigator.of(parentContext).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const OnboardingRouter()),
-        (route) => false,
-      );
-      ScaffoldMessenger.of(parentContext).showSnackBar(
-        const SnackBar(
-          content: Text('Account successfully deleted. All data has been wiped.'),
-          backgroundColor: Colors.black,
-        ),
-      );
-    }
+    if (!parentContext.mounted) return;
+
+    Navigator.of(parentContext).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const OnboardingRouter()),
+      (route) => false,
+    );
+    ScaffoldMessenger.of(parentContext).showSnackBar(
+      const SnackBar(
+        content: Text('Account successfully deleted. All data has been wiped.'),
+        backgroundColor: Colors.black,
+      ),
+    );
   }
 
   void _showSettingsBottomSheet(BuildContext context, WidgetRef ref) {
@@ -263,16 +263,28 @@ class SettingsScreen extends ConsumerWidget {
                       trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
                       onTap: () {
                         Navigator.pop(modalContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Notification settings coming soon!'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
                       },
                     ),
 
-                    // Privacy
+                     // Privacy
                     ListTile(
                       leading: Icon(Icons.privacy_tip_outlined, color: iconThemeColor),
                       title: Text('Privacy Policy', style: TextStyle(color: textThemeColor)),
                       trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
                       onTap: () {
                         Navigator.pop(modalContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Privacy Policy will be available soon.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
                       },
                     ),
 
@@ -283,6 +295,12 @@ class SettingsScreen extends ConsumerWidget {
                       trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
                       onTap: () {
                         Navigator.pop(modalContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Terms of Service will be available soon.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
                       },
                     ),
                     Divider(color: dividerColor),

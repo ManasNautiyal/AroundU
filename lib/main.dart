@@ -422,9 +422,11 @@ class LoadingScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.png',
+              'assets/logo/app_logo_light.png',
               width: 140,
               height: 140,
+              color: isDark ? Colors.white : null,
+              colorBlendMode: isDark ? BlendMode.srcIn : null,
               errorBuilder: (context, error, stackTrace) => Text(
                 'AroundU',
                 style: TextStyle(

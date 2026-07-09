@@ -352,9 +352,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
               children: [
                 const SizedBox(height: 32),
                 Image.asset(
-                  isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.png',
+                  'assets/logo/app_logo_light.png',
                   height: 60,
                   fit: BoxFit.contain,
+                  color: isDark ? Colors.white : null,
+                  colorBlendMode: isDark ? BlendMode.srcIn : null,
                   errorBuilder: (context, error, stackTrace) => Text(
                     'AroundU',
                     textAlign: TextAlign.center,
@@ -475,10 +477,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                     foregroundColor: theme.colorScheme.surface,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  icon: const Icon(Icons.apple, size: 20),
-                  label: const Text(
+                  icon: Icon(Icons.apple, size: 20, color: theme.colorScheme.surface),
+                  label: Text(
                     'Continue with Apple',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.surface,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

@@ -136,14 +136,17 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
               duration: const Duration(milliseconds: 350),
               height: isInRoom ? 0 : 70,
               curve: Curves.easeInOut,
-              color: theme.colorScheme.surfaceContainerHighest,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.07)
+                  : Colors.black.withValues(alpha: 0.05),
               child: isInRoom
                   ? const SizedBox.shrink()
                   : Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Row(
                         children: [
-                          Icon(Icons.warning_amber_rounded, color: theme.colorScheme.onSurfaceVariant),
+                          Icon(Icons.warning_amber_rounded,
+                              color: theme.colorScheme.onSurfaceVariant),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
@@ -202,6 +205,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
   }
 
   Widget _buildLeftZoneState(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -212,7 +216,9 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: theme.colorScheme.surfaceContainerHighest,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.07)
+                    : Colors.black.withValues(alpha: 0.05),
               ),
               child: Icon(
                 Icons.location_off_rounded,
@@ -246,13 +252,16 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
       builder: (context, ref, child) {
         final senderAsync = ref.watch(userProfileProvider(senderId));
         final sender = senderAsync.valueOrNull;
+        final isDarkLocal = Theme.of(context).brightness == Brightness.dark;
 
         final bubbleColor = isMe
             ? theme.colorScheme.primary
-            : theme.colorScheme.surfaceContainerHighest;
+            : (isDarkLocal
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.06));
         final textColor = isMe
             ? theme.colorScheme.onPrimary
-            : theme.colorScheme.onSurfaceVariant;
+            : theme.colorScheme.onSurface;
 
         final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
         final margin = isMe

@@ -117,15 +117,16 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
                   // Celebration Header
                   Text(
                     'You are friends now!',
+                    textAlign: TextAlign.center,
                     style: theme.textTheme.headlineLarge?.copyWith(
-                      color: theme.colorScheme.primaryContainer,
+                      color: Colors.white,
                       fontWeight: FontWeight.w900,
                       fontSize: 40,
                       letterSpacing: -1.0,
                       shadows: [
                         Shadow(
-                          color: theme.colorScheme.primary.withAlpha(150),
-                          blurRadius: 15,
+                          color: Colors.white.withAlpha(80),
+                          blurRadius: 20,
                         ),
                       ],
                     ),

@@ -44,9 +44,33 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     final borderBg = theme.colorScheme.outline;
     final textColor = theme.colorScheme.onSurface;
     final hintColor = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       children: [
+        // App Logo + Title Row
+        Row(
+          children: [
+            Image.asset(
+              'assets/logo/app_logo_light.png',
+              height: 28,
+              fit: BoxFit.contain,
+              color: isDark ? Colors.white : Colors.black,
+              colorBlendMode: BlendMode.srcIn,
+              errorBuilder: (context, error, stackTrace) => Text(
+                'AroundU',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: textColor,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Search Bar
         Row(
           children: [
             Expanded(
