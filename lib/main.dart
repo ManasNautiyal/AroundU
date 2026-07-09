@@ -424,28 +424,20 @@ class LoadingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/logo/app_logo_light.png',
-              width: 140,
-              height: 140,
-              color: isDark ? Colors.white : null,
-              colorBlendMode: isDark ? BlendMode.srcIn : null,
-              errorBuilder: (context, error, stackTrace) => Text(
-                'AroundU',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                  letterSpacing: -1.0,
-                ),
+            Text(
+              'AroundU',
+              style: TextStyle(
+                fontSize: 42,
+                fontWeight: FontWeight.w900,
+                color: theme.colorScheme.onSurface,
+                letterSpacing: -1.5,
+                height: 1.0,
               ),
             ),
             const SizedBox(height: 32),

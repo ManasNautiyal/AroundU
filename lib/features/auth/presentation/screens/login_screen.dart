@@ -335,8 +335,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
-    final isDark = theme.brightness == Brightness.dark;
-
     return Scaffold(
       body: Container(
         height: size.height,
@@ -351,20 +349,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 32),
-                Image.asset(
-                  'assets/logo/app_logo_light.png',
-                  height: 60,
-                  fit: BoxFit.contain,
-                  color: isDark ? Colors.white : null,
-                  colorBlendMode: isDark ? BlendMode.srcIn : null,
-                  errorBuilder: (context, error, stackTrace) => Text(
-                    'AroundU',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -1.0,
-                      color: theme.colorScheme.onSurface,
-                    ),
+                Text(
+                  'AroundU',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.onSurface,
+                    letterSpacing: -2.0,
+                    height: 1.0,
                   ),
                 ),
                 const SizedBox(height: 8),
