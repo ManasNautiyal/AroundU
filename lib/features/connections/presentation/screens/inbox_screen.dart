@@ -590,7 +590,6 @@ class MatchTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = theme.brightness == Brightness.dark;
     final borderBg = theme.colorScheme.outline;
-    final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
 
     final targetUserId = connection.user1Id == currentUserId ? connection.user2Id : connection.user1Id;
     final userAsync = ref.watch(userProfileProvider(targetUserId));
@@ -635,26 +634,6 @@ class MatchTile extends ConsumerWidget {
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              height: 6,
-                              width: 6,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.green,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Active now',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: subTextColor,
-                              ),
-                            ),
-                          ],
                         ),
                       ],
                     ),
