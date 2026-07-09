@@ -424,29 +424,40 @@ class LoadingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: Center(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // App logo image — centered with clean bounds
+            Image.asset(
+              isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.png',
+              height: 50,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 12),
             Text(
-              'AroundU',
+              "Discover who's nearby",
               style: TextStyle(
-                fontSize: 42,
-                fontWeight: FontWeight.w900,
-                color: theme.colorScheme.onSurface,
-                letterSpacing: -1.5,
-                height: 1.0,
+                fontSize: 14,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                letterSpacing: 0.2,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 40),
             SizedBox(
-              width: 24,
-              height: 24,
+              width: 22,
+              height: 22,
               child: CircularProgressIndicator(
                 strokeWidth: 2.0,
-                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.colorScheme.primary,
+                ),
               ),
             ),
           ],

@@ -334,6 +334,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       body: Container(
@@ -349,18 +350,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 32),
-                Text(
-                  'AroundU',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w900,
-                    color: theme.colorScheme.onSurface,
-                    letterSpacing: -2.0,
-                    height: 1.0,
+                Center(
+                  child: Image.asset(
+                    isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.png',
+                    height: 52,
+                    fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
                   "Discover who's AroundU.",
                   textAlign: TextAlign.center,
