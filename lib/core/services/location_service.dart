@@ -218,3 +218,16 @@ Stream<Position> userPosition(UserPositionRef ref) async* {
   }
 }
 
+final locationPermissionAndServiceStatusProvider = FutureProvider<bool>((ref) async {
+  final locService = ref.watch(locationServiceProvider);
+  final serviceEnabled = await locService.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    return false;
+  }
+  final permission = await locService.checkPermission();
+  if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+    return false;
+  }
+  return true;
+});
+

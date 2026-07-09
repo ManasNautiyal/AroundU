@@ -17,6 +17,7 @@ import 'features/chat/presentation/controllers/proximity_rooms_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/app_observers.dart';
+import 'core/services/location_service.dart';
 
 final dynamicColorSchemeProvider = FutureProvider.family<ColorScheme, Brightness>((ref, brightness) async {
   final isDark = brightness == Brightness.dark;
@@ -351,22 +352,32 @@ class OnboardingRouter extends ConsumerWidget {
 
         // 2. If authenticated, fetch and check their Firestore user profile status.
         final userModelAsync = ref.watch(currentUserModelProvider);
+        final locationStatusAsync = ref.watch(locationPermissionAndServiceStatusProvider);
 
         return userModelAsync.when(
           data: (userModel) {
-            if (userModel != null) {
-              // Profile already exists: navigate directly to main application (Step 3)
-              return const MainLayout();
+            final step = ref.watch(onboardingStepProvider);
+            final isEnteringMainApp = userModel != null || step == 3;
+
+            if (isEnteringMainApp) {
+              return locationStatusAsync.when(
+                data: (locationOk) {
+                  if (locationOk) {
+                    return const MainLayout();
+                  } else {
+                    return const LocationPermissionScreen();
+                  }
+                },
+                loading: () => const LoadingScreen(),
+                error: (error, stack) => const LocationPermissionScreen(),
+              );
             } else {
               // Profile doesn't exist yet: run the onboarding steps.
-              final step = ref.watch(onboardingStepProvider);
               switch (step) {
                 case 1:
                   return const LocationPermissionScreen();
                 case 2:
                   return const ProfileSetupScreen();
-                case 3:
-                  return const MainLayout();
                 case 0:
                 default:
                   // For a logged-in user starting onboarding, route to location permission (Step 1)

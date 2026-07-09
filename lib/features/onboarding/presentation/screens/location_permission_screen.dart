@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/services/location_service.dart';
 import '../controllers/onboarding_providers.dart';
+import '../../../discovery/data/repositories/user_repository.dart';
 
 class LocationPermissionScreen extends ConsumerStatefulWidget {
   const LocationPermissionScreen({super.key});
@@ -12,13 +13,14 @@ class LocationPermissionScreen extends ConsumerStatefulWidget {
 }
 
 class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _pulseController;
   bool _isRequesting = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -27,8 +29,24 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pulseController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(locationPermissionAndServiceStatusProvider);
+    }
+  }
+
+  void _onPermissionGranted() {
+    ref.invalidate(locationPermissionAndServiceStatusProvider);
+    final userModel = ref.read(currentUserModelProvider).valueOrNull;
+    if (userModel == null) {
+      ref.read(onboardingStepProvider.notifier).setStep(2);
+    }
   }
 
   Future<void> _requestLocationPermission() async {
@@ -41,13 +59,13 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
       final permission = await locService.requestPermission();
       
       if (permission == LocationPermission.always) {
-        _navigateToProfileSetup();
+        _onPermissionGranted();
       } else if (permission == LocationPermission.whileInUse) {
         if (mounted) {
           _showAlwaysLocationDialog();
         }
       } else {
-        // If permission is denied, show a friendly explanation Dialog, but allow them to proceed for now in debug mode
+        // If permission is denied, show a friendly explanation Dialog
         if (mounted) {
           _showPermissionDeniedDialog();
         }
@@ -65,10 +83,6 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     }
   }
 
-  void _navigateToProfileSetup() {
-    ref.read(onboardingStepProvider.notifier).setStep(2);
-  }
-
   void _showAlwaysLocationDialog() {
     showDialog(
       context: context,
@@ -82,7 +96,7 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              _navigateToProfileSetup();
+              _onPermissionGranted();
             },
             child: const Text('Keep "While Using"'),
           ),
@@ -90,7 +104,7 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
             onPressed: () async {
               Navigator.pop(dialogContext);
               await Geolocator.openAppSettings();
-              _navigateToProfileSetup();
+              _onPermissionGranted();
             },
             child: const Text('Change to "Always"'),
           ),
@@ -100,21 +114,23 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
   }
 
   void _showPermissionDeniedDialog() {
+    final hasProfile = ref.read(currentUserModelProvider).valueOrNull != null;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Location Access Required'),
         content: const Text(
-          'AroundU requires precise location permissions to calculate relative distances between you and other users. Please enable location services and select "Always Allow".',
+          'AroundU requires precise location permissions to calculate relative distances between you and other users. Please enable location services.',
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              _navigateToProfileSetup(); // Let them proceed in debug/mock onboarding anyway
-            },
-            child: const Text('Proceed anyway'),
-          ),
+          if (!hasProfile)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _onPermissionGranted(); // Let them proceed in debug/mock onboarding anyway
+              },
+              child: const Text('Proceed anyway'),
+            ),
           FilledButton(
             onPressed: () {
               Navigator.pop(dialogContext);
@@ -252,20 +268,22 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: _navigateToProfileSetup,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: Text(
-                  'Maybe Later',
-                  style: TextStyle(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
+              if (ref.watch(currentUserModelProvider).valueOrNull == null) ...[
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _onPermissionGranted,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text(
+                    'Maybe Later',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
+              ],
               const SizedBox(height: 16),
             ],
           ),
