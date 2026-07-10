@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../../core/services/location_service.dart';
 import '../controllers/onboarding_providers.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 
 class LocationPermissionScreen extends ConsumerStatefulWidget {
   const LocationPermissionScreen({super.key});
@@ -35,9 +36,20 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.resumed) {
+      // Add a slight delay to allow the OS to update location settings
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      
       ref.invalidate(locationPermissionAndServiceStatusProvider);
+      
+      // Auto-advance if permission was granted while the app was in the background
+      final locService = ref.read(locationServiceProvider);
+      final permission = await locService.checkPermission();
+      if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+        _onPermissionGranted();
+      }
     }
   }
 
@@ -284,6 +296,23 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
                   ),
                 ),
               ],
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () async {
+                  await ref.read(authRepositoryProvider).signOut();
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                label: const Text(
+                  'Sign Out / Go to Login',
+                  style: TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
             ],
           ),
