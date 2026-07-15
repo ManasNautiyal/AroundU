@@ -102,8 +102,6 @@ class SettingsScreen extends ConsumerWidget {
           'name': '[Deleted Account]',
           'bio': 'This account has been deleted.',
           'profilePictures': FieldValue.delete(),
-          'beaconEmoji': FieldValue.delete(),
-          'beaconMessage': FieldValue.delete(),
           'location': FieldValue.delete(),
           'isGhostMode': true,
         });

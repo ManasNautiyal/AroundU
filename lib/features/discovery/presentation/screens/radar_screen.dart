@@ -7,7 +7,6 @@ import '../../../auth/data/repositories/auth_repository.dart';
 import '../../data/models/nearby_user.dart';
 import '../../data/repositories/discovery_repository.dart';
 import '../controllers/discovery_providers.dart';
-import '../widgets/beacon_sheet.dart';
 import '../widgets/profile_detail_sheet.dart';
 import '../../../chat/presentation/widgets/create_room_sheet.dart';
 
@@ -21,6 +20,11 @@ class RadarScreen extends ConsumerStatefulWidget {
 class _RadarScreenState extends ConsumerState<RadarScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
+
+  String _formatRange(double meters) {
+    if (meters >= 1000) return '${(meters / 1000).toStringAsFixed(1)} km';
+    return '${meters.toInt()} m';
+  }
 
   @override
   void dispose() {
@@ -116,6 +120,58 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     );
   }
 
+  Widget _buildRangeSlider(ThemeData theme, double rangeInMeters) {
+    final isDark = theme.brightness == Brightness.dark;
+    final accentColor = theme.colorScheme.primary;
+    final labelBg = isDark
+        ? Colors.white.withValues(alpha: 0.1)
+        : Colors.black.withValues(alpha: 0.06);
+    final labelFg = theme.colorScheme.onSurface;
+
+    return Row(
+      children: [
+        Expanded(
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: accentColor,
+              inactiveTrackColor: accentColor.withValues(alpha: 0.2),
+              thumbColor: accentColor,
+              overlayColor: accentColor.withValues(alpha: 0.12),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+              trackHeight: 3.0,
+              showValueIndicator: ShowValueIndicator.never,
+            ),
+            child: Slider(
+              value: rangeInMeters,
+              min: 50,
+              max: 500,
+              divisions: 9,
+              onChanged: (val) {
+                ref.read(discoveryRangeFilterProvider.notifier).setRange(val);
+              },
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: labelBg,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            _formatRange(rangeInMeters),
+            style: TextStyle(
+              color: labelFg,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildProfileCard(NearbyUser nearbyUser) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -171,23 +227,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                   ),
                 ),
               ),
-              if (user.beaconEmoji != null)
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.75),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: isDark ? Colors.white : Colors.black, width: 1.0),
-                    ),
-                    child: Text(
-                      user.beaconEmoji!,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
               Positioned(
                 bottom: 12,
                 left: 12,
@@ -205,29 +244,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on,
-                          size: 11,
-                          color: Colors.white70,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            nearbyUser.fuzzedDistance,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -248,6 +264,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     final isGhostMode = ref.watch(ghostModeControllerProvider);
     final nearbyUsersAsync = ref.watch(nearbyUsersProvider(currentUserId: currentUserId));
+    final rangeInMeters = ref.watch(discoveryRangeFilterProvider);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -295,6 +312,8 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+              _buildRangeSlider(theme, rangeInMeters),
               const SizedBox(height: 12),
               Expanded(
                 child: nearbyUsersAsync.when(
@@ -303,13 +322,29 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                       final user = nearby.user;
                       final nameMatch = user.name.toLowerCase().contains(_searchQuery.toLowerCase());
                       final bioMatch = user.bio.toLowerCase().contains(_searchQuery.toLowerCase());
-                      return nameMatch || bioMatch;
+                      final withinRange = nearby.distanceInMeters <= rangeInMeters;
+                      return (nameMatch || bioMatch) && withinRange;
                     }).toList();
 
                     // Sort filtered users by likesCount in descending order
                     filteredUsers.sort((a, b) => b.user.likesCount.compareTo(a.user.likesCount));
 
                     if (filteredUsers.isEmpty) {
+                      // Determine a helpful empty-state message
+                      final allWithinRange = nearbyUsers
+                          .where((u) => u.distanceInMeters <= rangeInMeters)
+                          .toList();
+                      final rangeIsTheCause =
+                          nearbyUsers.isNotEmpty && allWithinRange.isEmpty;
+                      final searchIsTheCause =
+                          _searchQuery.isNotEmpty && nearbyUsers.isNotEmpty;
+
+                      final emptyMsg = rangeIsTheCause
+                          ? 'No one within ${_formatRange(rangeInMeters)} right now.\nTry widening your range.'
+                          : searchIsTheCause
+                              ? 'No matching profiles found nearby.'
+                              : 'No one is nearby right now.\nTap recenter to scan your area.';
+
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -317,9 +352,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                             Icon(Icons.people_outline_rounded, size: 48, color: isDark ? Colors.white30 : Colors.black26),
                             const SizedBox(height: 12),
                             Text(
-                              _searchQuery.isNotEmpty
-                                  ? 'No matching profiles found nearby.'
-                                  : 'No one is nearby right now.\nTap recenter to scan your area.',
+                              emptyMsg,
                               textAlign: TextAlign.center,
                               style: TextStyle(color: subTextColor, fontSize: 14, height: 1.4),
                             ),
@@ -352,42 +385,19 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
           ),
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 12.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton.small(
-              heroTag: 'drop_beacon_fab',
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => const BeaconSheet(),
-                );
-              },
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              child: const Icon(Icons.add_location_alt_rounded),
-            ),
-            const SizedBox(width: 8),
-            FloatingActionButton.small(
-              heroTag: 'create_room_fab',
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => const CreateRoomSheet(),
-                );
-              },
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              child: const Icon(Icons.store_rounded),
-            ),
-          ],
-        ),
+      floatingActionButton: FloatingActionButton.small(
+        heroTag: 'create_room_fab',
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const CreateRoomSheet(),
+          );
+        },
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        child: const Icon(Icons.store_rounded),
       ),
     );
   }

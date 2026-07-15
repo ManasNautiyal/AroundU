@@ -287,6 +287,20 @@ class InteractionRepository {
       return _sentLikesController.stream;
     }
   }
+  /// Streams the total number of matches (connects) for any user.
+  Stream<int> userConnectsCountStream(String userId) {
+    if (_isFirebaseInitialized) {
+      return _firestore
+          .collection('matches')
+          .where('userIds', arrayContains: userId)
+          .snapshots()
+          .map((snap) => snap.docs.length);
+    } else {
+      return Stream.value(_mockMatches
+          .where((m) => m.user1Id == userId || m.user2Id == userId)
+          .length);
+    }
+  }
 }
 
 @riverpod
@@ -317,4 +331,10 @@ Stream<List<InteractionModel>> receivedLikesStream(ReceivedLikesStreamRef ref, {
 Stream<List<InteractionModel>> sentLikesStream(SentLikesStreamRef ref, {required String currentUserId}) {
   final repo = ref.watch(interactionRepositoryProvider);
   return repo.getSentLikesStream(currentUserId);
+}
+
+@riverpod
+Stream<int> userConnectsCount(UserConnectsCountRef ref, {required String userId}) {
+  final repo = ref.watch(interactionRepositoryProvider);
+  return repo.userConnectsCountStream(userId);
 }

@@ -21,25 +21,14 @@ class ChatScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProviderStateMixin {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
-  late AnimationController _pulseController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-  }
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
@@ -70,7 +59,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
-    final isNearby = ref.watch(proximityStatusProvider(widget.targetUser.uid));
     final messagesAsync = ref.watch(messagesStreamProvider(matchId: widget.matchId));
 
     final avatarUrl = widget.targetUser.profilePictures.isNotEmpty
@@ -94,60 +82,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with SingleTickerProvid
                   Text(
                     widget.targetUser.name,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 2),
-                  // Proximity Status Indicator
-                  Row(
-                    children: [
-                      if (isNearby) ...[
-                        AnimatedBuilder(
-                          animation: _pulseController,
-                          builder: (context, child) {
-                            return Container(
-                              height: 8,
-                              width: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.green.withAlpha(
-                                  (150 + (100 * _pulseController.value)).toInt(),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.green.withAlpha(80),
-                                    blurRadius: 6 * _pulseController.value,
-                                    spreadRadius: 1 * _pulseController.value,
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Nearby (Within 100m)',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black54,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ] else ...[
-                        Container(
-                          height: 8,
-                          width: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Away',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ],
                   ),
                 ],
               ),

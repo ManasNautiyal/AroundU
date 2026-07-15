@@ -39,6 +39,18 @@ class MockDiscoveryUsersController extends _$MockDiscoveryUsersController {
   }
 }
 
+/// Holds the user's chosen discovery range in meters (50 – 500 m).
+/// Defaults to 500 m so all nearby users are visible initially.
+@riverpod
+class DiscoveryRangeFilter extends _$DiscoveryRangeFilter {
+  @override
+  double build() => 500.0;
+
+  void setRange(double meters) {
+    state = meters.clamp(50.0, 500.0);
+  }
+}
+
 
 
 

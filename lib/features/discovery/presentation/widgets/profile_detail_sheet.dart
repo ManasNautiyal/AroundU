@@ -7,6 +7,131 @@ import '../../../safety/data/repositories/block_service.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
 import '../../../connections/presentation/widgets/match_overlay.dart';
+
+// ─────────────────────────────────────────────
+// Full-screen photo viewer (pushed as a route)
+// ─────────────────────────────────────────────
+class _FullScreenPhotoViewer extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const _FullScreenPhotoViewer({
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_FullScreenPhotoViewer> createState() => _FullScreenPhotoViewerState();
+}
+
+class _FullScreenPhotoViewerState extends State<_FullScreenPhotoViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.images.length,
+            onPageChanged: (i) => setState(() => _currentIndex = i),
+            itemBuilder: (context, index) {
+              return InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 4.0,
+                child: Center(
+                  child: getUserImageWidget(
+                    widget.images[index],
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              );
+            },
+          ),
+          // Close button
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: CircleAvatar(
+                backgroundColor: Colors.black54,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+          ),
+          // Dot indicator
+          if (widget.images.length > 1)
+            Positioned(
+              bottom: 32,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(widget.images.length, (i) {
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    height: 6,
+                    width: i == _currentIndex ? 18 : 6,
+                    decoration: BoxDecoration(
+                      color: i == _currentIndex
+                          ? Colors.white
+                          : Colors.white.withAlpha(100),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          // Photo counter top-right
+          Positioned(
+            top: 0,
+            right: 16,
+            child: SafeArea(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_currentIndex + 1} / ${widget.images.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Profile Detail Sheet
+// ─────────────────────────────────────────────
 class ProfileDetailSheet extends ConsumerStatefulWidget {
   final UserModel userModel;
 
@@ -20,12 +145,22 @@ class ProfileDetailSheet extends ConsumerStatefulWidget {
 }
 
 class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
-  int _currentImageIndex = 0;
+
+  void _openPhotoViewer(List<String> images, int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _FullScreenPhotoViewer(
+          images: images,
+          initialIndex: index,
+        ),
+      ),
+    );
+  }
 
   void _showReportBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
     final reasons = ['Spam', 'Harassment', 'Inappropriate Content'];
-
     final sheetColor = theme.colorScheme.surface;
     final borderColor = theme.colorScheme.outline;
 
@@ -39,9 +174,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
           decoration: BoxDecoration(
             color: sheetColor,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border(
-              top: BorderSide(color: borderColor, width: 1.5),
-            ),
+            border: Border(top: BorderSide(color: borderColor, width: 1.5)),
           ),
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
           child: Column(
@@ -50,13 +183,11 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
             children: [
               Text(
                 'Report ${widget.userModel.name}',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                'Please select a reason for reporting this profile. This user will also be blocked automatically for your safety.',
+                'Please select a reason for reporting this profile. This user will also be blocked automatically.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -66,22 +197,12 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                 return ListTile(
                   title: Text(reason),
                   trailing: const Icon(Icons.chevron_right_rounded),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   onTap: () async {
-                    // Close the sheet
                     Navigator.pop(modalContext);
-                    
-                    // Show progress message
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Reporting ${widget.userModel.name}...'),
-                        duration: const Duration(seconds: 1),
-                      ),
+                      SnackBar(content: Text('Reporting ${widget.userModel.name}...'), duration: const Duration(seconds: 1)),
                     );
-                    
-                    // Trigger block & report logic
                     final blockService = ref.read(blockServiceProvider);
                     final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
                     await blockService.reportUser(
@@ -89,9 +210,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                       targetUserId: widget.userModel.uid,
                       reason: reason,
                     );
-                    
                     if (!context.mounted) return;
-                    
                     ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -99,7 +218,6 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                         backgroundColor: Colors.black,
                       ),
                     );
-                    // Close the Profile Detail sheet
                     Navigator.pop(context);
                   },
                 );
@@ -114,9 +232,10 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
   void _showConnectDialog() {
     final theme = Theme.of(context);
     final textController = TextEditingController();
-
     final sheetColor = theme.colorScheme.surface;
     final borderColor = theme.colorScheme.outline;
+    final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
+    final user = widget.userModel;
 
     showModalBottomSheet(
       context: context,
@@ -126,17 +245,13 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
       ),
       builder: (modalContext) {
         return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(modalContext).viewInsets.bottom,
-          ),
+          padding: EdgeInsets.only(bottom: MediaQuery.of(modalContext).viewInsets.bottom),
           child: SingleChildScrollView(
             child: Container(
               decoration: BoxDecoration(
                 color: sheetColor,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(
-                  top: BorderSide(color: borderColor, width: 1.5),
-                ),
+                border: Border(top: BorderSide(color: borderColor, width: 1.5)),
               ),
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -148,19 +263,15 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                       Icon(Icons.chat_bubble_outline_rounded, color: theme.colorScheme.primary),
                       const SizedBox(width: 8),
                       Text(
-                        'Connect with ${widget.userModel.name}',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        'Connect with ${user.name}',
+                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Add a friendly note to introduce yourself! Tapping send will transmit this request to ${widget.userModel.name}.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    'Add a friendly note to introduce yourself!',
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 20),
                   TextField(
@@ -170,7 +281,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                     textCapitalization: TextCapitalization.sentences,
                     decoration: const InputDecoration(
                       labelText: 'Intro Message',
-                      hintText: 'e.g. Hey! I also love classic movies...',
+                      hintText: 'e.g. Hey! I noticed you nearby...',
                       alignLabelWithHint: true,
                     ),
                   ),
@@ -184,38 +295,24 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                         );
                         return;
                       }
-
-                      // Close the dialog bottom sheet
                       Navigator.pop(modalContext);
-
-                      // Call repository method
                       final repo = ref.read(interactionRepositoryProvider);
-                      final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
                       await repo.sendConnectionRequest(
                         currentUserId: currentUserId,
-                        targetUserId: widget.userModel.uid,
+                        targetUserId: user.uid,
                         introMessage: message,
                       );
-
                       if (!mounted) return;
-
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Connection request sent to ${widget.userModel.name}!'),
+                          content: Text('Connection request sent to ${user.name}!'),
                           backgroundColor: Colors.black,
                         ),
                       );
-                      
-                      // Close the parent ProfileDetailSheet
                       Navigator.pop(context);
                     },
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text(
-                      'Send Request',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                    child: const Text('Send Request', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -229,247 +326,239 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
+    final isDark = theme.brightness == Brightness.dark;
     final user = widget.userModel;
 
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     final sentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: currentUserId));
     final hasLiked = sentLikesAsync.valueOrNull?.any((like) => like.receiverId == user.uid) ?? false;
+    final connectsAsync = ref.watch(userConnectsCountProvider(userId: user.uid));
 
     final sheetColor = theme.colorScheme.surface;
     final borderColor = theme.colorScheme.outline;
 
-    // Filter out empty picture paths
-    final images = user.profilePictures.where((pic) => pic.isNotEmpty).toList();
+    final images = user.profilePictures.where((p) => p.isNotEmpty).toList();
     if (images.isEmpty) {
       images.add('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500');
     }
 
+    final avatarUrl = images[0];
+    final gridPhotos = images.length > 1 ? images.sublist(1) : <String>[];
+
     return DraggableScrollableSheet(
-      initialChildSize: 0.8,
+      initialChildSize: 0.9,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
           decoration: BoxDecoration(
             color: sheetColor,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(24),
-            ),
-            border: Border(
-              top: BorderSide(color: borderColor, width: 1.5),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(top: BorderSide(color: borderColor, width: 1.5)),
           ),
           child: Stack(
             children: [
-              // Scrollable Profile Info Content
+              // ── Scrollable body ──
               ListView(
                 controller: scrollController,
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.only(bottom: 110),
                 children: [
-                  // 1. Image Carousel (PageView)
-                  SizedBox(
-                    height: size.height * 0.42,
-                    child: Stack(
-                      children: [
-                        PageView.builder(
-                          itemCount: images.length,
-                          onPageChanged: (index) {
-                            setState(() => _currentImageIndex = index);
-                          },
-                          itemBuilder: (context, index) {
-                            return getUserImageWidget(
-                              images[index],
-                              fit: BoxFit.cover,
-                            );
-                          },
-                        ),
+                  // Drag handle
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 20),
+                      height: 5,
+                      width: 44,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
 
-                        // Carousel Top Handle / Indicator overlay
-                        Positioned(
-                          top: 12,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: Container(
-                              height: 5,
-                              width: 44,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withAlpha(150),
-                                borderRadius: BorderRadius.circular(10),
+                  // ── Instagram-style header ──
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Circular avatar (tappable → viewer index 0)
+                        GestureDetector(
+                          onTap: () => _openPhotoViewer(images, 0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: borderColor, width: 2),
+                            ),
+                            child: CircleAvatar(
+                              radius: 46,
+                              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                              child: ClipOval(
+                                child: getUserImageWidget(
+                                  avatarUrl,
+                                  fit: BoxFit.cover,
+                                  errorWidget: Icon(Icons.person, size: 40, color: theme.colorScheme.onSurfaceVariant),
+                                ),
                               ),
                             ),
                           ),
                         ),
+                        const SizedBox(width: 20),
 
-                        // Dot indicators
-                        if (images.length > 1)
-                          Positioned(
-                            bottom: 16,
-                            left: 0,
-                            right: 0,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(images.length, (index) {
-                                final isActive = index == _currentImageIndex;
-                                return AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                                  height: 6,
-                                  width: isActive ? 16 : 6,
-                                  decoration: BoxDecoration(
-                                    color: isActive
-                                        ? theme.colorScheme.primary
-                                        : Colors.white.withAlpha(180),
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
-                                );
-                              }),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  // 2. Profile Details Content
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 110), // Bottom padding leaves space for actions
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Name and Nearby Indicator
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
+                        // Name + stats column
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 6),
+                              Row(
                                 children: [
-                                  Flexible(
+                                  Expanded(
                                     child: Text(
                                       user.name,
-                                      style: theme.textTheme.headlineMedium?.copyWith(
+                                      style: theme.textTheme.titleLarge?.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        color: theme.colorScheme.onSurface,
+                                        fontSize: 20,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  // ··· report overflow
                                   IconButton(
                                     icon: Icon(
-                                      Icons.flag_outlined,
+                                      Icons.more_horiz_rounded,
                                       color: theme.colorScheme.onSurfaceVariant,
                                     ),
-                                    tooltip: 'Report / Block User',
+                                    tooltip: 'Report / Block',
                                     onPressed: () => _showReportBottomSheet(context),
                                   ),
                                 ],
                               ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withAlpha(30),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: theme.colorScheme.primary.withAlpha(50),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                              const SizedBox(height: 12),
+
+                              // Stats row
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    Icons.location_on_rounded,
-                                    size: 14,
-                                    color: theme.colorScheme.primary,
+                                  _StatItem(
+                                    label: 'Photos',
+                                    value: images.length.toString(),
+                                    theme: theme,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Nearby',
-                                    style: theme.textTheme.labelMedium?.copyWith(
-                                      color: theme.colorScheme.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  const SizedBox(width: 24),
+                                  _StatItem(
+                                    label: 'Likes',
+                                    value: user.likesCount.toString(),
+                                    theme: theme,
+                                  ),
+                                  const SizedBox(width: 24),
+                                  _StatItem(
+                                    label: 'Connects',
+                                    value: connectsAsync.valueOrNull?.toString() ?? '–',
+                                    theme: theme,
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Active Time status
-                        Row(
-                          children: [
-                            Container(
-                              height: 8,
-                              width: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Active now',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Bio Title
-                        Text(
-                          'Bio',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        // Bio Text
-                        Text(
-                          user.bio,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            height: 1.5,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-
-
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 20),
+
+                  // ── Bio ──
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      user.bio,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        height: 1.55,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Photo grid (remaining photos after avatar) ──
+                  if (images.length > 1) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        'Photos',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 4,
+                          mainAxisSpacing: 4,
+                          childAspectRatio: 1,
+                        ),
+                        itemCount: gridPhotos.length,
+                        itemBuilder: (ctx, i) {
+                          // i+1 because avatar is index 0 in the full images list
+                          return GestureDetector(
+                            onTap: () => _openPhotoViewer(images, i + 1),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: getUserImageWidget(
+                                gridPhotos[i],
+                                fit: BoxFit.cover,
+                                placeholder: Container(
+                                  color: isDark
+                                      ? Colors.white.withAlpha(10)
+                                      : Colors.black.withAlpha(8),
+                                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                ),
+                                errorWidget: Container(
+                                  color: theme.colorScheme.surfaceContainerHighest,
+                                  child: Icon(Icons.broken_image_outlined,
+                                      color: theme.colorScheme.onSurfaceVariant),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ],
               ),
 
-              // 3. Action Buttons Overlay (Sticky at Bottom)
+              // ── Sticky action buttons ──
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
                 child: Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
                         sheetColor.withValues(alpha: 0.0),
-                        sheetColor.withValues(alpha: 0.85),
+                        sheetColor.withValues(alpha: 0.9),
                         sheetColor,
                       ],
-                      stops: const [0.0, 0.4, 1.0],
+                      stops: const [0.0, 0.35, 1.0],
                     ),
                   ),
                   child: Row(
                     children: [
-                      // Like/Unlike Heart Button
+                      // Like / Unlike
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () async {
@@ -494,7 +583,6 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                               );
                               if (context.mounted) {
                                 if (mutual) {
-                                  // Show Match Celebration Overlay!
                                   MatchOverlay.show(
                                     context: context,
                                     matchedUser: user,
@@ -505,7 +593,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => ChatScreen(
+                                          builder: (_) => ChatScreen(
                                             matchId: matchId,
                                             targetUser: user,
                                           ),
@@ -517,7 +605,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Liked ${user.name}!'),
+                                      content: Text('Liked ${user.name}! ❤️'),
                                       behavior: SnackBarBehavior.floating,
                                     ),
                                   );
@@ -531,10 +619,8 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                               color: hasLiked ? Colors.redAccent : theme.colorScheme.primary,
                               width: 1.5,
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
                           icon: Icon(
                             hasLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
@@ -542,28 +628,23 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                           ),
                           label: Text(
                             hasLiked ? 'Liked' : 'Like',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Connect & Message Button
+                      // Connect
                       Expanded(
                         child: FilledButton.icon(
                           onPressed: _showConnectDialog,
                           style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
                           icon: const Icon(Icons.send_rounded),
                           label: const Text(
                             'Connect',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -575,6 +656,45 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
           ),
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Stat item widget
+// ─────────────────────────────────────────────
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final ThemeData theme;
+
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontSize: 12,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -48,11 +48,8 @@ class DiscoveryRepository {
           {
             'name': 'Sarah',
             'bio': 'Art student & photography lover. Always down for coffee and museum walks. ☕🎨',
-            'vibeTags': ['☕ Coffee', '🎨 Art', '📷 Photo'],
             'profilePictures': ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500'],
             'isGhostMode': false,
-            'beaconEmoji': '☕',
-            'beaconMessage': 'Sketching at the park!',
             'likesCount': 4,
             'latOffset': 0.0015,
             'lngOffset': 0.0012,
@@ -60,11 +57,8 @@ class DiscoveryRepository {
           {
             'name': 'Marcus',
             'bio': 'Software engineer by day, guitarist by night. Let\'s talk music and tech! 🎵🎸',
-            'vibeTags': ['🎵 Music', '🎮 Gaming', '💻 Tech'],
             'profilePictures': ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500'],
             'isGhostMode': false,
-            'beaconEmoji': '🎵',
-            'beaconMessage': 'Jamming to indie records',
             'likesCount': 7,
             'latOffset': -0.0012,
             'lngOffset': -0.0018,
@@ -72,11 +66,8 @@ class DiscoveryRepository {
           {
             'name': 'Elena',
             'bio': 'Fitness enthusiast & food lover. Looking for a workout buddy or pizza enthusiast! 🍕🏋️',
-            'vibeTags': ['🏋️ Gym', '🍕 Food', '🏃 Run'],
             'profilePictures': ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'],
             'isGhostMode': false,
-            'beaconEmoji': '🍕',
-            'beaconMessage': 'Post-workout pizza search',
             'likesCount': 12,
             'latOffset': 0.0022,
             'lngOffset': -0.0011,
@@ -96,11 +87,8 @@ class DiscoveryRepository {
           await _firestore.collection('users').doc(mockUid).set({
             'name': profile['name'],
             'bio': profile['bio'],
-            'vibeTags': profile['vibeTags'],
             'profilePictures': profile['profilePictures'],
             'isGhostMode': profile['isGhostMode'],
-            'beaconEmoji': profile['beaconEmoji'],
-            'beaconMessage': profile['beaconMessage'],
             'likesCount': profile['likesCount'],
             'lastActive': FieldValue.serverTimestamp(),
             'location': {
@@ -116,12 +104,15 @@ class DiscoveryRepository {
     }
   }
 
-  /// Streams nearby users within 10.0 km of the current user.
+  /// Streams nearby users within [maxDistanceInMeters] of the current user.
   /// Automatically filters out the current user, ghost mode users, and blocked users.
+  /// The Firestore geo-query always uses a 10 km radius for a warm cache;
+  /// [maxDistanceInMeters] is enforced client-side for fine-grained filtering.
   Stream<List<NearbyUser>> getNearbyUsersStream({
     required String currentUserId,
     required Position currentPosition,
     List<String> blockedUserIds = const [],
+    double maxDistanceInMeters = 500.0,
   }) {
     if (!_isFirebaseInitialized) {
       // Mock local fallback stream
@@ -131,10 +122,7 @@ class DiscoveryRepository {
           name: 'Sarah',
           bio: 'Art student & photography lover. Always down for coffee and museum walks. ☕🎨',
           profilePictures: const ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500'],
-          vibeTags: const ['☕ Coffee', '🎨 Art', '📷 Photo'],
           isGhostMode: false,
-          beaconEmoji: '☕',
-          beaconMessage: 'Sketching at the park!',
           likesCount: 4,
           lastActive: DateTime.now(),
         ),
@@ -143,10 +131,7 @@ class DiscoveryRepository {
           name: 'Marcus',
           bio: 'Software engineer by day, guitarist by night. Let\'s talk music and tech! 🎵🎸',
           profilePictures: const ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500'],
-          vibeTags: const ['🎵 Music', '🎮 Gaming', '💻 Tech'],
           isGhostMode: false,
-          beaconEmoji: '🎵',
-          beaconMessage: 'Jamming to indie records',
           likesCount: 7,
           lastActive: DateTime.now(),
         ),
@@ -155,10 +140,7 @@ class DiscoveryRepository {
           name: 'Elena',
           bio: 'Fitness enthusiast & food lover. Looking for a workout buddy or pizza enthusiast! 🍕🏋️',
           profilePictures: const ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'],
-          vibeTags: const ['🏋️ Gym', '🍕 Food', '🏃 Run'],
           isGhostMode: false,
-          beaconEmoji: '🍕',
-          beaconMessage: 'Post-workout pizza search',
           likesCount: 12,
           lastActive: DateTime.now(),
         ),
@@ -237,8 +219,8 @@ class DiscoveryRepository {
             geopoint.longitude,
           );
           
-          // Filter to users within 10.0 km (10000 meters)
-          if (distance <= 10000.0) {
+          // Client-side filter to the user's chosen range
+          if (distance <= maxDistanceInMeters) {
             nearbyList.add(NearbyUser(
               user: user,
               distanceInMeters: distance,
@@ -269,6 +251,7 @@ Stream<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String curren
   final positionAsync = ref.watch(userPositionProvider);
   final blockedUsersAsync = ref.watch(blockedUsersStreamProvider(currentUserId: currentUserId));
   final isGhostMode = ref.watch(ghostModeControllerProvider);
+  final rangeInMeters = ref.watch(discoveryRangeFilterProvider);
   
   final blockedUserIds = blockedUsersAsync.valueOrNull ?? const [];
   
@@ -289,6 +272,7 @@ Stream<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String curren
         currentUserId: currentUserId,
         currentPosition: position,
         blockedUserIds: blockedUserIds,
+        maxDistanceInMeters: rangeInMeters,
       );
     },
     error: (err, stack) {

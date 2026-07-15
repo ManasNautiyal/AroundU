@@ -25,19 +25,14 @@ class UserRepository {
     required String uid,
     required String name,
     required String bio,
-    required List<String> vibeTags,
     List<String> profilePictures = const [],
   }) async {
-    // 1. Sanitize input: Trim whitespace from name and bio
     final sanitizedName = name.trim();
     final sanitizedBio = bio.trim();
 
-    // 2. Validate name
     if (sanitizedName.isEmpty) {
       throw UserProfileValidationException('Name cannot be empty. Please enter your first name.');
     }
-
-    // 3. Validate bio length
     if (sanitizedBio.isEmpty) {
       throw UserProfileValidationException('Bio cannot be empty. Please share a little about yourself.');
     }
@@ -45,14 +40,11 @@ class UserRepository {
       throw UserProfileValidationException('Bio cannot exceed 150 characters.');
     }
 
-    // 4. Validate vibe tags (Disabled: Vibe tags functionality removed)
-
     final userModel = UserModel(
       uid: uid,
       name: sanitizedName,
       bio: sanitizedBio,
       profilePictures: profilePictures,
-      vibeTags: vibeTags,
       isGhostMode: false,
       lastActive: DateTime.now(),
     );
@@ -106,14 +98,6 @@ class UserRepository {
     return await uploadTask.ref.getDownloadURL();
   }
 
-  /// Updates or deletes the beacon values on the user's Firestore document.
-  Future<void> updateBeacon(String uid, String? emoji, String? message) async {
-    await _firestore.collection('users').doc(uid).update({
-      'beaconEmoji': emoji ?? FieldValue.delete(),
-      'beaconMessage': message ?? FieldValue.delete(),
-      'lastActive': FieldValue.serverTimestamp(),
-    });
-  }
 
   /// Updates the ghost mode status. If enabled, deletes the user location from the database.
   Future<void> updateGhostMode(String uid, bool isGhostMode) async {

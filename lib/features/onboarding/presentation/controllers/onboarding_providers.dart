@@ -11,7 +11,6 @@ class OnboardingState {
   final String name;
   final String bio;
   final List<String?> profilePictures; // Index 0 is primary, 1 and 2 are secondary slots
-  final List<String> selectedVibeTags;
   final bool isLoading;
 
   OnboardingState({
@@ -19,7 +18,6 @@ class OnboardingState {
     this.name = '',
     this.bio = '',
     this.profilePictures = const [null, null, null],
-    this.selectedVibeTags = const [],
     this.isLoading = false,
   });
 
@@ -28,7 +26,6 @@ class OnboardingState {
     String? name,
     String? bio,
     List<String?>? profilePictures,
-    List<String>? selectedVibeTags,
     bool? isLoading,
   }) {
     return OnboardingState(
@@ -36,7 +33,6 @@ class OnboardingState {
       name: name ?? this.name,
       bio: bio ?? this.bio,
       profilePictures: profilePictures ?? this.profilePictures,
-      selectedVibeTags: selectedVibeTags ?? this.selectedVibeTags,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -46,9 +42,6 @@ class OnboardingState {
 
   /// Helper to check if step 2 (Pictures) has at least the primary picture uploaded.
   bool get isPicturesValid => profilePictures[0] != null;
-
-  /// Helper to check if step 3 (Vibe Tags) has at least 1 and at most 5 tags selected.
-  bool get isVibeTagsValid => selectedVibeTags.isNotEmpty && selectedVibeTags.length <= 5;
 }
 
 @riverpod
@@ -82,18 +75,6 @@ class OnboardingController extends _$OnboardingController {
 
   void updateBio(String bio) {
     state = state.copyWith(bio: bio.substring(0, bio.length > 150 ? 150 : bio.length));
-  }
-
-  void toggleVibeTag(String tag) {
-    final currentTags = List<String>.from(state.selectedVibeTags);
-    if (currentTags.contains(tag)) {
-      currentTags.remove(tag);
-    } else {
-      if (currentTags.length < 5) {
-        currentTags.add(tag);
-      }
-    }
-    state = state.copyWith(selectedVibeTags: currentTags);
   }
 
   void updatePicture(int index, String? path) {
@@ -139,9 +120,8 @@ class OnboardingController extends _$OnboardingController {
         uid: uid,
         name: state.name.trim(),
         bio: state.bio.trim(),
-        vibeTags: const [], // Empty vibeTags as vibe functionalities are removed
         profilePictures: uploadedUrls.isNotEmpty ? uploadedUrls : const [
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500' // Fallback visual setup profile picture
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500'
         ],
       );
 

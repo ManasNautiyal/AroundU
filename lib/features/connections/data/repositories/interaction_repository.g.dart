@@ -560,5 +560,125 @@ class _SentLikesStreamProviderElement
   String get currentUserId => (origin as SentLikesStreamProvider).currentUserId;
 }
 
+String _$userConnectsCountHash() => r'e9f267f88a9211f00843add63495de738a9de6d0';
+
+/// See also [userConnectsCount].
+@ProviderFor(userConnectsCount)
+const userConnectsCountProvider = UserConnectsCountFamily();
+
+/// See also [userConnectsCount].
+class UserConnectsCountFamily extends Family<AsyncValue<int>> {
+  /// See also [userConnectsCount].
+  const UserConnectsCountFamily();
+
+  /// See also [userConnectsCount].
+  UserConnectsCountProvider call({required String userId}) {
+    return UserConnectsCountProvider(userId: userId);
+  }
+
+  @override
+  UserConnectsCountProvider getProviderOverride(
+    covariant UserConnectsCountProvider provider,
+  ) {
+    return call(userId: provider.userId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'userConnectsCountProvider';
+}
+
+/// See also [userConnectsCount].
+class UserConnectsCountProvider extends AutoDisposeStreamProvider<int> {
+  /// See also [userConnectsCount].
+  UserConnectsCountProvider({required String userId})
+    : this._internal(
+        (ref) => userConnectsCount(ref as UserConnectsCountRef, userId: userId),
+        from: userConnectsCountProvider,
+        name: r'userConnectsCountProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$userConnectsCountHash,
+        dependencies: UserConnectsCountFamily._dependencies,
+        allTransitiveDependencies:
+            UserConnectsCountFamily._allTransitiveDependencies,
+        userId: userId,
+      );
+
+  UserConnectsCountProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.userId,
+  }) : super.internal();
+
+  final String userId;
+
+  @override
+  Override overrideWith(
+    Stream<int> Function(UserConnectsCountRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: UserConnectsCountProvider._internal(
+        (ref) => create(ref as UserConnectsCountRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        userId: userId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<int> createElement() {
+    return _UserConnectsCountProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is UserConnectsCountProvider && other.userId == userId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, userId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin UserConnectsCountRef on AutoDisposeStreamProviderRef<int> {
+  /// The parameter `userId` of this provider.
+  String get userId;
+}
+
+class _UserConnectsCountProviderElement
+    extends AutoDisposeStreamProviderElement<int>
+    with UserConnectsCountRef {
+  _UserConnectsCountProviderElement(super.provider);
+
+  @override
+  String get userId => (origin as UserConnectsCountProvider).userId;
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
