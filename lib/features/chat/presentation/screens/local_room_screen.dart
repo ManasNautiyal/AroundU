@@ -3,13 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/widgets/image_helper.dart';
+import '../../data/models/message_model.dart';
 import '../../data/models/proximity_room_model.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../controllers/proximity_room_chat_controller.dart';
 import '../../../discovery/presentation/controllers/user_providers.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../../core/services/location_service.dart';
+import '../../../discovery/data/models/nearby_user.dart';
+import '../widgets/message_reaction_bar.dart';
+import '../widgets/quoted_message_preview.dart';
+import '../widgets/voice_note_widget.dart';
 
 class LocalRoomScreen extends ConsumerStatefulWidget {
   final ProximityRoomModel room;
@@ -22,18 +28,34 @@ class LocalRoomScreen extends ConsumerStatefulWidget {
 class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
-  bool? _manualProximityOverride;
+  final _imagePicker = ImagePicker();
 
-  void _sendMessage() {
+  bool? _manualProximityOverride;
+  ReplyToModel? _replyTo;
+
+  void _sendMessage({
+    MessageType type = MessageType.text,
+    String? mediaUrl,
+    int? durationSeconds,
+  }) {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty && type == MessageType.text && mediaUrl == null) return;
 
     _messageController.clear();
+    final replyPayload = _replyTo;
+    setState(() {
+      _replyTo = null;
+    });
+
     final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? 'me';
     ref.read(chatRepositoryProvider).sendProximityRoomMessage(
       roomId: widget.room.id,
       senderId: currentUserId,
-      text: text,
+      text: type == MessageType.text ? text : (type == MessageType.image ? '📷 Photo' : '🎤 Voice Note'),
+      type: type,
+      mediaUrl: mediaUrl,
+      durationSeconds: durationSeconds,
+      replyTo: replyPayload,
     );
 
     // Scroll to bottom after new message is sent
@@ -46,6 +68,35 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
         );
       }
     });
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final file = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
+      if (file != null) {
+        _sendMessage(
+          type: MessageType.image,
+          mediaUrl: file.path,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image: $e')),
+        );
+      }
+    }
+  }
+
+  void _sendVoiceNote(int durationSeconds) {
+    _sendMessage(
+      type: MessageType.voiceNote,
+      mediaUrl: 'mock_audio_${DateTime.now().millisecondsSinceEpoch}',
+      durationSeconds: durationSeconds,
+    );
   }
 
   @override
@@ -73,7 +124,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
         );
         return distance <= widget.room.radiusInMeters;
       },
-      orElse: () => true, // default to true if location is loading
+      orElse: () => true,
     );
 
     final isInRoom = _manualProximityOverride ?? isInRange;
@@ -97,7 +148,6 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
           ],
         ),
         actions: [
-          // Proximity Simulator Switch in Header
           Row(
             children: [
               Icon(
@@ -131,7 +181,6 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
         ),
         child: Column(
           children: [
-            // Proximity Warning Banner
             AnimatedContainer(
               duration: const Duration(milliseconds: 350),
               height: isInRoom ? 0 : 70,
@@ -162,7 +211,6 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                     ),
             ),
 
-            // Messages View
             Expanded(
               child: !isInRoom
                   ? _buildLeftZoneState(theme)
@@ -187,7 +235,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                             final message = roomMessages[index];
                             final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
                             final isMe = message.senderId == currentUserId;
-                            return _buildGroupMessageBubble(message, isMe, message.senderId, theme);
+                            return _buildGroupMessageItem(message, isMe, message.senderId, theme);
                           },
                         );
                       },
@@ -196,7 +244,16 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                     ),
             ),
 
-            // Input Area
+            if (_replyTo != null)
+              QuotedMessageInputPreview(
+                replyTo: _replyTo!,
+                onCancel: () {
+                  setState(() {
+                    _replyTo = null;
+                  });
+                },
+              ),
+
             if (isInRoom) _buildInputArea(theme),
           ],
         ),
@@ -247,38 +304,102 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
     );
   }
 
-  Widget _buildGroupMessageBubble(dynamic message, bool isMe, String senderId, ThemeData theme) {
+  Widget _buildGroupMessageItem(MessageModel message, bool isMe, String senderId, ThemeData theme) {
     return Consumer(
       builder: (context, ref, child) {
         final senderAsync = ref.watch(userProfileProvider(senderId));
         final sender = senderAsync.valueOrNull;
-        final isDarkLocal = Theme.of(context).brightness == Brightness.dark;
+        final senderName = isMe ? 'You' : (sender?.name ?? 'Member');
 
-        final bubbleColor = isMe
-            ? theme.colorScheme.primary
-            : (isDarkLocal
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.06));
-        final textColor = isMe
-            ? theme.colorScheme.onPrimary
-            : theme.colorScheme.onSurface;
+        return Dismissible(
+          key: Key('preply_${message.id}'),
+          direction: DismissDirection.startToEnd,
+          confirmDismiss: (_) async {
+            setState(() {
+              _replyTo = ReplyToModel(
+                messageId: message.id,
+                senderName: senderName,
+                text: message.text,
+              );
+            });
+            return false;
+          },
+          background: Container(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.only(left: 16),
+            child: Icon(Icons.reply_rounded, color: theme.colorScheme.primary),
+          ),
+          child: GestureDetector(
+            onLongPress: () {
+              MessageReactionBar.show(
+                context: context,
+                message: message,
+                isMe: isMe,
+                onReactionSelected: (emoji) {
+                  final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
+                  ref.read(chatRepositoryProvider).toggleReaction(
+                        matchId: widget.room.id,
+                        messageId: message.id,
+                        userId: currentUserId,
+                        emoji: emoji,
+                        isProximityRoom: true,
+                      );
+                },
+                onReply: () {
+                  setState(() {
+                    _replyTo = ReplyToModel(
+                      messageId: message.id,
+                      senderName: senderName,
+                      text: message.text,
+                    );
+                  });
+                },
+                onDelete: () {
+                  ref.read(chatRepositoryProvider).deleteMessage(
+                        matchId: widget.room.id,
+                        messageId: message.id,
+                        isProximityRoom: true,
+                      );
+                },
+              );
+            },
+            child: _buildGroupMessageBubble(message, isMe, senderId, sender, theme),
+          ),
+        );
+      },
+    );
+  }
 
-        final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-        final margin = isMe
-            ? const EdgeInsets.only(left: 64, top: 4, bottom: 4)
-            : const EdgeInsets.only(right: 64, top: 4, bottom: 4);
+  Widget _buildGroupMessageBubble(MessageModel message, bool isMe, String senderId, UserModel? sender, ThemeData theme) {
+    final isDarkLocal = theme.brightness == Brightness.dark;
 
-        final formattedTime = DateFormat('h:mm a').format(message.timestamp);
+    final bubbleColor = isMe
+        ? theme.colorScheme.primary
+        : (isDarkLocal
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.black.withValues(alpha: 0.06));
+    final textColor = isMe
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.onSurface;
 
-        final avatarUrl = (sender != null && sender.profilePictures.isNotEmpty)
-            ? sender.profilePictures[0]
-            : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+    final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+    final margin = isMe
+        ? const EdgeInsets.only(left: 64, top: 4, bottom: 4)
+        : const EdgeInsets.only(right: 64, top: 4, bottom: 4);
 
-        return Align(
-          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            margin: margin,
-            child: Row(
+    final formattedTime = DateFormat('h:mm a').format(message.timestamp);
+    final avatarUrl = (sender != null && sender.profilePictures.isNotEmpty)
+        ? sender.profilePictures[0]
+        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: margin,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -305,9 +426,11 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                           ),
                         ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: bubbleColor,
+                          color: message.isDeleted
+                              ? theme.colorScheme.onSurface.withValues(alpha: 0.1)
+                              : bubbleColor,
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(18),
                             topRight: const Radius.circular(18),
@@ -315,13 +438,48 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                             bottomRight: Radius.circular(isMe ? 4 : 18),
                           ),
                         ),
-                        child: Text(
-                          message.text,
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 15,
-                            height: 1.35,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (message.replyTo != null)
+                              QuotedMessageBubbleCard(replyTo: message.replyTo!, isMe: isMe),
+
+                            if (message.isDeleted)
+                              Text(
+                                'This message was deleted',
+                                style: TextStyle(
+                                  color: textColor.withValues(alpha: 0.6),
+                                  fontStyle: FontStyle.italic,
+                                  fontSize: 14,
+                                ),
+                              )
+                            else if (message.type == MessageType.image && message.mediaUrl != null)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image(
+                                  image: getUserImageProvider(message.mediaUrl!),
+                                  width: 200,
+                                  height: 160,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            else if (message.type == MessageType.voiceNote)
+                              VoiceNoteBubblePlayer(
+                                audioUrl: message.mediaUrl,
+                                durationSeconds: message.durationSeconds ?? 5,
+                                isMe: isMe,
+                              )
+                            else
+                              Text(
+                                message.text,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 15,
+                                  height: 1.35,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -340,9 +498,17 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                 ),
               ],
             ),
-          ),
-        );
-      },
+
+            if (message.reactions.isNotEmpty)
+              Positioned(
+                bottom: 14,
+                right: isMe ? null : -8,
+                left: isMe ? -8 : null,
+                child: MessageReactionDisplay(reactions: message.reactions),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -350,10 +516,11 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
     final cardBg = theme.colorScheme.surface;
     final borderBg = theme.colorScheme.outline;
     final textColor = theme.colorScheme.onSurface;
+    final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
     final hintColor = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(
@@ -368,7 +535,7 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
           children: [
             Expanded(
               child: Container(
-                height: 48,
+                constraints: const BoxConstraints(minHeight: 48),
                 decoration: BoxDecoration(
                   color: cardBg,
                   borderRadius: BorderRadius.circular(24),
@@ -380,8 +547,16 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
                   children: [
-                    const SizedBox(width: 8),
-                    // Text Input field
+                    IconButton(
+                      icon: Icon(Icons.camera_alt_outlined, color: subTextColor, size: 22),
+                      onPressed: () => _pickImage(ImageSource.camera),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.photo_outlined, color: subTextColor, size: 22),
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                    ),
+                    const SizedBox(width: 2),
+
                     Expanded(
                       child: TextField(
                         controller: _messageController,
@@ -403,10 +578,13 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                         onSubmitted: (_) => _sendMessage(),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // Send Button
+
+                    VoiceNoteRecorderButton(
+                      onVoiceNoteRecorded: _sendVoiceNote,
+                    ),
+
                     TextButton(
-                      onPressed: _sendMessage,
+                      onPressed: () => _sendMessage(),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         foregroundColor: theme.colorScheme.primary,

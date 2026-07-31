@@ -165,6 +165,129 @@ class _MessagesStreamProviderElement
   String get matchId => (origin as MessagesStreamProvider).matchId;
 }
 
+String _$typingStatusStreamHash() =>
+    r'adad1dbed59feb4d249ca903c99298d90f961a3e';
+
+/// See also [typingStatusStream].
+@ProviderFor(typingStatusStream)
+const typingStatusStreamProvider = TypingStatusStreamFamily();
+
+/// See also [typingStatusStream].
+class TypingStatusStreamFamily extends Family<AsyncValue<Map<String, bool>>> {
+  /// See also [typingStatusStream].
+  const TypingStatusStreamFamily();
+
+  /// See also [typingStatusStream].
+  TypingStatusStreamProvider call({required String matchId}) {
+    return TypingStatusStreamProvider(matchId: matchId);
+  }
+
+  @override
+  TypingStatusStreamProvider getProviderOverride(
+    covariant TypingStatusStreamProvider provider,
+  ) {
+    return call(matchId: provider.matchId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'typingStatusStreamProvider';
+}
+
+/// See also [typingStatusStream].
+class TypingStatusStreamProvider
+    extends AutoDisposeStreamProvider<Map<String, bool>> {
+  /// See also [typingStatusStream].
+  TypingStatusStreamProvider({required String matchId})
+    : this._internal(
+        (ref) =>
+            typingStatusStream(ref as TypingStatusStreamRef, matchId: matchId),
+        from: typingStatusStreamProvider,
+        name: r'typingStatusStreamProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$typingStatusStreamHash,
+        dependencies: TypingStatusStreamFamily._dependencies,
+        allTransitiveDependencies:
+            TypingStatusStreamFamily._allTransitiveDependencies,
+        matchId: matchId,
+      );
+
+  TypingStatusStreamProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.matchId,
+  }) : super.internal();
+
+  final String matchId;
+
+  @override
+  Override overrideWith(
+    Stream<Map<String, bool>> Function(TypingStatusStreamRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: TypingStatusStreamProvider._internal(
+        (ref) => create(ref as TypingStatusStreamRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        matchId: matchId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<Map<String, bool>> createElement() {
+    return _TypingStatusStreamProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TypingStatusStreamProvider && other.matchId == matchId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, matchId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin TypingStatusStreamRef on AutoDisposeStreamProviderRef<Map<String, bool>> {
+  /// The parameter `matchId` of this provider.
+  String get matchId;
+}
+
+class _TypingStatusStreamProviderElement
+    extends AutoDisposeStreamProviderElement<Map<String, bool>>
+    with TypingStatusStreamRef {
+  _TypingStatusStreamProviderElement(super.provider);
+
+  @override
+  String get matchId => (origin as TypingStatusStreamProvider).matchId;
+}
+
 String _$proximityStatusHash() => r'8bdb90d7902880c8e4fb2ce4fd826c82d89b70fc';
 
 abstract class _$ProximityStatus extends BuildlessAutoDisposeNotifier<bool> {

@@ -11,6 +11,9 @@ import '../../data/repositories/interaction_repository.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../discovery/presentation/controllers/user_providers.dart';
 import '../../../chat/data/models/proximity_room_model.dart';
+import 'package:intl/intl.dart';
+import '../../../chat/data/repositories/chat_repository.dart';
+import '../../../chat/data/models/message_model.dart';
 import '../../../chat/presentation/controllers/proximity_rooms_controller.dart';
 import '../widgets/match_overlay.dart';
 
@@ -306,9 +309,11 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       );
     }
 
+    final int totalCount = connections.length + proximityRooms.length;
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      itemCount: connections.length + proximityRooms.length,
+      itemCount: totalCount,
       itemBuilder: (context, index) {
         if (index < proximityRooms.length) {
           final room = proximityRooms[index];
@@ -325,7 +330,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           );
         }
         
-        final connectionIndex = index - proximityRooms.length;
+        final int connectionIndex = index - proximityRooms.length;
         return Column(
           children: [
             MatchTile(
@@ -589,10 +594,14 @@ class MatchTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = theme.brightness == Brightness.dark;
-    final borderBg = theme.colorScheme.outline;
 
     final targetUserId = connection.user1Id == currentUserId ? connection.user2Id : connection.user1Id;
     final userAsync = ref.watch(userProfileProvider(targetUserId));
+    final messagesAsync = ref.watch(messagesStreamProvider(matchId: connection.id));
+
+    final messages = messagesAsync.valueOrNull ?? [];
+    final lastMessage = messages.isNotEmpty ? messages.first : null;
+    final unreadCount = messages.where((m) => m.senderId != currentUserId && !m.isRead).length;
 
     return userAsync.when(
       data: (user) {
@@ -600,6 +609,9 @@ class MatchTile extends ConsumerWidget {
           return const SizedBox.shrink();
         }
         final avatarUrl = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
+        final isOutgoing = lastMessage != null && lastMessage.senderId == currentUserId;
+        final formattedTime = lastMessage != null ? DateFormat('h:mm a').format(lastMessage.timestamp) : '';
+
         return Material(
           color: Colors.transparent,
           child: InkWell(
@@ -618,48 +630,110 @@ class MatchTile extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 12.0),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundImage: getUserImageProvider(avatarUrl),
+                  Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundImage: getUserImageProvider(avatarUrl),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: theme.scaffoldBackgroundColor, width: 2.0),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          user.name,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                user.name,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (formattedTime.isNotEmpty)
+                              Text(
+                                formattedTime,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: unreadCount > 0
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  // Trailing Proximity Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: borderBg, width: 1.0),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_rounded,
-                          size: 12,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Nearby',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            if (isOutgoing) ...[
+                              Icon(
+                                Icons.done_all_rounded,
+                                size: 16,
+                                color: lastMessage.isRead ? Colors.blue : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Expanded(
+                              child: Text(
+                                lastMessage != null
+                                    ? (lastMessage.isDeleted
+                                        ? 'This message was deleted'
+                                        : (lastMessage.type == MessageType.image
+                                            ? '📷 Photo'
+                                            : (lastMessage.type == MessageType.voiceNote
+                                                ? '🎤 Voice Note'
+                                                : lastMessage.text)))
+                                    : 'Start chatting...',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: unreadCount > 0
+                                      ? theme.colorScheme.onSurface
+                                      : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                  fontWeight: unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+                                  fontSize: 13.5,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (unreadCount > 0) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: const BoxDecoration(
+                                  color: Colors.green,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  '$unreadCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),
