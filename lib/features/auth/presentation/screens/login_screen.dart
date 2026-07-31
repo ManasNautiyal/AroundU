@@ -334,7 +334,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       body: Container(
@@ -352,7 +351,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 const SizedBox(height: 32),
                 Center(
                   child: Image.asset(
-                    isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.png',
+                    'assets/logo/app_logo.png',
                     height: 52,
                     fit: BoxFit.contain,
                   ),

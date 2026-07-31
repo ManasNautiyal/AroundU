@@ -14,68 +14,22 @@ import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/discovery/data/repositories/user_repository.dart';
 import 'features/discovery/presentation/controllers/discovery_providers.dart';
 import 'features/chat/presentation/controllers/proximity_rooms_controller.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/app_observers.dart';
 import 'core/services/location_service.dart';
 
-final dynamicColorSchemeProvider = FutureProvider.family<ColorScheme, Brightness>((ref, brightness) async {
-  final isDark = brightness == Brightness.dark;
-  if (isDark) {
-    return const ColorScheme.dark(
-      primary: Colors.white,
-      onPrimary: Colors.black,
-      secondary: Colors.white,
-      onSecondary: Colors.black,
-      surface: Colors.black,
-      onSurface: Colors.white,
-      outline: Colors.white,
-      outlineVariant: Colors.white,
-    );
-  } else {
-    return const ColorScheme.light(
-      primary: Colors.black,
-      onPrimary: Colors.white,
-      secondary: Colors.black,
-      onSecondary: Colors.white,
-      surface: Colors.white,
-      onSurface: Colors.black,
-      outline: Colors.black,
-      outlineVariant: Colors.black,
-    );
-  }
+final dynamicColorSchemeProvider = FutureProvider<ColorScheme>((ref) async {
+  return const ColorScheme.dark(
+    primary: Colors.white,
+    onPrimary: Colors.black,
+    secondary: Colors.white,
+    onSecondary: Colors.black,
+    surface: Colors.black,
+    onSurface: Colors.white,
+    outline: Colors.white,
+    outlineVariant: Colors.white,
+  );
 });
-
-final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
-  return ThemeModeNotifier();
-});
-
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.dark) {
-    _init();
-  }
-
-  Future<void> _init() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final isLight = prefs.getBool('is_light_mode') ?? false;
-      state = isLight ? ThemeMode.light : ThemeMode.dark;
-    } catch (_) {}
-  }
-
-  Future<void> toggleTheme() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      if (state == ThemeMode.dark) {
-        state = ThemeMode.light;
-        await prefs.setBool('is_light_mode', true);
-      } else {
-        state = ThemeMode.dark;
-        await prefs.setBool('is_light_mode', false);
-      }
-    } catch (_) {}
-  }
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -99,21 +53,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-
-    final lightSchemeAsync = ref.watch(dynamicColorSchemeProvider(Brightness.light));
-    final darkSchemeAsync = ref.watch(dynamicColorSchemeProvider(Brightness.dark));
-
-    final lightColorScheme = lightSchemeAsync.valueOrNull ?? const ColorScheme.light(
-      primary: Colors.black,
-      onPrimary: Colors.white,
-      secondary: Colors.black,
-      onSecondary: Colors.white,
-      surface: Colors.white,
-      onSurface: Colors.black,
-      outline: Colors.black,
-      outlineVariant: Colors.black,
-    );
+    final darkSchemeAsync = ref.watch(dynamicColorSchemeProvider);
 
     final darkColorScheme = darkSchemeAsync.valueOrNull ?? const ColorScheme.dark(
       primary: Colors.white,
@@ -126,17 +66,8 @@ class MyApp extends ConsumerWidget {
       outlineVariant: Colors.white,
     );
 
-    const lightCardColor = Colors.white;
-    const lightBorderColor = Colors.black;
-
     const darkCardColor = Colors.black;
     const darkBorderColor = Colors.white;
-
-    final baseLight = ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: lightColorScheme,
-    );
 
     final baseDark = ThemeData(
       useMaterial3: true,
@@ -147,87 +78,8 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'AroundU',
       debugShowCheckedModeBanner: false,
-      themeMode: themeMode,
-      theme: baseLight.copyWith(
-        scaffoldBackgroundColor: lightColorScheme.surface,
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          centerTitle: false,
-          iconTheme: IconThemeData(color: lightColorScheme.onSurface),
-          titleTextStyle: TextStyle(
-            color: lightColorScheme.onSurface,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        cardTheme: CardThemeData(
-          color: lightCardColor,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: lightBorderColor, width: 1.2),
-          ),
-        ),
-        navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: Colors.white,
-          elevation: 8,
-          indicatorColor: Colors.black,
-          iconTheme: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const IconThemeData(color: Colors.white);
-            }
-            return IconThemeData(color: Colors.black.withValues(alpha: 0.5));
-          }),
-          labelTextStyle: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black);
-            }
-            return TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black.withValues(alpha: 0.5));
-          }),
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            shape: const StadiumBorder(),
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            shape: const StadiumBorder(),
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            shape: const StadiumBorder(),
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: lightCardColor,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: lightBorderColor, width: 1.2),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: lightBorderColor, width: 1.2),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: lightColorScheme.primary.withValues(alpha: 0.5), width: 1.5),
-          ),
-          labelStyle: TextStyle(color: lightColorScheme.onSurfaceVariant),
-          hintStyle: TextStyle(color: lightColorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
-        ),
-      ),
-      darkTheme: baseDark.copyWith(
+      themeMode: ThemeMode.dark,
+      theme: baseDark.copyWith(
         scaffoldBackgroundColor: darkColorScheme.surface,
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
@@ -424,8 +276,6 @@ class LoadingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: Center(
@@ -436,7 +286,7 @@ class LoadingScreen extends ConsumerWidget {
           children: [
             // App logo image — centered with clean bounds
             Image.asset(
-              isDark ? 'assets/logo/app_logo.png' : 'assets/logo/app_logo_light.png',
+              'assets/logo/app_logo.png',
               height: 50,
               fit: BoxFit.contain,
             ),

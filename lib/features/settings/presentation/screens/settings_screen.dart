@@ -210,34 +210,6 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const Divider(color: Colors.transparent, height: 4),
 
-                    // Theme Mode Toggle Switch Tile
-                    SwitchListTile(
-                      title: Row(
-                        children: [
-                          Icon(
-                            isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-                            color: iconThemeColor,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Light Mode',
-                            style: TextStyle(fontWeight: FontWeight.w600, color: textThemeColor),
-                          ),
-                        ],
-                      ),
-                      subtitle: Text(
-                        'Switch between light and dark monochrome themes.',
-                        style: TextStyle(fontSize: 12, color: subtitleColor),
-                      ),
-                      value: !isDark,
-                      activeThumbColor: theme.colorScheme.primary,
-                      activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.4),
-                      onChanged: (val) {
-                        sheetRef.read(themeModeProvider.notifier).toggleTheme();
-                      },
-                    ),
-                    Divider(color: dividerColor),
-
                     // Edit Profile
                     ListTile(
                       leading: Icon(Icons.person_outline_rounded, color: iconThemeColor),
