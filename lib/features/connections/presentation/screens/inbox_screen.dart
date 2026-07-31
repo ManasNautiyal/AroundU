@@ -630,26 +630,9 @@ class MatchTile extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 12.0),
               child: Row(
                 children: [
-                  Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 28,
-                        backgroundImage: getUserImageProvider(avatarUrl),
-                      ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 14,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: theme.scaffoldBackgroundColor, width: 2.0),
-                          ),
-                        ),
-                      ),
-                    ],
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundImage: getUserImageProvider(avatarUrl),
                   ),
                   const SizedBox(width: 16),
                   Expanded(

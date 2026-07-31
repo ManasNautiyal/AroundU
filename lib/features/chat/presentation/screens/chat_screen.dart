@@ -150,22 +150,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  void _sendVoiceNote(int durationSeconds) {
-    _sendMessage(
-      type: MessageType.voiceNote,
-      mediaUrl: 'mock_audio_${DateTime.now().millisecondsSinceEpoch}',
-      durationSeconds: durationSeconds,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     final messagesAsync = ref.watch(messagesStreamProvider(matchId: widget.matchId));
-    final typingMapAsync = ref.watch(typingStatusStreamProvider(matchId: widget.matchId));
 
-    final isTargetTyping = typingMapAsync.valueOrNull?[widget.targetUser.uid] ?? false;
     final avatarUrl = widget.targetUser.profilePictures.isNotEmpty
         ? widget.targetUser.profilePictures[0]
         : '';
@@ -181,45 +171,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.targetUser.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  Text(
-                    isTargetTyping ? 'typing...' : 'online',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isTargetTyping ? theme.colorScheme.primary : Colors.green,
-                      fontWeight: isTargetTyping ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                ],
+              child: Text(
+                widget.targetUser.name,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.videocam_outlined),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Calling ${widget.targetUser.name}...')),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.call_outlined),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Calling ${widget.targetUser.name}...')),
-              );
-            },
-          ),
-          const SizedBox(width: 4),
-        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -552,11 +510,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           filled: false,
                         ),
                       ),
-                    ),
-
-                    // Voice Note Recording Button
-                    VoiceNoteRecorderButton(
-                      onVoiceNoteRecorded: _sendVoiceNote,
                     ),
 
                     // Send Button

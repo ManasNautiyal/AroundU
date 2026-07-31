@@ -91,14 +91,6 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
     }
   }
 
-  void _sendVoiceNote(int durationSeconds) {
-    _sendMessage(
-      type: MessageType.voiceNote,
-      mediaUrl: 'mock_audio_${DateTime.now().millisecondsSinceEpoch}',
-      durationSeconds: durationSeconds,
-    );
-  }
-
   @override
   void dispose() {
     _messageController.dispose();
@@ -577,10 +569,6 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                         ),
                         onSubmitted: (_) => _sendMessage(),
                       ),
-                    ),
-
-                    VoiceNoteRecorderButton(
-                      onVoiceNoteRecorded: _sendVoiceNote,
                     ),
 
                     TextButton(
