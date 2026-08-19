@@ -9,20 +9,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          dynamicColorSchemeProvider(Brightness.light).overrideWith(
-            (ref) => const ColorScheme.light(
+          dynamicColorSchemeProvider.overrideWith(
+            (ref) async => const ColorScheme.light(
               primary: Colors.black,
               onPrimary: Colors.white,
               surface: Color(0xFFF3F5F2),
               onSurface: Colors.black,
-            ),
-          ),
-          dynamicColorSchemeProvider(Brightness.dark).overrideWith(
-            (ref) => const ColorScheme.dark(
-              primary: Colors.white,
-              onPrimary: Colors.black,
-              surface: Color(0xFF060606),
-              onSurface: Colors.white,
             ),
           ),
         ],
