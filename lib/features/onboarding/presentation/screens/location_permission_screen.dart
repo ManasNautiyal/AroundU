@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -17,6 +18,7 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _pulseController;
   bool _isRequesting = false;
+  Timer? _pollingTimer;
 
   @override
   void initState() {
@@ -26,10 +28,19 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
+      _checkLocationAndAutoAdvance();
+    });
   }
 
   @override
   void dispose() {
+    _pollingTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _pulseController.dispose();
     super.dispose();
@@ -38,26 +49,36 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.resumed) {
-      // Add a slight delay to allow the OS to update location settings
       await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
-      
-      ref.invalidate(locationPermissionAndServiceStatusProvider);
-      
-      // Auto-advance if permission was granted while the app was in the background
+      _checkLocationAndAutoAdvance();
+    }
+  }
+
+  Future<void> _checkLocationAndAutoAdvance() async {
+    if (!mounted || _isRequesting) return;
+    try {
       final locService = ref.read(locationServiceProvider);
+      final serviceEnabled = await locService.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
       final permission = await locService.checkPermission();
       if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
         _onPermissionGranted();
       }
-    }
+    } catch (_) {}
   }
 
   void _onPermissionGranted() {
+    _pollingTimer?.cancel();
     ref.invalidate(locationPermissionAndServiceStatusProvider);
     final userModel = ref.read(currentUserModelProvider).valueOrNull;
-    if (userModel == null) {
+    final currentStep = ref.read(onboardingStepProvider);
+
+    if (userModel == null && currentStep <= 1) {
       ref.read(onboardingStepProvider.notifier).setStep(2);
+    } else {
+      ref.read(onboardingStepProvider.notifier).setStep(3);
     }
   }
 
@@ -67,17 +88,32 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     try {
       final locService = ref.read(locationServiceProvider);
       
-      // Request permission using our LocationService
-      final permission = await locService.requestPermission();
-      
+      // 1. Check if location services (GPS) are enabled
+      final serviceEnabled = await locService.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          _showLocationServiceDisabledDialog();
+        }
+        return;
+      }
+
+      // 2. Request permission using LocationService
+      var permission = await locService.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await locService.requestPermission();
+      }
+
       if (permission == LocationPermission.always) {
         _onPermissionGranted();
       } else if (permission == LocationPermission.whileInUse) {
         if (mounted) {
           _showAlwaysLocationDialog();
         }
+      } else if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          _showPermissionDeniedForeverDialog();
+        }
       } else {
-        // If permission is denied, show a friendly explanation Dialog
         if (mounted) {
           _showPermissionDeniedDialog();
         }
@@ -95,12 +131,62 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     }
   }
 
+  void _showLocationServiceDisabledDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Location Services Disabled'),
+        content: const Text(
+          'Your device GPS / Location Services are turned off. Please turn on Location in your device settings to continue.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await Geolocator.openLocationSettings();
+            },
+            child: const Text('Turn On Location'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPermissionDeniedForeverDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Permission Permanently Denied'),
+        content: const Text(
+          'Location permission has been permanently denied for AroundU. Please enable Location in App Settings to proceed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await Geolocator.openAppSettings();
+            },
+            child: const Text('Open App Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAlwaysLocationDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Always-On Location Required'),
+        title: const Text('Always-On Location Recommended'),
         content: const Text(
           'To ensure you never miss any nearby connections or local chat zones (even when the app runs in the background), please set location permission to "Always Allow" in your system settings.',
         ),
@@ -116,7 +202,6 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
             onPressed: () async {
               Navigator.pop(dialogContext);
               await Geolocator.openAppSettings();
-              _onPermissionGranted();
             },
             child: const Text('Change to "Always"'),
           ),
@@ -139,7 +224,7 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
-                _onPermissionGranted(); // Let them proceed in debug/mock onboarding anyway
+                _onPermissionGranted();
               },
               child: const Text('Proceed anyway'),
             ),
