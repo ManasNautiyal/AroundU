@@ -58,7 +58,9 @@ class AuthRepository {
   /// Sign in using Google Account.
   Future<UserCredential> signInWithGoogle() async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        serverClientId: '863029322406-9c0lu7nu1ofen0q8d5f03kihlt3tpe05.apps.googleusercontent.com',
+      );
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
         throw AuthException('Google Sign-In was cancelled by the user.');

@@ -51,12 +51,17 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     if (state == AppLifecycleState.resumed) {
       await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
+      // Always invalidate the provider so OnboardingRouter re-evaluates the
+      // location gate, even if _isRequesting was previously stuck.
+      ref.invalidate(locationPermissionAndServiceStatusProvider);
       _checkLocationAndAutoAdvance();
     }
   }
 
   Future<void> _checkLocationAndAutoAdvance() async {
-    if (!mounted || _isRequesting) return;
+    if (!mounted) return;
+    // Reset any stuck requesting state so returning from Settings is never blocked.
+    _isRequesting = false;
     try {
       final locService = ref.read(locationServiceProvider);
       final serviceEnabled = await locService.isLocationServiceEnabled();
