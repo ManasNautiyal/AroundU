@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "863029322406-ejv00bjk4skac4mbc98nct4paj2hgqqr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aroundu.aroundu",
+            "certificate_hash": "209cc90ab91774ee6000139e486de83b325a3980"
+          }
+        },
+        {
           "client_id": "863029322406-osvmgomdikiuve5g3vapvp5h4dvmfuj0.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
