@@ -14,7 +14,7 @@ import '../../../chat/data/models/proximity_room_model.dart';
 import 'package:intl/intl.dart';
 import '../../../chat/data/repositories/chat_repository.dart';
 import '../../../chat/data/models/message_model.dart';
-import '../../../chat/presentation/controllers/proximity_rooms_controller.dart';
+import '../../../chat/presentation/widgets/create_room_sheet.dart';
 import '../widgets/match_overlay.dart';
 
 class InboxScreen extends ConsumerStatefulWidget {
@@ -28,7 +28,7 @@ class InboxScreen extends ConsumerStatefulWidget {
 
 class _InboxScreenState extends ConsumerState<InboxScreen> {
   bool _showReceivedLikes = true;
-  bool _showPrimaryChats = true;
+  int _chatsSubTab = 0; // 0: Primary (1-on-1), 1: Chatrooms, 2: Requests
 
   void _showProfileDetail(BuildContext context, UserModel user) {
     showModalBottomSheet(
@@ -55,6 +55,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       if (widget.selectedTabOverride == 0) {
         final requests = pendingRequestsAsync.valueOrNull ?? [];
         final connections = activeConnectionsAsync.valueOrNull ?? [];
+        final proximityRoomsAsync = ref.watch(proximityRoomsProvider);
+        final proximityRooms = proximityRoomsAsync.valueOrNull ?? [];
         final isDark = theme.brightness == Brightness.dark;
 
         return Scaffold(
@@ -63,6 +65,33 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
               'Chats',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  Icons.forum_rounded,
+                  color: _chatsSubTab == 1 ? theme.colorScheme.primary : null,
+                ),
+                tooltip: 'Chatrooms in Range',
+                onPressed: () {
+                  setState(() {
+                    _chatsSubTab = 1;
+                  });
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline_rounded),
+                tooltip: 'Create Chat Room',
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const CreateRoomSheet(),
+                  );
+                },
+              ),
+              const SizedBox(width: 4),
+            ],
           ),
           body: Container(
             decoration: decoration,
@@ -80,24 +109,58 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                               'Primary (${connections.length})',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: _showPrimaryChats ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                                fontSize: 12,
+                                color: _chatsSubTab == 0 ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          selected: _showPrimaryChats,
+                          selected: _chatsSubTab == 0,
                           selectedColor: theme.colorScheme.primary,
                           backgroundColor: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                           checkmarkColor: theme.colorScheme.onPrimary,
                           onSelected: (selected) {
                             if (selected) {
                               setState(() {
-                                _showPrimaryChats = true;
+                                _chatsSubTab = 0;
                               });
                             }
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: ChoiceChip(
+                          avatar: Icon(
+                            Icons.forum_rounded,
+                            size: 16,
+                            color: _chatsSubTab == 1 ? theme.colorScheme.onPrimary : theme.colorScheme.primary,
+                          ),
+                          label: Center(
+                            child: Text(
+                              'Chatrooms (${proximityRooms.length})',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: _chatsSubTab == 1 ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          selected: _chatsSubTab == 1,
+                          selectedColor: theme.colorScheme.primary,
+                          backgroundColor: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
+                          checkmarkColor: theme.colorScheme.onPrimary,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _chatsSubTab = 1;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: ChoiceChip(
                           label: Center(
@@ -105,18 +168,20 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                               'Requests (${requests.length})',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: !_showPrimaryChats ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                                fontSize: 12,
+                                color: _chatsSubTab == 2 ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          selected: !_showPrimaryChats,
+                          selected: _chatsSubTab == 2,
                           selectedColor: theme.colorScheme.primary,
                           backgroundColor: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
                           checkmarkColor: theme.colorScheme.onPrimary,
                           onSelected: (selected) {
                             if (selected) {
                               setState(() {
-                                _showPrimaryChats = false;
+                                _chatsSubTab = 2;
                               });
                             }
                           },
@@ -128,17 +193,23 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                 
                 // Tab Content
                 Expanded(
-                  child: _showPrimaryChats
+                  child: _chatsSubTab == 0
                       ? activeConnectionsAsync.when(
-                          data: (connectionsList) => _buildMessagesList(connectionsList, currentUserId, theme),
+                          data: (connectionsList) => _buildPrimaryMessagesList(connectionsList, currentUserId, theme),
                           error: (err, _) => Center(child: Text('Error loading messages: $err')),
                           loading: () => const Center(child: CircularProgressIndicator()),
                         )
-                      : pendingRequestsAsync.when(
-                          data: (requestsList) => _buildRequestsList(requestsList, theme),
-                          error: (err, _) => Center(child: Text('Error loading requests: $err')),
-                          loading: () => const Center(child: CircularProgressIndicator()),
-                        ),
+                      : _chatsSubTab == 1
+                          ? proximityRoomsAsync.when(
+                              data: (roomsList) => _buildProximityRoomsList(roomsList, theme),
+                              error: (err, _) => Center(child: Text('Error loading chatrooms: $err')),
+                              loading: () => const Center(child: CircularProgressIndicator()),
+                            )
+                          : pendingRequestsAsync.when(
+                              data: (requestsList) => _buildRequestsList(requestsList, theme),
+                              error: (err, _) => Center(child: Text('Error loading requests: $err')),
+                              loading: () => const Center(child: CircularProgressIndicator()),
+                            ),
                 ),
               ],
             ),
@@ -291,6 +362,73 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPrimaryMessagesList(List<MatchModel> connections, String currentUserId, ThemeData theme) {
+    if (connections.isEmpty) {
+      return _buildEmptyState(
+        theme: theme,
+        icon: Icons.chat_bubble_outline_rounded,
+        title: 'No Primary Chats',
+        body: 'Your 1-on-1 matched connections will appear here. Explore the Map tab to discover people around you!',
+      );
+    }
+
+    final borderBg = theme.colorScheme.outline;
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      itemCount: connections.length,
+      separatorBuilder: (context, index) => Divider(
+        color: borderBg,
+        height: 1,
+        thickness: 1.0,
+      ),
+      itemBuilder: (context, index) {
+        return MatchTile(
+          connection: connections[index],
+          currentUserId: currentUserId,
+          theme: theme,
+        );
+      },
+    );
+  }
+
+  Widget _buildProximityRoomsList(List<ProximityRoomModel> proximityRooms, ThemeData theme) {
+    if (proximityRooms.isEmpty) {
+      return _buildEmptyState(
+        theme: theme,
+        icon: Icons.forum_rounded,
+        title: 'No Chat Rooms in Range',
+        body: 'There are no active proximity chat rooms within your range. Tap below to create a room!',
+        actionButtonText: 'Create Room',
+        onActionButtonPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const CreateRoomSheet(),
+          );
+        },
+      );
+    }
+
+    final borderBg = theme.colorScheme.outline;
+    final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      itemCount: proximityRooms.length,
+      separatorBuilder: (context, index) => Divider(
+        color: borderBg,
+        height: 1,
+        thickness: 1.0,
+      ),
+      itemBuilder: (context, index) {
+        final room = proximityRooms[index];
+        return _buildProximityRoomTile(room, theme, borderBg, subTextColor);
+      },
     );
   }
 
@@ -477,6 +615,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     required IconData icon,
     required String title,
     required String body,
+    String? actionButtonText,
+    VoidCallback? onActionButtonPressed,
   }) {
     return Center(
       child: Padding(
@@ -512,6 +652,20 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                 height: 1.5,
               ),
             ),
+            if (actionButtonText != null && onActionButtonPressed != null) ...[
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: onActionButtonPressed,
+                icon: const Icon(Icons.add_rounded),
+                label: Text(actionButtonText),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

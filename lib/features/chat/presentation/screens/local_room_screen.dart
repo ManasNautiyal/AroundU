@@ -406,17 +406,21 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                   child: Column(
                     crossAxisAlignment: align,
                     children: [
-                      if (!isMe && sender != null)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4.0, bottom: 2.0),
-                          child: Text(
-                            sender.name,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: isMe ? 0 : 4.0,
+                          right: isMe ? 4.0 : 0,
+                          bottom: 3.0,
+                        ),
+                        child: Text(
+                          isMe ? 'You' : (sender?.name ?? 'Member'),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
+                      ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
