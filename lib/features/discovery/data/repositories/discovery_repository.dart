@@ -41,66 +41,10 @@ class DiscoveryRepository {
         'lastActive': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // Seeding: If there are no other users or only 1 user (ourselves), seed 3 nearby mock users dynamically.
-      final usersSnap = await _firestore.collection('users').limit(5).get();
-      if (usersSnap.docs.length <= 1) {
-        final mockProfiles = [
-          {
-            'name': 'Sarah',
-            'bio': 'Art student & photography lover. Always down for coffee and museum walks. ☕🎨',
-            'profilePictures': ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500'],
-            'isGhostMode': false,
-            'likesCount': 4,
-            'latOffset': 0.0015,
-            'lngOffset': 0.0012,
-          },
-          {
-            'name': 'Marcus',
-            'bio': 'Software engineer by day, guitarist by night. Let\'s talk music and tech! 🎵🎸',
-            'profilePictures': ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500'],
-            'isGhostMode': false,
-            'likesCount': 7,
-            'latOffset': -0.0012,
-            'lngOffset': -0.0018,
-          },
-          {
-            'name': 'Elena',
-            'bio': 'Fitness enthusiast & food lover. Looking for a workout buddy or pizza enthusiast! 🍕🏋️',
-            'profilePictures': ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'],
-            'isGhostMode': false,
-            'likesCount': 12,
-            'latOffset': 0.0022,
-            'lngOffset': -0.0011,
-          },
-        ];
-
-        for (final profile in mockProfiles) {
-          final mockUid = 'mock_${profile['name']!.toString().toLowerCase()}';
-          if (mockUid == uid) continue; // Skip if somehow matching current user's uid
-          
-          final latOffset = profile['latOffset'] as double;
-          final lngOffset = profile['lngOffset'] as double;
-          final mockLat = latitude + latOffset;
-          final mockLng = longitude + lngOffset;
-          final mockGeoFirePoint = GeoFirePoint(GeoPoint(mockLat, mockLng));
-
-          await _firestore.collection('users').doc(mockUid).set({
-            'name': profile['name'],
-            'bio': profile['bio'],
-            'profilePictures': profile['profilePictures'],
-            'isGhostMode': profile['isGhostMode'],
-            'likesCount': profile['likesCount'],
-            'lastActive': FieldValue.serverTimestamp(),
-            'location': {
-              'geohash': mockGeoFirePoint.geohash,
-              'geopoint': mockGeoFirePoint.geopoint,
-            },
-          });
-        }
-      }
+      // Location updated successfully
     } catch (e) {
       // ignore: avoid_print
-      print('DEBUG: Failed to update user location or seed mock users: $e');
+      print('DEBUG: Failed to update user location: $e');
     }
   }
 
@@ -115,63 +59,7 @@ class DiscoveryRepository {
     double maxDistanceInMeters = 500.0,
   }) {
     if (!_isFirebaseInitialized) {
-      // Mock local fallback stream
-      final mockProfiles = [
-        UserModel(
-          uid: 'mock_sarah',
-          name: 'Sarah',
-          bio: 'Art student & photography lover. Always down for coffee and museum walks. ☕🎨',
-          profilePictures: const ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500'],
-          isGhostMode: false,
-          likesCount: 4,
-          lastActive: DateTime.now(),
-        ),
-        UserModel(
-          uid: 'mock_marcus',
-          name: 'Marcus',
-          bio: 'Software engineer by day, guitarist by night. Let\'s talk music and tech! 🎵🎸',
-          profilePictures: const ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500'],
-          isGhostMode: false,
-          likesCount: 7,
-          lastActive: DateTime.now(),
-        ),
-        UserModel(
-          uid: 'mock_elena',
-          name: 'Elena',
-          bio: 'Fitness enthusiast & food lover. Looking for a workout buddy or pizza enthusiast! 🍕🏋️',
-          profilePictures: const ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500'],
-          isGhostMode: false,
-          likesCount: 12,
-          lastActive: DateTime.now(),
-        ),
-      ];
-
-      final List<NearbyUser> nearbyList = [];
-      final offsets = [
-        [0.0015, 0.0012],
-        [-0.0012, -0.0018],
-        [0.0022, -0.0011],
-      ];
-
-      for (int i = 0; i < mockProfiles.length; i++) {
-        final profile = mockProfiles[i];
-        final lat = currentPosition.latitude + offsets[i][0];
-        final lng = currentPosition.longitude + offsets[i][1];
-        final distance = Geolocator.distanceBetween(
-          currentPosition.latitude,
-          currentPosition.longitude,
-          lat,
-          lng,
-        );
-
-        nearbyList.add(NearbyUser(
-          user: profile,
-          distanceInMeters: distance,
-        ));
-      }
-
-      nearbyList.sort((a, b) => a.distanceInMeters.compareTo(b.distanceInMeters));
-      return Stream.value(nearbyList);
+      return Stream.value([]);
     }
 
     try {

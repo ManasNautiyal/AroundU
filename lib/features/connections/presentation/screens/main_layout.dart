@@ -39,7 +39,7 @@ class _MainLayoutState extends State<MainLayout> {
           NavigationDestination(
             icon: Icon(Icons.location_on_outlined),
             selectedIcon: Icon(Icons.location_on_rounded),
-            label: 'Map',
+            label: 'Discover',
           ),
           NavigationDestination(
             icon: Icon(Icons.chat_bubble_outline_rounded),

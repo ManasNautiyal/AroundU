@@ -143,8 +143,8 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
             child: Slider(
               value: rangeInMeters,
               min: 50,
-              max: 500,
-              divisions: 9,
+              max: 300,
+              divisions: 5,
               onChanged: (val) {
                 ref.read(discoveryRangeFilterProvider.notifier).setRange(val);
               },
@@ -287,7 +287,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        isGhostMode ? 'Ghost Mode (Hidden)' : 'Visible (Scanning)',
+                        isGhostMode ? 'Ghost Mode' : 'Visible',
                         style: TextStyle(
                           color: subTextColor,
                           fontSize: 13,
@@ -315,69 +315,91 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               _buildRangeSlider(theme, rangeInMeters),
               const SizedBox(height: 12),
               Expanded(
-                child: nearbyUsersAsync.when(
-                  data: (nearbyUsers) {
-                    final filteredUsers = nearbyUsers.where((nearby) {
-                      final user = nearby.user;
-                      final nameMatch = user.name.toLowerCase().contains(_searchQuery.toLowerCase());
-                      final bioMatch = user.bio.toLowerCase().contains(_searchQuery.toLowerCase());
-                      final withinRange = nearby.distanceInMeters <= rangeInMeters;
-                      return (nameMatch || bioMatch) && withinRange;
-                    }).toList();
-
-                    // Sort filtered users by likesCount in descending order
-                    filteredUsers.sort((a, b) => b.user.likesCount.compareTo(a.user.likesCount));
-
-                    if (filteredUsers.isEmpty) {
-                      // Determine a helpful empty-state message
-                      final allWithinRange = nearbyUsers
-                          .where((u) => u.distanceInMeters <= rangeInMeters)
-                          .toList();
-                      final rangeIsTheCause =
-                          nearbyUsers.isNotEmpty && allWithinRange.isEmpty;
-                      final searchIsTheCause =
-                          _searchQuery.isNotEmpty && nearbyUsers.isNotEmpty;
-
-                      final emptyMsg = rangeIsTheCause
-                          ? 'No one within ${_formatRange(rangeInMeters)} right now.\nTry widening your range.'
-                          : searchIsTheCause
-                              ? 'No matching profiles found nearby.'
-                              : 'No one is nearby right now.\nTap recenter to scan your area.';
-
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.people_outline_rounded, size: 48, color: isDark ? Colors.white30 : Colors.black26),
-                            const SizedBox(height: 12),
-                            Text(
-                              emptyMsg,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: subTextColor, fontSize: 14, height: 1.4),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.8,
-                      ),
-                      itemCount: filteredUsers.length,
-                      itemBuilder: (context, index) {
-                        final nearbyUser = filteredUsers[index];
-                        return _buildProfileCard(nearbyUser);
-                      },
-                    );
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(nearbyUsersProvider(currentUserId: currentUserId));
+                    // Wait a moment for the provider to start refetching
+                    await Future.delayed(const Duration(milliseconds: 500));
                   },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
+                  child: nearbyUsersAsync.when(
+                    data: (nearbyUsers) {
+                      final filteredUsers = nearbyUsers.where((nearby) {
+                        final user = nearby.user;
+                        final nameMatch = user.name.toLowerCase().contains(_searchQuery.toLowerCase());
+                        final bioMatch = user.bio.toLowerCase().contains(_searchQuery.toLowerCase());
+                        final withinRange = nearby.distanceInMeters <= rangeInMeters;
+                        return (nameMatch || bioMatch) && withinRange;
+                      }).toList();
+
+                      // Sort filtered users by likesCount in descending order
+                      filteredUsers.sort((a, b) => b.user.likesCount.compareTo(a.user.likesCount));
+
+                      if (filteredUsers.isEmpty) {
+                        // Determine a helpful empty-state message
+                        final allWithinRange = nearbyUsers
+                            .where((u) => u.distanceInMeters <= rangeInMeters)
+                            .toList();
+                        final rangeIsTheCause =
+                            nearbyUsers.isNotEmpty && allWithinRange.isEmpty;
+                        final searchIsTheCause =
+                            _searchQuery.isNotEmpty && nearbyUsers.isNotEmpty;
+
+                        final emptyMsg = rangeIsTheCause
+                            ? 'No one within ${_formatRange(rangeInMeters)} right now.\nTry widening your range.'
+                            : searchIsTheCause
+                                ? 'No matching profiles found nearby.'
+                                : 'No one is nearby right now.';
+
+                        return LayoutBuilder(
+                          builder: (context, constraints) => SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: SizedBox(
+                              height: constraints.maxHeight,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.people_outline_rounded, size: 48, color: isDark ? Colors.white30 : Colors.black26),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      emptyMsg,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(color: subTextColor, fontSize: 14, height: 1.4),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      return GridView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.8,
+                        ),
+                        itemCount: filteredUsers.length,
+                        itemBuilder: (context, index) {
+                          final nearbyUser = filteredUsers[index];
+                          return _buildProfileCard(nearbyUser);
+                        },
+                      );
+                    },
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                    error: (err, stack) => SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        child: _buildLocationErrorWidget(err, theme, isDark),
+                      ),
+                    ),
                   ),
-                  error: (err, stack) => _buildLocationErrorWidget(err, theme, isDark),
                 ),
               ),
             ],

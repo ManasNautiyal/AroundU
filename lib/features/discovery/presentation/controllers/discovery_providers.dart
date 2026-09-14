@@ -44,10 +44,10 @@ class MockDiscoveryUsersController extends _$MockDiscoveryUsersController {
 @riverpod
 class DiscoveryRangeFilter extends _$DiscoveryRangeFilter {
   @override
-  double build() => 500.0;
+  double build() => 300.0;
 
   void setRange(double meters) {
-    state = meters.clamp(50.0, 500.0);
+    state = meters.clamp(50.0, 300.0);
   }
 }
 

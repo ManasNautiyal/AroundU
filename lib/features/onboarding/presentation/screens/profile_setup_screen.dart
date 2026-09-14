@@ -127,7 +127,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           ],
         ),
         content: const Text(
-          'Your AroundU profile is now set up. Prepare to discover nearby vibes within 100 meters!',
+          'Your AroundU profile is now set up. Prepare to discover people around U!',
         ),
         actions: [
           FilledButton(

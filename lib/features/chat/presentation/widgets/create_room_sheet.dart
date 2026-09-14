@@ -116,7 +116,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Create Proximity Chat Zone',
+              'Create Chat Room',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -124,7 +124,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Anyone within range will automatically see and join this chat room.',
+              'Anyone within range can see and join this chat room.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -139,7 +139,7 @@ class _CreateRoomSheetState extends ConsumerState<CreateRoomSheet> {
                 fontSize: 16,
               ),
               decoration: InputDecoration(
-                labelText: 'Zone Name',
+                labelText: 'Room Name',
                 hintText: 'e.g., Library Study Desk, Table 5',
                 prefixIcon: const Icon(Icons.store_rounded),
                 filled: true,
