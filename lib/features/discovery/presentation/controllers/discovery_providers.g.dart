@@ -23,26 +23,7 @@ final ghostModeControllerProvider =
     );
 
 typedef _$GhostModeController = AutoDisposeNotifier<bool>;
-String _$mockDiscoveryUsersControllerHash() =>
-    r'08ba81c3131e3eb0bc73393274a8e66b96c595d0';
 
-/// See also [MockDiscoveryUsersController].
-@ProviderFor(MockDiscoveryUsersController)
-final mockDiscoveryUsersControllerProvider =
-    AutoDisposeNotifierProvider<
-      MockDiscoveryUsersController,
-      List<NearbyUser>
-    >.internal(
-      MockDiscoveryUsersController.new,
-      name: r'mockDiscoveryUsersControllerProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$mockDiscoveryUsersControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$MockDiscoveryUsersController = AutoDisposeNotifier<List<NearbyUser>>;
 String _$discoveryRangeFilterHash() =>
     r'e20f55c6f74f79a38f9a9c66805cd91e4a6cc33e';
 

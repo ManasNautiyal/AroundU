@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:geoflutterfire_plus/geoflutterfire_plus.dart';
 import '../models/message_model.dart';
@@ -14,45 +14,7 @@ part 'chat_repository.g.dart';
 class ChatRepository {
   final FirebaseFirestore _firestore;
 
-  // Local Mock Message Store: Map of matchId -> list of messages
-  final Map<String, List<MessageModel>> _mockChats = {};
-  
-  // StreamControllers to push updates for mock streams
-  final Map<String, StreamController<List<MessageModel>>> _controllers = {};
-
-  // Mock Proximity Room Stores
-  final Map<String, ProximityRoomModel> _mockProximityRooms = {};
-  final Map<String, List<MessageModel>> _mockProximityMessages = {};
-  final Map<String, StreamController<List<MessageModel>>> _proximityMessageControllers = {};
-
-  // Mock Typing status store: matchId -> Map of userId -> bool
-  final Map<String, Map<String, bool>> _mockTypingStatus = {};
-  final Map<String, StreamController<Map<String, bool>>> _typingControllers = {};
-
-  ChatRepository(this._firestore) {
-    // Seed a mock proximity room near Lalit's mocked location (Dehradun, India)
-    const mockRoomId = 'mock_room_1';
-    final mockRoomGeopoint = GeoPoint(30.3004027, 78.0347056);
-    _mockProximityRooms[mockRoomId] = ProximityRoomModel(
-      id: mockRoomId,
-      name: 'Library Zone',
-      creatorId: 'system',
-      location: {
-        'geopoint': mockRoomGeopoint,
-        'geohash': 'tts7',
-      },
-      radiusInMeters: 100.0,
-      createdAt: DateTime.now(),
-    );
-  }
-
-  bool get _isFirebaseInitialized {
-    try {
-      return Firebase.apps.isNotEmpty;
-    } catch (_) {
-      return false;
-    }
-  }
+  ChatRepository(this._firestore);
 
   /// Sends a chat message with optional media, reply, or voice note parameters.
   Future<void> sendMessage({
@@ -78,32 +40,11 @@ class ChatRepository {
       'isStarred': false,
     };
 
-    if (_isFirebaseInitialized) {
-      await _firestore
-          .collection('chats')
-          .doc(matchId)
-          .collection('messages')
-          .add(messageData);
-    } else {
-      final newMessage = MessageModel(
-        id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
-        senderId: senderId,
-        text: text,
-        timestamp: DateTime.now(),
-        type: type,
-        mediaUrl: mediaUrl,
-        durationSeconds: durationSeconds,
-        replyTo: replyTo,
-      );
-
-      final list = _mockChats[matchId] ?? [];
-      list.add(newMessage);
-      _mockChats[matchId] = list;
-
-      if (_controllers.containsKey(matchId)) {
-        _controllers[matchId]!.add(List.from(list.reversed));
-      }
-    }
+    await _firestore
+        .collection('chats')
+        .doc(matchId)
+        .collection('messages')
+        .add(messageData);
   }
 
   /// Mark all unread messages from the other user as read.
@@ -111,39 +52,23 @@ class ChatRepository {
     required String matchId,
     required String currentUserId,
   }) async {
-    if (_isFirebaseInitialized) {
-      final snap = await _firestore
-          .collection('chats')
-          .doc(matchId)
-          .collection('messages')
-          .where('isRead', isEqualTo: false)
-          .get();
+    final snap = await _firestore
+        .collection('chats')
+        .doc(matchId)
+        .collection('messages')
+        .where('isRead', isEqualTo: false)
+        .get();
 
-      final batch = _firestore.batch();
-      bool hasUpdates = false;
-      for (var doc in snap.docs) {
-        if (doc.data()['senderId'] != currentUserId) {
-          batch.update(doc.reference, {'isRead': true});
-          hasUpdates = true;
-        }
+    final batch = _firestore.batch();
+    bool hasUpdates = false;
+    for (var doc in snap.docs) {
+      if (doc.data()['senderId'] != currentUserId) {
+        batch.update(doc.reference, {'isRead': true});
+        hasUpdates = true;
       }
-      if (hasUpdates) {
-        await batch.commit();
-      }
-    } else {
-      final list = _mockChats[matchId];
-      if (list != null) {
-        bool changed = false;
-        for (int i = 0; i < list.length; i++) {
-          if (list[i].senderId != currentUserId && !list[i].isRead) {
-            list[i] = list[i].copyWith(isRead: true);
-            changed = true;
-          }
-        }
-        if (changed && _controllers.containsKey(matchId)) {
-          _controllers[matchId]!.add(List.from(list.reversed));
-        }
-      }
+    }
+    if (hasUpdates) {
+      await batch.commit();
     }
   }
 
@@ -155,43 +80,21 @@ class ChatRepository {
     required String emoji,
     bool isProximityRoom = false,
   }) async {
-    if (_isFirebaseInitialized) {
-      final docRef = isProximityRoom
-          ? _firestore.collection('proximity_rooms').doc(matchId).collection('messages').doc(messageId)
-          : _firestore.collection('chats').doc(matchId).collection('messages').doc(messageId);
+    final docRef = isProximityRoom
+        ? _firestore.collection('proximity_rooms').doc(matchId).collection('messages').doc(messageId)
+        : _firestore.collection('chats').doc(matchId).collection('messages').doc(messageId);
 
-      final snap = await docRef.get();
-      if (!snap.exists) return;
+    final snap = await docRef.get();
+    if (!snap.exists) return;
 
-      Map<String, dynamic> reactions = Map<String, dynamic>.from(snap.data()?['reactions'] ?? {});
-      if (reactions[userId] == emoji) {
-        reactions.remove(userId);
-      } else {
-        reactions[userId] = emoji;
-      }
-
-      await docRef.update({'reactions': reactions});
+    Map<String, dynamic> reactions = Map<String, dynamic>.from(snap.data()?['reactions'] ?? {});
+    if (reactions[userId] == emoji) {
+      reactions.remove(userId);
     } else {
-      final list = isProximityRoom ? _mockProximityMessages[matchId] : _mockChats[matchId];
-      if (list != null) {
-        final index = list.indexWhere((m) => m.id == messageId);
-        if (index != -1) {
-          final msg = list[index];
-          final updatedReactions = Map<String, String>.from(msg.reactions);
-          if (updatedReactions[userId] == emoji) {
-            updatedReactions.remove(userId);
-          } else {
-            updatedReactions[userId] = emoji;
-          }
-          list[index] = msg.copyWith(reactions: updatedReactions);
-
-          final controller = isProximityRoom ? _proximityMessageControllers[matchId] : _controllers[matchId];
-          if (controller != null) {
-            controller.add(List.from(list.reversed));
-          }
-        }
-      }
+      reactions[userId] = emoji;
     }
+
+    await docRef.update({'reactions': reactions});
   }
 
   /// Delete a message (mark as deleted).
@@ -200,33 +103,15 @@ class ChatRepository {
     required String messageId,
     bool isProximityRoom = false,
   }) async {
-    if (_isFirebaseInitialized) {
-      final docRef = isProximityRoom
-          ? _firestore.collection('proximity_rooms').doc(matchId).collection('messages').doc(messageId)
-          : _firestore.collection('chats').doc(matchId).collection('messages').doc(messageId);
+    final docRef = isProximityRoom
+        ? _firestore.collection('proximity_rooms').doc(matchId).collection('messages').doc(messageId)
+        : _firestore.collection('chats').doc(matchId).collection('messages').doc(messageId);
 
-      await docRef.update({
-        'text': 'This message was deleted',
-        'isDeleted': true,
-        'mediaUrl': null,
-      });
-    } else {
-      final list = isProximityRoom ? _mockProximityMessages[matchId] : _mockChats[matchId];
-      if (list != null) {
-        final index = list.indexWhere((m) => m.id == messageId);
-        if (index != -1) {
-          list[index] = list[index].copyWith(
-            text: 'This message was deleted',
-            isDeleted: true,
-            mediaUrl: null,
-          );
-          final controller = isProximityRoom ? _proximityMessageControllers[matchId] : _controllers[matchId];
-          if (controller != null) {
-            controller.add(List.from(list.reversed));
-          }
-        }
-      }
-    }
+    await docRef.update({
+      'text': 'This message was deleted',
+      'isDeleted': true,
+      'mediaUrl': null,
+    });
   }
 
   /// Set typing status for a user in a match chat.
@@ -235,81 +120,45 @@ class ChatRepository {
     required String userId,
     required bool isTyping,
   }) async {
-    if (_isFirebaseInitialized) {
-      await _firestore.collection('chats').doc(matchId).collection('typing').doc(userId).set({
-        'isTyping': isTyping,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } else {
-      _mockTypingStatus[matchId] ??= {};
-      _mockTypingStatus[matchId]![userId] = isTyping;
-
-      if (_typingControllers.containsKey(matchId)) {
-        _typingControllers[matchId]!.add(Map.from(_mockTypingStatus[matchId]!));
-      }
-    }
+    await _firestore.collection('chats').doc(matchId).collection('typing').doc(userId).set({
+      'isTyping': isTyping,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   /// Get live typing status stream for a match chat.
   Stream<Map<String, bool>> getTypingStatusStream(String matchId) {
-    if (_isFirebaseInitialized) {
-      return _firestore.collection('chats').doc(matchId).collection('typing').snapshots().map((snap) {
-        Map<String, bool> map = {};
-        for (var doc in snap.docs) {
-          map[doc.id] = doc.data()['isTyping'] ?? false;
-        }
-        return map;
-      });
-    } else {
-      if (!_typingControllers.containsKey(matchId)) {
-        _typingControllers[matchId] = StreamController<Map<String, bool>>.broadcast();
+    return _firestore.collection('chats').doc(matchId).collection('typing').snapshots().map((snap) {
+      Map<String, bool> map = {};
+      for (var doc in snap.docs) {
+        map[doc.id] = doc.data()['isTyping'] ?? false;
       }
-      Timer.run(() => _typingControllers[matchId]!.add(_mockTypingStatus[matchId] ?? {}));
-      return _typingControllers[matchId]!.stream;
-    }
+      return map;
+    });
   }
 
   /// Streams messages for a given match, ordered by timestamp descending.
   Stream<List<MessageModel>> getMessagesStream(String matchId) {
-    if (_isFirebaseInitialized) {
-      return _firestore
-          .collection('chats')
-          .doc(matchId)
-          .collection('messages')
-          .orderBy('timestamp', descending: true)
-          .snapshots()
-          .map((snap) =>
-              snap.docs.map((doc) => MessageModel.fromMap(doc.data(), doc.id)).toList());
-    } else {
-      if (!_controllers.containsKey(matchId)) {
-        _controllers[matchId] = StreamController<List<MessageModel>>.broadcast();
-      }
-      
-      final list = _mockChats[matchId] ?? [];
-      Timer.run(() => _controllers[matchId]!.add(List.from(list.reversed)));
-      return _controllers[matchId]!.stream;
-    }
+    return _firestore
+        .collection('chats')
+        .doc(matchId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((doc) => MessageModel.fromMap(doc.data(), doc.id)).toList());
   }
 
   /// Streams messages for a given proximity room.
   Stream<List<MessageModel>> getProximityRoomMessagesStream(String roomId) {
-    if (_isFirebaseInitialized) {
-      return _firestore
-          .collection('proximity_rooms')
-          .doc(roomId)
-          .collection('messages')
-          .orderBy('timestamp', descending: true)
-          .snapshots()
-          .map((snap) =>
-              snap.docs.map((doc) => MessageModel.fromMap(doc.data(), doc.id)).toList());
-    } else {
-      if (!_proximityMessageControllers.containsKey(roomId)) {
-        _proximityMessageControllers[roomId] = StreamController<List<MessageModel>>.broadcast();
-      }
-      final list = _mockProximityMessages[roomId] ?? [];
-      Timer.run(() => _proximityMessageControllers[roomId]!.add(List.from(list.reversed)));
-      return _proximityMessageControllers[roomId]!.stream;
-    }
+    return _firestore
+        .collection('proximity_rooms')
+        .doc(roomId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((doc) => MessageModel.fromMap(doc.data(), doc.id)).toList());
   }
 
   /// Sends a message to a proximity room.
@@ -334,32 +183,11 @@ class ChatRepository {
       'isDeleted': false,
     };
 
-    if (_isFirebaseInitialized) {
-      await _firestore
-          .collection('proximity_rooms')
-          .doc(roomId)
-          .collection('messages')
-          .add(messageData);
-    } else {
-      final newMessage = MessageModel(
-        id: 'pmsg_${DateTime.now().millisecondsSinceEpoch}',
-        senderId: senderId,
-        text: text,
-        timestamp: DateTime.now(),
-        type: type,
-        mediaUrl: mediaUrl,
-        durationSeconds: durationSeconds,
-        replyTo: replyTo,
-      );
-
-      final list = _mockProximityMessages[roomId] ?? [];
-      list.add(newMessage);
-      _mockProximityMessages[roomId] = list;
-
-      if (_proximityMessageControllers.containsKey(roomId)) {
-        _proximityMessageControllers[roomId]!.add(List.from(list.reversed));
-      }
-    }
+    await _firestore
+        .collection('proximity_rooms')
+        .doc(roomId)
+        .collection('messages')
+        .add(messageData);
   }
 
   /// Creates a dynamic proximity chat room.
@@ -382,108 +210,68 @@ class ChatRepository {
       'createdAt': FieldValue.serverTimestamp(),
     };
 
-    if (_isFirebaseInitialized) {
-      await _firestore.collection('proximity_rooms').add(roomData);
-    } else {
-      final roomId = 'room_${DateTime.now().millisecondsSinceEpoch}';
-      final newRoom = ProximityRoomModel(
-        id: roomId,
-        name: name,
-        creatorId: creatorId,
-        location: {
-          'geopoint': GeoPoint(latitude, longitude),
-          'geohash': geoFirePoint.geohash,
-        },
-        radiusInMeters: radiusInMeters,
-        createdAt: DateTime.now(),
-      );
-      _mockProximityRooms[roomId] = newRoom;
+    await _firestore.collection('proximity_rooms').add(roomData);
+  }
+
+  /// Deletes a proximity room (for the creator or auto-cleanup).
+  Future<void> deleteProximityRoom(String roomId) async {
+    try {
+      await _firestore.collection('proximity_rooms').doc(roomId).delete();
+    } catch (e) {
+      // ignore: avoid_print
+      print('DEBUG: Error deleting proximity room: $e');
     }
   }
 
   /// Streams dynamic proximity rooms within 10km.
+  /// Automatically deletes rooms if the creator moves out of the room's range.
   Stream<List<ProximityRoomModel>> getNearbyProximityRooms({
     required double latitude,
     required double longitude,
+    String? currentUserId,
   }) {
-    if (_isFirebaseInitialized) {
-      _seedProximityRoomIfEmpty(latitude, longitude);
+    final collectionRef = _firestore.collection('proximity_rooms');
+    final geoRef = GeoCollectionReference(collectionRef);
+    final center = GeoFirePoint(GeoPoint(latitude, longitude));
 
-      final collectionRef = _firestore.collection('proximity_rooms');
-      final geoRef = GeoCollectionReference(collectionRef);
-      final center = GeoFirePoint(GeoPoint(latitude, longitude));
-
-      return geoRef.subscribeWithin(
-        center: center,
-        radiusInKm: 10.0,
-        field: 'location',
-        geopointFrom: (data) {
-          final locationMap = data['location'] as Map<String, dynamic>?;
-          return locationMap?['geopoint'] as GeoPoint;
-        },
-        strictMode: true,
-      ).map((snapshots) {
-        final List<ProximityRoomModel> rooms = [];
-        for (final doc in snapshots) {
-          final data = doc.data();
-          if (data == null) continue;
-          final room = ProximityRoomModel.fromMap(data, doc.id);
-          
-          final geopoint = room.location['geopoint'] as GeoPoint?;
-          if (geopoint == null) continue;
-
-          final distance = Geolocator.distanceBetween(
-            latitude,
-            longitude,
-            geopoint.latitude,
-            geopoint.longitude,
-          );
-
-          if (distance <= room.radiusInMeters) {
-            rooms.add(room);
-          }
-        }
-        return rooms;
-      });
-    } else {
-      final mockList = _mockProximityRooms.values.where((room) {
+    return geoRef.subscribeWithin(
+      center: center,
+      radiusInKm: 10.0,
+      field: 'location',
+      geopointFrom: (data) {
+        final locationMap = data['location'] as Map<String, dynamic>?;
+        return locationMap?['geopoint'] as GeoPoint;
+      },
+      strictMode: true,
+    ).map((snapshots) {
+      final List<ProximityRoomModel> rooms = [];
+      for (final doc in snapshots) {
+        final data = doc.data();
+        if (data == null) continue;
+        final room = ProximityRoomModel.fromMap(data, doc.id);
+        
         final geopoint = room.location['geopoint'] as GeoPoint?;
-        if (geopoint == null) return false;
+        if (geopoint == null) continue;
+
         final distance = Geolocator.distanceBetween(
           latitude,
           longitude,
           geopoint.latitude,
           geopoint.longitude,
         );
-        return distance <= room.radiusInMeters;
-      }).toList();
-      
-      final controller = StreamController<List<ProximityRoomModel>>.broadcast();
-      Timer.run(() => controller.add(mockList));
-      return controller.stream;
-    }
-  }
 
-  Future<void> _seedProximityRoomIfEmpty(double latitude, double longitude) async {
-    try {
-      final snap = await _firestore.collection('proximity_rooms').limit(5).get();
-      if (snap.docs.isEmpty) {
-        final geoFirePoint = GeoFirePoint(GeoPoint(latitude, longitude));
-        await _firestore.collection('proximity_rooms').add({
-          'name': 'Library Zone',
-          'creatorId': 'system',
-          'location': {
-            'geohash': geoFirePoint.geohash,
-            'geopoint': geoFirePoint.geopoint,
-          },
-          'radiusInMeters': 100.0,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        // Auto-delete room if creator moved out of the room's range
+        if (currentUserId != null && room.creatorId == currentUserId && distance > room.radiusInMeters) {
+          deleteProximityRoom(doc.id);
+          continue;
+        }
+
+        if (distance <= room.radiusInMeters) {
+          rooms.add(room);
+        }
       }
-    } catch (e) {
-      // ignore: avoid_print
-      print('DEBUG: Failed to seed proximity room: $e');
-    }
+      return rooms;
+    });
   }
 }
 
@@ -509,11 +297,6 @@ Stream<Map<String, bool>> typingStatusStream(TypingStatusStreamRef ref, {require
 class ProximityStatus extends _$ProximityStatus {
   @override
   bool build(String userId) {
-    final isFirebaseInitialized = Firebase.apps.isNotEmpty;
-    if (!isFirebaseInitialized) {
-      return userId == 'mock_2';
-    }
-
     final positionAsync = ref.watch(userPositionProvider);
     final targetProfileAsync = ref.watch(userProfileProvider(userId));
 

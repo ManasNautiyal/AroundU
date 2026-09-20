@@ -11,124 +11,6 @@ import '../../../connections/presentation/widgets/match_overlay.dart';
 // ─────────────────────────────────────────────
 // Full-screen photo viewer (pushed as a route)
 // ─────────────────────────────────────────────
-class _FullScreenPhotoViewer extends StatefulWidget {
-  final List<String> images;
-  final int initialIndex;
-
-  const _FullScreenPhotoViewer({
-    required this.images,
-    required this.initialIndex,
-  });
-
-  @override
-  State<_FullScreenPhotoViewer> createState() => _FullScreenPhotoViewerState();
-}
-
-class _FullScreenPhotoViewerState extends State<_FullScreenPhotoViewer> {
-  late PageController _pageController;
-  late int _currentIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-    _pageController = PageController(initialPage: widget.initialIndex);
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: widget.images.length,
-            onPageChanged: (i) => setState(() => _currentIndex = i),
-            itemBuilder: (context, index) {
-              return InteractiveViewer(
-                minScale: 0.8,
-                maxScale: 4.0,
-                child: Center(
-                  child: getUserImageWidget(
-                    widget.images[index],
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              );
-            },
-          ),
-          // Close button
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: CircleAvatar(
-                backgroundColor: Colors.black54,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ),
-          ),
-          // Dot indicator
-          if (widget.images.length > 1)
-            Positioned(
-              bottom: 32,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(widget.images.length, (i) {
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    height: 6,
-                    width: i == _currentIndex ? 18 : 6,
-                    decoration: BoxDecoration(
-                      color: i == _currentIndex
-                          ? Colors.white
-                          : Colors.white.withAlpha(100),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          // Photo counter top-right
-          Positioned(
-            top: 0,
-            right: 16,
-            child: SafeArea(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${_currentIndex + 1} / ${widget.images.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ─────────────────────────────────────────────
 // Profile Detail Sheet
 // ─────────────────────────────────────────────
@@ -147,15 +29,7 @@ class ProfileDetailSheet extends ConsumerStatefulWidget {
 class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
 
   void _openPhotoViewer(List<String> images, int index) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => _FullScreenPhotoViewer(
-          images: images,
-          initialIndex: index,
-        ),
-      ),
-    );
+    showFullScreenPhotoViewer(context, images, initialIndex: index);
   }
 
   void _showReportBottomSheet(BuildContext context) {
@@ -263,7 +137,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                       Icon(Icons.chat_bubble_outline_rounded, color: theme.colorScheme.primary),
                       const SizedBox(width: 8),
                       Text(
-                        'Connect with ${user.name}',
+                        'Text ${user.name}',
                         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -305,7 +179,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                       if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Connection request sent to ${user.name}!'),
+                          content: Text('Text request sent to ${user.name}!'),
                           backgroundColor: Colors.black,
                         ),
                       );
@@ -332,7 +206,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     final sentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: currentUserId));
     final hasLiked = sentLikesAsync.valueOrNull?.any((like) => like.receiverId == user.uid) ?? false;
-    final connectsAsync = ref.watch(userConnectsCountProvider(userId: user.uid));
+    final userSentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: user.uid));
 
     final sheetColor = theme.colorScheme.surface;
     final borderColor = theme.colorScheme.outline;
@@ -453,8 +327,8 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                                   ),
                                   const SizedBox(width: 24),
                                   _StatItem(
-                                    label: 'Connects',
-                                    value: connectsAsync.valueOrNull?.toString() ?? '–',
+                                    label: 'Liked',
+                                    value: userSentLikesAsync.valueOrNull?.length.toString() ?? '0',
                                     theme: theme,
                                   ),
                                 ],
@@ -643,7 +517,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                           ),
                           icon: const Icon(Icons.send_rounded),
                           label: const Text(
-                            'Connect',
+                            'Text',
                             style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                         ),

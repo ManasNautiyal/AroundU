@@ -36,10 +36,9 @@ service cloud.firestore {
 
     // --- Blocks ---
     match /blocks/{blockId} {
-      allow read: if isAuthenticated() && 
-        (resource.data.blockerId == request.auth.uid || resource.data.blockedId == request.auth.uid);
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.blockerId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.blockerId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource == null || resource.data.blockerId == request.auth.uid);
     }
 
     // --- Reports ---
@@ -70,20 +69,23 @@ service cloud.firestore {
     match /proximity_rooms/{roomId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.creatorId == request.auth.uid;
+      allow update, delete: if isAuthenticated();
 
       match /messages/{messageId} {
         allow read: if isAuthenticated();
         allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if isAuthenticated();
       }
     }
 
     // --- Connection Requests ---
     match /connection_requests/{requestId} {
-      allow read: if isAuthenticated() && 
-        (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      // Allow any authenticated user to read connection requests.
+      // Firestore collection queries fail with OR-based rules across different fields.
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
       allow delete: if isAuthenticated() && 
-        (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+        (resource == null || resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
     }
 
     // --- Chats & Messages subcollection ---

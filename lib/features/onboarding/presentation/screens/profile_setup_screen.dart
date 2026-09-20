@@ -24,6 +24,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = ref.read(onboardingControllerProvider);
+      if (state.name.isNotEmpty && _nameController.text.isEmpty) {
+        _nameController.text = state.name;
+      }
+    });
   }
 
   @override

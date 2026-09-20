@@ -42,6 +42,12 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        serverClientId: '863029322406-9c0lu7nu1ofen0q8d5f03kihlt3tpe05.apps.googleusercontent.com',
+      );
+      await googleSignIn.signOut();
+    } catch (_) {}
     await _auth.signOut();
   }
 
@@ -61,6 +67,11 @@ class AuthRepository {
       final GoogleSignIn googleSignIn = GoogleSignIn(
         serverClientId: '863029322406-9c0lu7nu1ofen0q8d5f03kihlt3tpe05.apps.googleusercontent.com',
       );
+      // Ensure Google sign in presents account selection modal
+      try {
+        await googleSignIn.signOut();
+      } catch (_) {}
+
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
         throw AuthException('Google Sign-In was cancelled by the user.');

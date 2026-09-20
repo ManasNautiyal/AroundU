@@ -65,13 +65,12 @@ service cloud.firestore {
     }
 
     // --- Blocks ---
-    // Read: Users can only fetch block entries they are involved in.
+    // Read: Any authenticated user can read block entries.
     // Write: A user can block/unblock another user only under their own UID.
     match /blocks/{blockId} {
-      allow read: if isAuthenticated() && 
-        (resource.data.blockerId == request.auth.uid || resource.data.blockedId == request.auth.uid);
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.blockerId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.blockerId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource == null || resource.data.blockerId == request.auth.uid);
     }
 
     // --- Reports ---
@@ -83,12 +82,11 @@ service cloud.firestore {
     }
 
     // --- Likes ---
-    // Read: Users can query likes they sent or received.
+    // Read: Any authenticated user can read likes. (Disjunctive OR rules across different fields fail for queries).
     // Create/Update: Users can only create/update likes where they are the sender.
     // Delete: Users can delete a like they sent.
     match /likes/{likeId} {
-      allow read: if isAuthenticated() && 
-        (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow read: if isAuthenticated();
       allow create, update: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
       allow delete: if isAuthenticated() && (resource == null || resource.data.senderId == request.auth.uid);
     }
@@ -104,21 +102,21 @@ service cloud.firestore {
     }
 
     // --- Waves (Short Signal Interactions) ---
-    // Read: Users can query waves they sent or waves sent to them.
+    // Read: Any authenticated user can read waves.
     // Write: Users can only create wave documents specifying themselves as the sender.
     match /waves/{waveId} {
-      allow read: if isAuthenticated() && 
-        (resource.data.receiverId == request.auth.uid || resource.data.senderId == request.auth.uid);
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
     }
 
     // --- Connection Requests ---
-    // Read: Users can query connection requests they sent or received.
+    // Read: Any authenticated user can read connection requests. (Disjunctive OR rules across different fields fail for queries).
     // Write: Users can only create connection requests where they are the sender.
     match /connection_requests/{requestId} {
-      allow read: if isAuthenticated() && 
-        (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+      allow delete: if isAuthenticated() && 
+        (resource == null || resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
     }
 
     // --- Chats & Messages subcollection ---

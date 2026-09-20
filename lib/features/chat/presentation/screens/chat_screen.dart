@@ -362,13 +362,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image(
-                                image: getUserImageProvider(message.mediaUrl!),
-                                width: 220,
-                                height: 180,
-                                fit: BoxFit.cover,
+                            GestureDetector(
+                              onTap: () => showFullScreenPhotoViewer(context, [message.mediaUrl!]),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: SizedBox(
+                                  width: 200,
+                                  height: 200,
+                                  child: Image(
+                                    image: getUserImageProvider(message.mediaUrl!),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                               ),
                             ),
                             if (message.text.isNotEmpty && message.text != '📷 Photo') ...[

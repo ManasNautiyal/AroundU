@@ -176,7 +176,6 @@ class OnboardingRouter extends ConsumerWidget {
           ref.invalidate(onboardingControllerProvider);
           ref.invalidate(currentUserModelProvider);
           ref.invalidate(ghostModeControllerProvider);
-          ref.invalidate(mockDiscoveryUsersControllerProvider);
           ref.invalidate(proximityRoomsProvider);
         } else {
           WidgetsBinding.instance.addPostFrameCallback((_) {

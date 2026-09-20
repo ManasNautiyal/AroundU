@@ -402,10 +402,10 @@ class SettingsScreen extends ConsumerWidget {
 
           final validPics = user.profilePictures.where((pic) => pic.isNotEmpty).toList();
           final likesAsync = ref.watch(receivedLikesStreamProvider(currentUserId: user.uid));
-          final matchesAsync = ref.watch(matchesStreamProvider(currentUserId: user.uid));
+          final sentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: user.uid));
 
           final likesCount = likesAsync.valueOrNull?.length ?? 0;
-          final matchesCount = matchesAsync.valueOrNull?.length ?? 0;
+          final sentLikesCount = sentLikesAsync.valueOrNull?.length ?? 0;
 
           final avatarUrl = validPics.isNotEmpty ? validPics[0] : '';
 
@@ -427,7 +427,7 @@ class SettingsScreen extends ConsumerWidget {
                       children: [
                         _buildStatColumn('Posts', validPics.length, theme),
                         _buildStatColumn('Likes', likesCount, theme),
-                        _buildStatColumn('Connects', matchesCount, theme),
+                        _buildStatColumn('Liked', sentLikesCount, theme),
                       ],
                     ),
                   ),
@@ -529,12 +529,15 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       itemCount: validPics.length,
                       itemBuilder: (context, index) {
-                        return AspectRatio(
-                          aspectRatio: 1,
-                          child: ClipRRect(
-                            child: getUserImageWidget(
-                              validPics[index],
-                              fit: BoxFit.cover,
+                        return GestureDetector(
+                          onTap: () => showFullScreenPhotoViewer(context, validPics, initialIndex: index),
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: ClipRRect(
+                              child: getUserImageWidget(
+                                validPics[index],
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         );

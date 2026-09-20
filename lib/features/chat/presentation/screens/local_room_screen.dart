@@ -9,6 +9,7 @@ import '../../data/models/message_model.dart';
 import '../../data/models/proximity_room_model.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../controllers/proximity_room_chat_controller.dart';
+import '../controllers/proximity_rooms_controller.dart';
 import '../../../discovery/presentation/controllers/user_providers.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../../core/services/location_service.dart';
@@ -30,7 +31,6 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
   final _scrollController = ScrollController();
   final _imagePicker = ImagePicker();
 
-  bool? _manualProximityOverride;
   ReplyToModel? _replyTo;
 
   void _sendMessage({
@@ -98,10 +98,47 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
     super.dispose();
   }
 
+  Future<void> _confirmDeleteRoom() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Proximity Room?'),
+        content: Text('Are you sure you want to delete "${widget.room.name}"? This action will permanently remove the room for everyone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      await ref.read(chatRepositoryProvider).deleteProximityRoom(widget.room.id);
+      ref.invalidate(proximityRoomsProvider);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Proximity room deleted.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
+    final isCreator = widget.room.creatorId == currentUserId;
 
     final positionAsync = ref.watch(userPositionProvider);
     final isInRange = positionAsync.maybeWhen(
@@ -114,12 +151,28 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
           geopoint.latitude,
           geopoint.longitude,
         );
+
+        // Auto-delete if creator has walked out of range
+        if (isCreator && distance > widget.room.radiusInMeters) {
+          final navigator = Navigator.of(context);
+          final messenger = ScaffoldMessenger.of(context);
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            await ref.read(chatRepositoryProvider).deleteProximityRoom(widget.room.id);
+            ref.invalidate(proximityRoomsProvider);
+            if (!mounted) return;
+            navigator.pop();
+            messenger.showSnackBar(
+              const SnackBar(content: Text('Room deleted because you moved out of range.')),
+            );
+          });
+        }
+
         return distance <= widget.room.radiusInMeters;
       },
       orElse: () => true,
     );
 
-    final isInRoom = _manualProximityOverride ?? isInRange;
+    final isInRoom = isInRange;
     final messagesAsync = ref.watch(proximityRoomMessagesProvider(roomId: widget.room.id));
 
     return Scaffold(
@@ -140,30 +193,12 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
           ],
         ),
         actions: [
-          Row(
-            children: [
-              Icon(
-                isInRoom ? Icons.location_on : Icons.location_off,
-                color: isInRoom
-                    ? theme.colorScheme.primary
-                    : (isDark ? Colors.white30 : Colors.black26),
-                size: 18,
-              ),
-              const SizedBox(width: 4),
-              Switch(
-                value: isInRoom,
-                onChanged: (val) {
-                  setState(() {
-                    _manualProximityOverride = val;
-                  });
-                },
-                activeThumbColor: theme.colorScheme.onPrimary,
-                activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.4),
-                inactiveThumbColor: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
-                inactiveTrackColor: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.15),
-              ),
-            ],
-          ),
+          if (isCreator)
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+              tooltip: 'Delete Room',
+              onPressed: _confirmDeleteRoom,
+            ),
           const SizedBox(width: 8),
         ],
       ),
@@ -451,13 +486,18 @@ class _LocalRoomScreenState extends ConsumerState<LocalRoomScreen> {
                                 ),
                               )
                             else if (message.type == MessageType.image && message.mediaUrl != null)
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image(
-                                  image: getUserImageProvider(message.mediaUrl!),
-                                  width: 200,
-                                  height: 160,
-                                  fit: BoxFit.cover,
+                              GestureDetector(
+                                onTap: () => showFullScreenPhotoViewer(context, [message.mediaUrl!]),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: SizedBox(
+                                    width: 200,
+                                    height: 200,
+                                    child: Image(
+                                      image: getUserImageProvider(message.mediaUrl!),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
                                 ),
                               )
                             else if (message.type == MessageType.voiceNote)

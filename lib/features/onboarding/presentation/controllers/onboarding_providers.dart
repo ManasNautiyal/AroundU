@@ -48,7 +48,25 @@ class OnboardingState {
 class OnboardingController extends _$OnboardingController {
   @override
   OnboardingState build() {
-    return OnboardingState();
+    final user = ref.watch(authRepositoryProvider).currentUser;
+    String initialName = '';
+    List<String?> initialPics = [null, null, null];
+
+    if (user != null) {
+      if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
+        initialName = user.displayName!.trim();
+      } else if (user.email != null && user.email!.contains('@')) {
+        initialName = user.email!.split('@').first;
+      }
+      if (user.photoURL != null && user.photoURL!.isNotEmpty) {
+        initialPics[0] = user.photoURL;
+      }
+    }
+
+    return OnboardingState(
+      name: initialName,
+      profilePictures: initialPics,
+    );
   }
 
   void setPage(int page) {
@@ -120,9 +138,7 @@ class OnboardingController extends _$OnboardingController {
         uid: uid,
         name: state.name.trim(),
         bio: state.bio.trim(),
-        profilePictures: uploadedUrls.isNotEmpty ? uploadedUrls : const [
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500'
-        ],
+        profilePictures: uploadedUrls,
       );
 
       ref.invalidate(currentUserModelProvider);
