@@ -25,15 +25,15 @@ class GhostModeController extends _$GhostModeController {
 
 
 
-/// Holds the user's chosen discovery range in meters (50 – 500 m).
-/// Defaults to 500 m so all nearby users are visible initially.
+/// Holds the user's chosen discovery range in meters (50 – 300 m).
+/// Defaults to 300 m so all nearby users are visible initially.
 @riverpod
 class DiscoveryRangeFilter extends _$DiscoveryRangeFilter {
   @override
-  double build() => 5000.0;
+  double build() => 300.0;
 
   void setRange(double meters) {
-    state = meters.clamp(1000.0, 5000.0);
+    state = meters.clamp(50.0, 300.0);
   }
 }
 

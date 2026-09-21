@@ -351,7 +351,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 const SizedBox(height: 32),
                 Center(
                   child: Image.asset(
-                    'assets/logo/app_logo.png',
+                    'assets/logo/app_icon.png',
                     height: 52,
                     fit: BoxFit.contain,
                   ),

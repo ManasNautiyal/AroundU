@@ -278,7 +278,7 @@ class LoadingScreen extends ConsumerWidget {
       backgroundColor: Colors.black,
       body: Center(
         child: Image.asset(
-          'assets/logo/app_logo.png',
+          'assets/logo/app_icon.png',
           height: 80,
           fit: BoxFit.contain,
         ),

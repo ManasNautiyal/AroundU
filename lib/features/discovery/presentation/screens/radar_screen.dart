@@ -54,7 +54,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
         Row(
           children: [
             Image.asset(
-              'assets/logo/app_logo.png',
+              'assets/logo/app_icon.png',
               height: 24,
               fit: BoxFit.contain,
             ),

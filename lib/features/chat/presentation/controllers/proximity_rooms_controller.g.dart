@@ -6,7 +6,7 @@ part of 'proximity_rooms_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$proximityRoomsHash() => r'7904200e423803bc8ee8fdfb74deb1629305356c';
+String _$proximityRoomsHash() => r'71905497a9b51adae8c7c9e103e297be85ce5972';
 
 /// See also [proximityRooms].
 @ProviderFor(proximityRooms)

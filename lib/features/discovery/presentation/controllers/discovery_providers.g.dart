@@ -23,12 +23,11 @@ final ghostModeControllerProvider =
     );
 
 typedef _$GhostModeController = AutoDisposeNotifier<bool>;
-
 String _$discoveryRangeFilterHash() =>
-    r'e20f55c6f74f79a38f9a9c66805cd91e4a6cc33e';
+    r'16939c6d1967954d93efcfaf133cc73a15c7441c';
 
-/// Holds the user's chosen discovery range in meters (50 – 500 m).
-/// Defaults to 500 m so all nearby users are visible initially.
+/// Holds the user's chosen discovery range in meters (50 – 300 m).
+/// Defaults to 300 m so all nearby users are visible initially.
 ///
 /// Copied from [DiscoveryRangeFilter].
 @ProviderFor(DiscoveryRangeFilter)

@@ -288,7 +288,7 @@ class _TypingStatusStreamProviderElement
   String get matchId => (origin as TypingStatusStreamProvider).matchId;
 }
 
-String _$proximityStatusHash() => r'8bdb90d7902880c8e4fb2ce4fd826c82d89b70fc';
+String _$proximityStatusHash() => r'eb077eb1f758d3c8c114d41e65f44b32192e1d70';
 
 abstract class _$ProximityStatus extends BuildlessAutoDisposeNotifier<bool> {
   late final String userId;
