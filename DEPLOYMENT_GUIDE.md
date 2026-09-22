@@ -7,18 +7,21 @@ This guide provides exhaustive, step-by-step instructions to configure your prod
 ## 1. Firebase Project Setup
 
 ### A. Creating the Firebase Project
+
 1. Open the [Firebase Console](https://console.firebase.google.com/).
 2. Click **Add Project** and name it **AroundU** (or select your existing development/production project).
 3. Choose whether to enable Google Analytics (recommended for tracking user retention and active radar usage) and click **Create Project**.
 
 ### B. Configuring Authentication
+
 1. Navigate to **Build** ➔ **Authentication** in the left sidebar.
 2. Click **Get Started**.
 3. Under the **Sign-in method** tab, select **Email/Password**.
-4. Enable the **Email/Password** provider (leave *Email link (passwordless sign-in)* disabled for now).
+4. Enable the **Email/Password** provider (leave _Email link (passwordless sign-in)_ disabled for now).
 5. Click **Save**.
 
 ### C. Creating the Firestore Database
+
 1. Navigate to **Build** ➔ **Firestore Database**.
 2. Click **Create Database**.
 3. Select **Start in production mode** (this enforces security rules from day one).
@@ -28,7 +31,7 @@ This guide provides exhaustive, step-by-step instructions to configure your prod
 
 ## 2. Production Firestore Security Rules
 
-To protect user profiles, geolocations, waves, and chats, replace your database rules in the **Rules** tab of Firestore with the following configuration. 
+To protect user profiles, geolocations, waves, and chats, replace your database rules in the **Rules** tab of Firestore with the following configuration.
 
 > [!IMPORTANT]
 > The previous development rules allowed wildcard access to all collections for any authenticated user. The following production-ready rules ensure that users can only modify their own profiles, send waves/likes as themselves, read matching chats, and that report details remain secure.
@@ -51,7 +54,7 @@ service cloud.firestore {
 
     // Helper: Verifies that a mutual match document exists for a chat room
     function isMatchParticipant(matchId) {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         exists(/databases/$(database)/documents/matches/$(matchId)) &&
         (request.auth.uid in get(/databases/$(database)/documents/matches/$(matchId)).data.userIds);
     }
@@ -115,7 +118,7 @@ service cloud.firestore {
     match /connection_requests/{requestId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
-      allow delete: if isAuthenticated() && 
+      allow delete: if isAuthenticated() &&
         (resource == null || resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
     }
 
@@ -136,21 +139,26 @@ service cloud.firestore {
 
 ## 3. Database Indexing & Query Architecture
 
-AroundU queries Firestore data using geo-filtering and client-side sorting. 
+AroundU queries Firestore data using geo-filtering and client-side sorting.
 
 ### A. Geohash Radius Queries
+
 The radar feature uses the `geoflutterfire_plus` library (configured in [discovery_repository.dart](file:///c:/Users/admin/StudioProjects/AroundU/lib/features/discovery/data/repositories/discovery_repository.dart)) which calculates a geographic bounding box and queries users where `location.geohash` falls within a specific range.
-* **Indexes Required**: Because this is a single-field range query, Firestore's **automatic single-field indexing** is sufficient.
-* **Additional Filters**: If you decide to move filters like `isGhostMode` or block status from the client side to the Firestore query level (e.g., `.where('isGhostMode', isEqualTo: false)`), you **MUST** create a composite index in the Firebase console:
-  * **Collection**: `users`
-  * **Fields**: `isGhostMode` (Ascending), `location.geohash` (Ascending)
+
+- **Indexes Required**: Because this is a single-field range query, Firestore's **automatic single-field indexing** is sufficient.
+- **Additional Filters**: If you decide to move filters like `isGhostMode` or block status from the client side to the Firestore query level (e.g., `.where('isGhostMode', isEqualTo: false)`), you **MUST** create a composite index in the Firebase console:
+  - **Collection**: `users`
+  - **Fields**: `isGhostMode` (Ascending), `location.geohash` (Ascending)
 
 ### B. Message Ordering Index
+
 The messages in a chat are queried descending by timestamp:
+
 ```dart
 _firestore.collection('chats').doc(matchId).collection('messages').orderBy('timestamp', descending: true)
 ```
-* **Indexes Required**: Works out-of-the-box with Firestore's default subcollection index. No additional composite indexes are needed unless filters are added to the stream.
+
+- **Indexes Required**: Works out-of-the-box with Firestore's default subcollection index. No additional composite indexes are needed unless filters are added to the stream.
 
 ---
 
@@ -159,31 +167,35 @@ _firestore.collection('chats').doc(matchId).collection('messages').orderBy('time
 Ensure you configure the native platforms in the project root folder.
 
 ### A. Prerequisites
-* Install the **Firebase CLI**:
+
+- Install the **Firebase CLI**:
   ```bash
   npm install -g firebase-tools
   ```
-* Log in with your Google account:
+- Log in with your Google account:
   ```bash
   firebase login
   ```
-* Install the **FlutterFire CLI**:
+- Install the **FlutterFire CLI**:
   ```bash
   dart pub global activate flutterfire_cli
   ```
   Make sure your system variables contain the Pub cache bin directory (e.g., `C:\Users\<username>\AppData\Local\Pub\Cache\bin` on Windows).
 
 ### B. Generating Platform Config Files
+
 From the project root:
+
 ```bash
 flutterfire configure
 ```
+
 1. Select the target Firebase project.
 2. Select the platform targets: `android` and `ios` (and `web` if compiling web).
 3. The CLI will download/update:
-   * `android/app/google-services.json`
-   * `ios/Runner/GoogleService-Info.plist`
-   * [firebase_options.dart](file:///c:/Users/admin/StudioProjects/AroundU/lib/firebase_options.dart)
+   - `android/app/google-services.json`
+   - `ios/Runner/GoogleService-Info.plist`
+   - [firebase_options.dart](file:///c:/Users/admin/StudioProjects/AroundU/lib/firebase_options.dart)
 
 ---
 
@@ -192,7 +204,9 @@ flutterfire configure
 To deploy the Android application (`com.aroundu.aroundu`), follow these configuration instructions.
 
 ### A. Location & Foreground Permissions
+
 The Android Manifest ([AndroidManifest.xml](file:///c:/Users/admin/StudioProjects/AroundU/android/app/src/main/AndroidManifest.xml)) is configured to request foreground and background location permissions:
+
 ```xml
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -203,12 +217,15 @@ The Android Manifest ([AndroidManifest.xml](file:///c:/Users/admin/StudioProject
 
 > [!WARNING]
 > **Google Play Background Location Policy**: Google Play has strict guidelines regarding background location (`ACCESS_BACKGROUND_LOCATION`).
+>
 > 1. You must submit a declaration form explaining why background location access is core to the application.
 > 2. You must provide a clear in-app disclosure showing how the location is used (even when closed) and receive user consent.
 > 3. If rejected during the review, remove the `ACCESS_BACKGROUND_LOCATION` permission from the manifest and fall back to foreground location.
 
 ### B. Signing Credentials (Keystore Setup)
+
 For release builds, you must generate a secure keystore file.
+
 1. Run this command in a terminal to generate a secure keystore (`upload-keystore.jks`):
    ```bash
    keytool -genkey -v -keystore c:\Users\admin\StudioProjects\AroundU\android\app\upload-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
@@ -229,7 +246,7 @@ For release builds, you must generate a secure keystore file.
             if (keystorePropertiesFile.exists()) {
                 val keystoreProperties = java.util.Properties()
                 keystoreProperties.load(keystorePropertiesFile.inputStream())
-                
+
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
                 storeFile = file(keystoreProperties.getProperty("storeFile"))
@@ -249,7 +266,9 @@ For release builds, you must generate a secure keystore file.
 ```
 
 ### C. Extracting SHA-1 & SHA-256 for Firebase Auth
+
 Firebase Authentication uses app signatures to verify requests.
+
 1. Navigate to the `android` directory in your terminal and execute:
    ```bash
    ./gradlew signingReport
@@ -264,16 +283,19 @@ Firebase Authentication uses app signatures to verify requests.
 To deploy the iOS application, complete the following configurations using Xcode on a macOS machine.
 
 ### A. Location Permissions & Disclosures
+
 The app's [Info.plist](file:///c:/Users/admin/StudioProjects/AroundU/ios/Runner/Info.plist) is set up for foreground/background tracking:
-* `NSLocationWhenInUseUsageDescription`: Displays when the app is in the foreground.
-* `NSLocationAlwaysAndWhenInUseUsageDescription` & `NSLocationAlwaysUsageDescription`: Triggers when background location is active.
-* `UIBackgroundModes` ➔ `location`: Essential for updating coordinates in the background.
+
+- `NSLocationWhenInUseUsageDescription`: Displays when the app is in the foreground.
+- `NSLocationAlwaysAndWhenInUseUsageDescription` & `NSLocationAlwaysUsageDescription`: Triggers when background location is active.
+- `UIBackgroundModes` ➔ `location`: Essential for updating coordinates in the background.
 
 > [!WARNING]
 > **Apple App Store Review Guidelines (Section 2.5.4 - Multitasking & Background Services)**:
 > Apple requires background location usage to be directly beneficial to the user experience. You must include a description explaining that location is queried to discover other active users within 100 meters, and warning that continued background GPS usage can decrease battery life.
 
 ### B. Provisioning and Bundle Identifier
+
 1. Open the `/ios` directory in Xcode:
    ```bash
    open ios/Runner.xcworkspace
@@ -291,30 +313,38 @@ The app's [Info.plist](file:///c:/Users/admin/StudioProjects/AroundU/ios/Runner/
 Once configuration files and keys are complete, run the following compilation routines.
 
 ### A. Cleaning Project Cache
+
 Always clean build artifacts before compiling release versions:
+
 ```bash
 flutter clean
 flutter pub get
 ```
 
 ### B. Android Release Build
+
 Compile an Android App Bundle (AAB), which is optimized for Google Play store submissions:
+
 ```bash
 flutter build appbundle --release
 ```
-* **Output Path**: `build/app/outputs/bundle/release/app-release.aab`
-* *Alternatively*, if you need a direct installable APK for side-loading:
+
+- **Output Path**: `build/app/outputs/bundle/release/app-release.aab`
+- _Alternatively_, if you need a direct installable APK for side-loading:
   ```bash
   flutter build apk --release
   ```
 
 ### C. iOS Release Build
+
 Compile a release IPA container:
+
 ```bash
 flutter build ipa --release
 ```
-* **Output Path**: `build/ios/archive/Runner.xcarchive` / `build/ios/ipa/aroundu.ipa`
-* Use Xcode's Organizer (`Window` ➔ `Organizer` in Xcode) to select the archive and upload it to App Store Connect/TestFlight.
+
+- **Output Path**: `build/ios/archive/Runner.xcarchive` / `build/ios/ipa/aroundu.ipa`
+- Use Xcode's Organizer (`Window` ➔ `Organizer` in Xcode) to select the archive and upload it to App Store Connect/TestFlight.
 
 ---
 
@@ -323,29 +353,37 @@ flutter build ipa --release
 If you plan to compile a Web preview version of AroundU:
 
 ### A. Initialize Hosting
+
 Run the initialization wizard from your project root:
+
 ```bash
 firebase init hosting
 ```
+
 1. Select **Use an existing project** and select your AroundU project.
 2. Enter the public directory folder: **`build/web`**
 3. Configure as a single-page app (rewrite all URLs to `/index.html`): **`Yes`**
 4. Set up automatic builds/deploys with GitHub: **`No`** (unless CI/CD is required).
 
 ### B. Compile and Deploy Web Build
+
 Compile the release bundle and upload to Firebase:
+
 ```bash
 flutter build web --release
 firebase deploy --only hosting
 ```
-* Your app will be live at: `https://<your-project-id>.web.app`
+
+- Your app will be live at: `https://<your-project-id>.web.app`
 
 ---
 
 ## 9. Post-Deployment Checklist & Production Upgrades
 
 ### A. Profile Image Handling Optimization (Bypassed via Base64 & Firestore)
+
 To run the app fully on the Firebase Spark (free) tier without requiring the pay-as-you-go Blaze plan (which Firebase Storage requires for creation in many regions), AroundU uses a custom offline/on-device compression pipeline:
+
 1. During profile onboarding ([onboarding_providers.dart](file:///c:/Users/admin/StudioProjects/AroundU/lib/features/onboarding/presentation/controllers/onboarding_providers.dart)), user images are processed locally on-device.
 2. They are resized down to a width of `160px` via native codecs and compressed to save document space.
 3. The compressed bytes are encoded as a Base64 string prefixed with `base64:` and stored directly in the Firestore user profile document.
@@ -354,7 +392,9 @@ To run the app fully on the Firebase Spark (free) tier without requiring the pay
 This completely bypasses the need for Firebase Storage setup or Blaze tier activation.
 
 ### B. Monitoring and Crash Reports
+
 Add Firebase Crashlytics to report runtime crashes on users' devices:
+
 1. Run: `flutter pub add firebase_crashlytics`
 2. Configure initialization in `main.dart`:
    ```dart

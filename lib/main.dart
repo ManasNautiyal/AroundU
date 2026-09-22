@@ -274,12 +274,15 @@ class LoadingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final iconSize = screenWidth * 0.25; // 25% of screen width for a decent size
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
         child: Image.asset(
           'assets/logo/app_icon.png',
-          height: 80,
+          width: iconSize,
+          height: iconSize,
           fit: BoxFit.contain,
         ),
       ),
