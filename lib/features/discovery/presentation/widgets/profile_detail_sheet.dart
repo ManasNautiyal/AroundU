@@ -7,6 +7,7 @@ import '../../../safety/data/repositories/block_service.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
 import '../../../connections/presentation/widgets/match_overlay.dart';
+import '../../../connections/data/models/message_request_model.dart';
 
 // ─────────────────────────────────────────────
 // Full-screen photo viewer (pushed as a route)
@@ -207,6 +208,18 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     final sentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: currentUserId));
     final hasLiked = sentLikesAsync.valueOrNull?.any((like) => like.receiverId == user.uid) ?? false;
     final userSentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: user.uid));
+
+    final matchesAsync = ref.watch(matchesStreamProvider(currentUserId: currentUserId));
+    final matches = matchesAsync.valueOrNull ?? [];
+    final isMatched = matches.any((m) => m.user1Id == user.uid || m.user2Id == user.uid);
+
+    final requestsAsync = ref.watch(connectionRequestsStreamProvider(currentUserId: currentUserId));
+    final pendingRequests = requestsAsync.valueOrNull ?? [];
+    final pendingRequest = pendingRequests.cast<MessageRequestModel?>().firstWhere(
+      (r) => (r?.senderId == user.uid && r?.receiverId == currentUserId) ||
+             (r?.senderId == currentUserId && r?.receiverId == user.uid),
+      orElse: () => null,
+    );
 
     final sheetColor = theme.colorScheme.surface;
     final borderColor = theme.colorScheme.outline;
@@ -507,18 +520,57 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Connect
+                      // Connect / Chat Button
                       Expanded(
                         child: FilledButton.icon(
-                          onPressed: _showConnectDialog,
+                          onPressed: () {
+                            if (isMatched) {
+                              final matchId = currentUserId.compareTo(user.uid) < 0
+                                  ? '${currentUserId}_${user.uid}'
+                                  : '${user.uid}_$currentUserId';
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChatScreen(
+                                    matchId: matchId,
+                                    targetUser: user,
+                                  ),
+                                ),
+                              );
+                            } else if (pendingRequest != null) {
+                              if (pendingRequest.senderId == currentUserId) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Text request sent to ${user.name}. Waiting for response.'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              } else {
+                                _showConnectDialog();
+                              }
+                            } else {
+                              _showConnectDialog();
+                            }
+                          },
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
-                          icon: const Icon(Icons.send_rounded),
-                          label: const Text(
-                            'Text',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          icon: Icon(
+                            isMatched
+                                ? Icons.chat_rounded
+                                : (pendingRequest != null && pendingRequest.senderId == currentUserId
+                                    ? Icons.mark_chat_read_rounded
+                                    : Icons.send_rounded),
+                          ),
+                          label: Text(
+                            isMatched
+                                ? 'Chat'
+                                : (pendingRequest != null && pendingRequest.senderId == currentUserId
+                                    ? 'Pending'
+                                    : 'Text'),
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
