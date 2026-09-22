@@ -72,44 +72,36 @@ class InteractionRepository {
 
   /// Streams incoming and outgoing connection requests.
   Stream<List<MessageRequestModel>> getConnectionRequestsStream(String currentUserId) {
-    late StreamController<List<MessageRequestModel>> controller;
-    List<MessageRequestModel> incoming = [];
-    List<MessageRequestModel> outgoing = [];
+    final incomingStream = _firestore
+        .collection('connection_requests')
+        .where('receiverId', isEqualTo: currentUserId)
+        .snapshots();
 
-    StreamSubscription? sub1;
-    StreamSubscription? sub2;
+    final outgoingStream = _firestore
+        .collection('connection_requests')
+        .where('senderId', isEqualTo: currentUserId)
+        .snapshots();
 
-    controller = StreamController<List<MessageRequestModel>>.broadcast(
-      onListen: () {
-        sub1 = _firestore
-            .collection('connection_requests')
-            .where('receiverId', isEqualTo: currentUserId)
-            .snapshots()
-            .listen((snap) {
-          incoming = snap.docs.map((d) => MessageRequestModel.fromMap(d.data(), d.id)).toList();
-          final combined = [...incoming, ...outgoing];
-          combined.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-          if (!controller.isClosed) controller.add(combined);
-        });
+    return combineLatest2<QuerySnapshot<Map<String, dynamic>>, QuerySnapshot<Map<String, dynamic>>, List<MessageRequestModel>>(
+      incomingStream,
+      outgoingStream,
+      (incomingSnap, outgoingSnap) {
+        final incoming = incomingSnap.docs.map((d) => MessageRequestModel.fromMap(d.data(), d.id)).toList();
+        final outgoing = outgoingSnap.docs.map((d) => MessageRequestModel.fromMap(d.data(), d.id)).toList();
 
-        sub2 = _firestore
-            .collection('connection_requests')
-            .where('senderId', isEqualTo: currentUserId)
-            .snapshots()
-            .listen((snap) {
-          outgoing = snap.docs.map((d) => MessageRequestModel.fromMap(d.data(), d.id)).toList();
-          final combined = [...incoming, ...outgoing];
-          combined.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-          if (!controller.isClosed) controller.add(combined);
-        });
-      },
-      onCancel: () {
-        sub1?.cancel();
-        sub2?.cancel();
+        final Map<String, MessageRequestModel> requestMap = {};
+        for (final req in incoming) {
+          requestMap[req.id] = req;
+        }
+        for (final req in outgoing) {
+          requestMap[req.id] = req;
+        }
+
+        final combined = requestMap.values.toList();
+        combined.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        return combined;
       },
     );
-
-    return controller.stream;
   }
 
   /// Accepts a connection request: creates a match, writes the first chat message, and deletes the request.
@@ -239,4 +231,56 @@ Stream<List<InteractionModel>> sentLikesStream(SentLikesStreamRef ref, {required
 Stream<int> userConnectsCount(UserConnectsCountRef ref, {required String userId}) {
   final repo = ref.watch(interactionRepositoryProvider);
   return repo.userConnectsCountStream(userId);
+}
+
+/// Helper function to combine two streams cleanly without race conditions or missing updates.
+Stream<R> combineLatest2<T1, T2, R>(
+  Stream<T1> stream1,
+  Stream<T2> stream2,
+  R Function(T1 a, T2 b) combiner,
+) {
+  late StreamController<R> controller;
+  T1? last1;
+  T2? last2;
+  bool has1 = false;
+  bool has2 = false;
+
+  StreamSubscription<T1>? sub1;
+  StreamSubscription<T2>? sub2;
+
+  controller = StreamController<R>(
+    onListen: () {
+      sub1 = stream1.listen(
+        (val1) {
+          last1 = val1;
+          has1 = true;
+          if (has2 && !controller.isClosed) {
+            controller.add(combiner(last1 as T1, last2 as T2));
+          }
+        },
+        onError: (err, stack) {
+          if (!controller.isClosed) controller.addError(err, stack);
+        },
+      );
+
+      sub2 = stream2.listen(
+        (val2) {
+          last2 = val2;
+          has2 = true;
+          if (has1 && !controller.isClosed) {
+            controller.add(combiner(last1 as T1, last2 as T2));
+          }
+        },
+        onError: (err, stack) {
+          if (!controller.isClosed) controller.addError(err, stack);
+        },
+      );
+    },
+    onCancel: () async {
+      await sub1?.cancel();
+      await sub2?.cancel();
+    },
+  );
+
+  return controller.stream;
 }

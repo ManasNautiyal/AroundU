@@ -1049,6 +1049,7 @@ class MessageRequestTile extends ConsumerWidget {
                             final repo = ref.read(interactionRepositoryProvider);
                             try {
                               await repo.declineConnectionRequest(request.id);
+                              ref.invalidate(connectionRequestsStreamProvider(currentUserId: currentUserId));
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
@@ -1088,6 +1089,7 @@ class MessageRequestTile extends ConsumerWidget {
                             final repo = ref.read(interactionRepositoryProvider);
                             try {
                               await repo.declineConnectionRequest(request.id);
+                              ref.invalidate(connectionRequestsStreamProvider(currentUserId: currentUserId));
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
@@ -1127,6 +1129,8 @@ class MessageRequestTile extends ConsumerWidget {
                             final repo = ref.read(interactionRepositoryProvider);
                             try {
                               await repo.acceptConnectionRequest(request);
+                              ref.invalidate(connectionRequestsStreamProvider(currentUserId: currentUserId));
+                              ref.invalidate(matchesStreamProvider(currentUserId: currentUserId));
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
