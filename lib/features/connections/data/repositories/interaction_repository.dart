@@ -70,13 +70,46 @@ class InteractionRepository {
     });
   }
 
-  /// Streams incoming connection requests.
+  /// Streams incoming and outgoing connection requests.
   Stream<List<MessageRequestModel>> getConnectionRequestsStream(String currentUserId) {
-    return _firestore
-        .collection('connection_requests')
-        .where('receiverId', isEqualTo: currentUserId)
-        .snapshots()
-        .map((snap) => snap.docs.map((d) => MessageRequestModel.fromMap(d.data(), d.id)).toList());
+    late StreamController<List<MessageRequestModel>> controller;
+    List<MessageRequestModel> incoming = [];
+    List<MessageRequestModel> outgoing = [];
+
+    StreamSubscription? sub1;
+    StreamSubscription? sub2;
+
+    controller = StreamController<List<MessageRequestModel>>.broadcast(
+      onListen: () {
+        sub1 = _firestore
+            .collection('connection_requests')
+            .where('receiverId', isEqualTo: currentUserId)
+            .snapshots()
+            .listen((snap) {
+          incoming = snap.docs.map((d) => MessageRequestModel.fromMap(d.data(), d.id)).toList();
+          final combined = [...incoming, ...outgoing];
+          combined.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          if (!controller.isClosed) controller.add(combined);
+        });
+
+        sub2 = _firestore
+            .collection('connection_requests')
+            .where('senderId', isEqualTo: currentUserId)
+            .snapshots()
+            .listen((snap) {
+          outgoing = snap.docs.map((d) => MessageRequestModel.fromMap(d.data(), d.id)).toList();
+          final combined = [...incoming, ...outgoing];
+          combined.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          if (!controller.isClosed) controller.add(combined);
+        });
+      },
+      onCancel: () {
+        sub1?.cancel();
+        sub2?.cancel();
+      },
+    );
+
+    return controller.stream;
   }
 
   /// Accepts a connection request: creates a match, writes the first chat message, and deletes the request.

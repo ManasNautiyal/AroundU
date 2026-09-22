@@ -95,7 +95,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                         child: ChoiceChip(
                           label: Center(
                             child: Text(
-                              'Primary (${connections.length + requests.length})',
+                              'Primary (${connections.length})',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
@@ -184,11 +184,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                 Expanded(
                   child: _chatsSubTab == 0
                       ? activeConnectionsAsync.when(
-                          data: (connectionsList) => pendingRequestsAsync.when(
-                            data: (requestsList) => _buildPrimaryMessagesList(connectionsList, requestsList, currentUserId, theme),
-                            error: (err, _) => _buildPrimaryMessagesList(connectionsList, [], currentUserId, theme),
-                            loading: () => const Center(child: CircularProgressIndicator()),
-                          ),
+                          data: (connectionsList) => _buildPrimaryMessagesList(connectionsList, currentUserId, theme),
                           error: (err, _) => Center(child: Text('Error loading messages: $err')),
                           loading: () => const Center(child: CircularProgressIndicator()),
                         )
@@ -360,83 +356,35 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
 
   Widget _buildPrimaryMessagesList(
     List<MatchModel> connections,
-    List<MessageRequestModel> requests,
     String currentUserId,
     ThemeData theme,
   ) {
-    if (connections.isEmpty && requests.isEmpty) {
+    if (connections.isEmpty) {
       return _buildEmptyState(
         theme: theme,
         icon: Icons.chat_bubble_outline_rounded,
         title: 'No Primary Chats',
-        body: 'Your 1-on-1 matched connections and text requests will appear here. Explore the Map tab to discover people around you!',
+        body: 'Your 1-on-1 matched connections and accepted text requests will appear here. Explore the Map tab to discover people around you!',
       );
     }
 
     final borderBg = theme.colorScheme.outline;
 
-    return ListView(
+    return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      children: [
-        if (requests.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
-            child: Row(
-              children: [
-                Icon(Icons.mark_chat_unread_rounded, size: 18, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  'Text Requests (${requests.length})',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ...requests.map((request) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: MessageRequestTile(
-                request: request,
-                theme: theme,
-                onShowProfile: _showProfileDetail,
-              ),
-            );
-          }),
-          if (connections.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Divider(color: borderBg, height: 1, thickness: 1.0),
-            ),
-        ],
-        if (connections.isNotEmpty) ...[
-          if (requests.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text(
-                'Matched Conversations',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ...connections.map((connection) {
-            return Column(
-              children: [
-                MatchTile(
-                  connection: connection,
-                  currentUserId: currentUserId,
-                  theme: theme,
-                ),
-                Divider(color: borderBg, height: 1, thickness: 1.0),
-              ],
-            );
-          }),
-        ],
-      ],
+      itemCount: connections.length,
+      separatorBuilder: (context, index) => Divider(
+        color: borderBg,
+        height: 1,
+        thickness: 1.0,
+      ),
+      itemBuilder: (context, index) {
+        return MatchTile(
+          connection: connections[index],
+          currentUserId: currentUserId,
+          theme: theme,
+        );
+      },
     );
   }
 
@@ -1017,14 +965,18 @@ class MessageRequestTile extends ConsumerWidget {
     final borderBg = theme.colorScheme.outline;
     final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
 
-    final senderAsync = ref.watch(userProfileProvider(request.senderId));
+    final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
+    final isOutgoing = request.senderId == currentUserId;
+    final otherUserId = isOutgoing ? request.receiverId : request.senderId;
 
-    return senderAsync.when(
-      data: (sender) {
-        if (sender == null) {
+    final userAsync = ref.watch(userProfileProvider(otherUserId));
+
+    return userAsync.when(
+      data: (user) {
+        if (user == null) {
           return const SizedBox.shrink();
         }
-        final avatarUrl = sender.profilePictures.isNotEmpty ? sender.profilePictures[0] : '';
+        final avatarUrl = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
         return Material(
           color: Colors.transparent,
           child: Padding(
@@ -1032,11 +984,11 @@ class MessageRequestTile extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Sender Details Row
+                // Details Row
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () => onShowProfile(context, sender),
+                      onTap: () => onShowProfile(context, user),
                       child: CircleAvatar(
                         radius: 24,
                         backgroundImage: getUserImageProvider(avatarUrl),
@@ -1048,13 +1000,13 @@ class MessageRequestTile extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            sender.name,
+                            user.name,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            'Sent a message request',
+                            isOutgoing ? 'Sent text request (Pending response)' : 'Sent you a message request',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: subTextColor,
                             ),
@@ -1088,84 +1040,125 @@ class MessageRequestTile extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // Decline Button
-                    SizedBox(
-                      height: 36,
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          final repo = ref.read(interactionRepositoryProvider);
-                          try {
-                            await repo.declineConnectionRequest(request.id);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Declined request from ${sender.name}.'),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
+                    if (isOutgoing) ...[
+                      // Cancel Sent Request Button
+                      SizedBox(
+                        height: 36,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final repo = ref.read(interactionRepositoryProvider);
+                            try {
+                              await repo.declineConnectionRequest(request.id);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Cancelled request to ${user.name}.'),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error cancelling request: $e'),
+                                    backgroundColor: Colors.redAccent,
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              }
                             }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error declining request: $e'),
-                                  backgroundColor: Colors.redAccent,
-                                  duration: const Duration(seconds: 4),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: subTextColor,
-                          side: BorderSide(color: borderBg),
-                          shape: const StadiumBorder(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: subTextColor,
+                            side: BorderSide(color: borderBg),
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          icon: const Icon(Icons.close, size: 16),
+                          label: const Text('Cancel Request', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                         ),
-                        icon: const Icon(Icons.close, size: 16),
-                        label: const Text('Decline', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Accept Button
-                    SizedBox(
-                      height: 36,
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          final repo = ref.read(interactionRepositoryProvider);
-                          try {
-                            await repo.acceptConnectionRequest(request);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Accepted request! Chat with ${sender.name} is now open.'),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
+                    ] else ...[
+                      // Decline Button
+                      SizedBox(
+                        height: 36,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final repo = ref.read(interactionRepositoryProvider);
+                            try {
+                              await repo.declineConnectionRequest(request.id);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Declined request from ${user.name}.'),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error declining request: $e'),
+                                    backgroundColor: Colors.redAccent,
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              }
                             }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error accepting request: $e'),
-                                  backgroundColor: Colors.redAccent,
-                                  duration: const Duration(seconds: 4),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          shape: const StadiumBorder(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          elevation: 0,
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: subTextColor,
+                            side: BorderSide(color: borderBg),
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          icon: const Icon(Icons.close, size: 16),
+                          label: const Text('Decline', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                         ),
-                        icon: const Icon(Icons.check, size: 16),
-                        label: const Text('Accept', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      // Accept Button
+                      SizedBox(
+                        height: 36,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final repo = ref.read(interactionRepositoryProvider);
+                            try {
+                              await repo.acceptConnectionRequest(request);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Accepted request! Chat with ${user.name} is now open.'),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error accepting request: $e'),
+                                    backgroundColor: Colors.redAccent,
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(Icons.check, size: 16),
+                          label: const Text('Accept', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
