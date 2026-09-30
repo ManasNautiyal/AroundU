@@ -2,7 +2,9 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../controllers/onboarding_providers.dart';
 import '../../../../core/widgets/image_helper.dart';
 
@@ -125,15 +127,19 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.check_circle_rounded, color: Colors.green),
-            SizedBox(width: 8),
-            Text('Profile Created!'),
+            const Icon(Icons.check_circle_rounded, color: Color(0xFF6BCB77)),
+            const SizedBox(width: 8),
+            Text(
+              'Profile Created!',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
+            ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Your AroundU profile is now set up. Prepare to discover people around U!',
+          style: GoogleFonts.inter(color: AppTheme.textSecondary, height: 1.5),
         ),
         actions: [
           FilledButton(
@@ -271,15 +277,20 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         children: [
           Text(
             'Tell us about yourself',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              fontSize: 22,
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'This is the first thing people within 100 meters will see when you cross paths.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: GoogleFonts.inter(
+              color: AppTheme.textSecondary,
+              fontSize: 14,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 32),
@@ -341,15 +352,20 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         children: [
           Text(
             'Add your best photos',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              fontSize: 22,
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Upload at least one primary photo. Clear faces help build real connections.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: GoogleFonts.inter(
+              color: AppTheme.textSecondary,
+              fontSize: 14,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 32),

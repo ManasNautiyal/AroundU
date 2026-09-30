@@ -17,19 +17,7 @@ import 'features/chat/presentation/controllers/proximity_rooms_controller.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/app_observers.dart';
 import 'core/services/location_service.dart';
-
-final dynamicColorSchemeProvider = FutureProvider<ColorScheme>((ref) async {
-  return const ColorScheme.dark(
-    primary: Colors.white,
-    onPrimary: Colors.black,
-    secondary: Colors.white,
-    onSecondary: Colors.black,
-    surface: Colors.black,
-    onSurface: Colors.white,
-    outline: Colors.white,
-    outlineVariant: Colors.white,
-  );
-});
+import 'core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,111 +41,11 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final darkSchemeAsync = ref.watch(dynamicColorSchemeProvider);
-
-    final darkColorScheme = darkSchemeAsync.valueOrNull ?? const ColorScheme.dark(
-      primary: Colors.white,
-      onPrimary: Colors.black,
-      secondary: Colors.white,
-      onSecondary: Colors.black,
-      surface: Colors.black,
-      onSurface: Colors.white,
-      outline: Colors.white,
-      outlineVariant: Colors.white,
-    );
-
-    const darkCardColor = Colors.black;
-    const darkBorderColor = Colors.white;
-
-    final baseDark = ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: darkColorScheme,
-    );
-
     return MaterialApp(
       title: 'AroundU',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
-      theme: baseDark.copyWith(
-        scaffoldBackgroundColor: darkColorScheme.surface,
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          centerTitle: false,
-          iconTheme: IconThemeData(color: darkColorScheme.onSurface),
-          titleTextStyle: TextStyle(
-            color: darkColorScheme.onSurface,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        cardTheme: CardThemeData(
-          color: darkCardColor,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: darkBorderColor, width: 1.2),
-          ),
-        ),
-        navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: Colors.black,
-          elevation: 8,
-          indicatorColor: Colors.white,
-          iconTheme: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const IconThemeData(color: Colors.black);
-            }
-            return IconThemeData(color: Colors.white.withValues(alpha: 0.5));
-          }),
-          labelTextStyle: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white);
-            }
-            return TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.5));
-          }),
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            shape: const StadiumBorder(),
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            shape: const StadiumBorder(),
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            shape: const StadiumBorder(),
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 28),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: darkCardColor,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: darkBorderColor, width: 1.2),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: darkBorderColor, width: 1.2),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: darkColorScheme.primary.withValues(alpha: 0.5), width: 1.5),
-          ),
-          labelStyle: TextStyle(color: darkColorScheme.onSurfaceVariant),
-          hintStyle: TextStyle(color: darkColorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
-        ),
-      ),
+      theme: AppTheme.darkTheme,
       home: const OnboardingRouter(),
     );
   }
@@ -269,21 +157,60 @@ class OnboardingRouter extends ConsumerWidget {
   }
 }
 
-class LoadingScreen extends ConsumerWidget {
+class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  State<LoadingScreen> createState() => _LoadingScreenState();
+}
+
+class _LoadingScreenState extends State<LoadingScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final iconSize = screenWidth * 0.25; // 25% of screen width for a decent size
+    final iconSize = screenWidth * 0.22;
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: Image.asset(
-          'assets/logo/app_icon.png',
-          width: iconSize,
-          height: iconSize,
-          fit: BoxFit.contain,
+        child: AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return Opacity(
+              opacity: _pulseAnimation.value,
+              child: Transform.scale(
+                scale: _pulseAnimation.value,
+                child: child,
+              ),
+            );
+          },
+          child: Image.asset(
+            'assets/logo/app_icon.png',
+            width: iconSize,
+            height: iconSize,
+            fit: BoxFit.contain,
+          ),
         ),
       ),
     );

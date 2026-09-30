@@ -1,6 +1,9 @@
 import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../discovery/data/models/nearby_user.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
 import '../../../../core/widgets/image_helper.dart';
@@ -58,8 +61,9 @@ class MatchOverlay extends ConsumerStatefulWidget {
   ConsumerState<MatchOverlay> createState() => _MatchOverlayState();
 }
 
-class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerProviderStateMixin {
+class _MatchOverlayState extends ConsumerState<MatchOverlay> with TickerProviderStateMixin {
   late AnimationController _pulseController;
+  late AnimationController _particleController;
 
   @override
   void initState() {
@@ -68,17 +72,21 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+    _particleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _particleController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final matchedUser = widget.matchedUser;
 
@@ -100,14 +108,25 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
           // Glassmorphic Backdrop
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
               child: Container(
-                color: Colors.black.withAlpha(150),
+                color: Colors.black.withAlpha(180),
               ),
             ),
           ),
 
-          // Central Celebratory Content
+          // Floating particles
+          AnimatedBuilder(
+            animation: _particleController,
+            builder: (context, _) {
+              return CustomPaint(
+                size: size,
+                painter: _ParticlePainter(progress: _particleController.value),
+              );
+            },
+          ),
+
+          // Content
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -116,28 +135,23 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
                 children: [
                   // Celebration Header
                   Text(
-                    'You are friends now!',
+                    'It\'s a Match! ✨',
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineLarge?.copyWith(
+                    style: GoogleFonts.inter(
                       color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 40,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 36,
                       letterSpacing: -1.0,
-                      shadows: [
-                        Shadow(
-                          color: Colors.white.withAlpha(80),
-                          blurRadius: 20,
-                        ),
-                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     'You and ${matchedUser.name} both liked each other.',
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white.withAlpha(200),
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withAlpha(180),
                       fontWeight: FontWeight.w400,
+                      fontSize: 15,
                     ),
                   ),
 
@@ -145,14 +159,14 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
 
                   // Interlocking Circle Avatars
                   SizedBox(
-                    height: 180,
+                    height: 160,
                     width: size.width,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         // Left Avatar (Current User)
                         Positioned(
-                          left: size.width * 0.18,
+                          left: size.width * 0.16,
                           child: AnimatedBuilder(
                             animation: _pulseController,
                             builder: (context, child) {
@@ -161,22 +175,24 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: theme.colorScheme.primary.withAlpha(
-                                        (80 * _pulseController.value).toInt(),
+                                      color: Colors.white.withAlpha(
+                                        (40 * _pulseController.value).toInt(),
                                       ),
-                                      blurRadius: 25,
-                                      spreadRadius: 3,
+                                      blurRadius: 30,
+                                      spreadRadius: 4,
                                     ),
                                   ],
                                 ),
                                 child: child,
                               );
                             },
-                            child: CircleAvatar(
-                              radius: 65,
-                              backgroundColor: Colors.white,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 3),
+                              ),
                               child: CircleAvatar(
-                                radius: 60,
+                                radius: 58,
                                 backgroundImage: getUserImageProvider(currentUserImageUrl),
                               ),
                             ),
@@ -185,7 +201,7 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
 
                         // Right Avatar (Matched User)
                         Positioned(
-                          right: size.width * 0.18,
+                          right: size.width * 0.16,
                           child: AnimatedBuilder(
                             animation: _pulseController,
                             builder: (context, child) {
@@ -194,82 +210,81 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: theme.colorScheme.secondary.withAlpha(
-                                        (80 * (1 - _pulseController.value)).toInt(),
+                                      color: Colors.white.withAlpha(
+                                        (40 * (1 - _pulseController.value)).toInt(),
                                       ),
-                                      blurRadius: 25,
-                                      spreadRadius: 3,
+                                      blurRadius: 30,
+                                      spreadRadius: 4,
                                     ),
                                   ],
                                 ),
                                 child: child,
                               );
                             },
-                            child: CircleAvatar(
-                              radius: 65,
-                              backgroundColor: Colors.white,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 3),
+                              ),
                               child: CircleAvatar(
-                                radius: 60,
+                                radius: 58,
                                 backgroundImage: getUserImageProvider(matchedUserImageUrl),
                               ),
                             ),
                           ),
                         ),
-
-
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 64),
+                  const SizedBox(height: 56),
 
-                  // Action Button 1: Send Message (Filled)
+                  // Action Button 1: Send Message
                   FilledButton.icon(
                     onPressed: () {
-                      Navigator.pop(context); // Close Overlay
+                      Navigator.pop(context);
                       widget.onSendMessage();
                     },
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 18,
-                      ),
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                     ),
-                    icon: const Icon(Icons.chat_bubble_rounded),
-                    label: const Text(
+                    icon: const Icon(Icons.chat_bubble_rounded, size: 20),
+                    label: Text(
                       'Send a Message',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
-                  // Action Button 2: Keep Looking (Outlined text)
+                  // Action Button 2: Keep Looking
                   OutlinedButton(
                     onPressed: () {
-                      Navigator.pop(context); // Close Overlay
+                      Navigator.pop(context);
                       widget.onKeepLooking();
                     },
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white, width: 1.5),
+                      side: BorderSide(color: Colors.white.withAlpha(120), width: 1.2),
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Keep Looking',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -281,4 +296,46 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with SingleTickerPr
       ),
     );
   }
+}
+
+/// Floating particle painter for the match celebration
+class _ParticlePainter extends CustomPainter {
+  final double progress;
+  static final Random _random = Random(42);
+  static final List<_Particle> _particles = List.generate(20, (i) => _Particle(
+    x: _random.nextDouble(),
+    y: _random.nextDouble(),
+    size: _random.nextDouble() * 3 + 1,
+    speed: _random.nextDouble() * 0.5 + 0.3,
+    opacity: _random.nextDouble() * 0.4 + 0.1,
+  ));
+
+  _ParticlePainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final p in _particles) {
+      final y = ((p.y + progress * p.speed) % 1.0) * size.height;
+      final x = p.x * size.width + sin(progress * 2 * pi + p.x * 10) * 20;
+      final paint = Paint()
+        ..color = Colors.white.withValues(alpha: p.opacity)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(x, y), p.size, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
+
+class _Particle {
+  final double x, y, size, speed, opacity;
+  const _Particle({
+    required this.x,
+    required this.y,
+    required this.size,
+    required this.speed,
+    required this.opacity,
+  });
 }

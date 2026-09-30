@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../../onboarding/presentation/controllers/onboarding_providers.dart';
 
@@ -79,15 +81,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   }
   
   Color _getStrengthColor(double strength) {
-    if (strength <= 0.3) return Colors.redAccent;
-    if (strength <= 0.6) return Colors.amber;
-    return Colors.green;
+    if (strength <= 0.3) return const Color(0xFFFF6B6B);
+    if (strength <= 0.6) return const Color(0xFFFFD93D);
+    return const Color(0xFF6BCB77);
   }
 
   String _getStrengthText(double strength) {
     if (strength <= 0.3) return 'Weak';
     if (strength <= 0.6) return 'Moderate';
     return 'Strong';
+  }
+
+  void _showSnack(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+              color: isError ? Colors.white : Colors.black,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: isError ? Colors.white : Colors.black,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isError ? const Color(0xFFFF6B6B) : Colors.white,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+    );
   }
 
   void _showForgotPasswordSheet() {
@@ -99,18 +133,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (statefulContext, setModalState) {
-            return Padding(
+            return Container(
+              decoration: AppDecorations.bottomSheet(),
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(statefulContext).viewInsets.bottom + 24,
                 left: 24,
                 right: 24,
-                top: 16,
+                top: 8,
               ),
               child: Form(
                 key: sheetFormKey,
@@ -118,28 +151,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Center(
-                      child: Container(
-                        width: 48,
-                        height: 4,
-                        margin: const EdgeInsets.only(bottom: 24),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.outlineVariant.withAlpha(120),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
+                    AppDecorations.dragHandle(),
+                    const SizedBox(height: 4),
                     Text(
                       'Reset Password',
                       style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Enter your email address below and we will send you a link to reset your password.',
+                      'Enter your email address and we\'ll send you a link to reset your password.',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: AppTheme.textSecondary,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -174,45 +199,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                                 if (statefulContext.mounted) {
                                   Navigator.pop(statefulContext);
                                 }
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Password reset link sent to ${emailResetController.text.trim()}!'),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
+                                _showSnack('Password reset link sent to ${emailResetController.text.trim()}!');
                               } catch (e) {
                                 if (statefulContext.mounted) {
-                                  ScaffoldMessenger.of(statefulContext).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Failed: ${e.toString()}'),
-                                      backgroundColor: theme.colorScheme.error,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
+                                  _showSnack('Failed: ${e.toString()}', isError: true);
                                 }
                               } finally {
                                 setModalState(() => isResetLoading = false);
                               }
                             },
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
                       child: isResetLoading
-                          ? SizedBox(
+                          ? const SizedBox(
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation(theme.colorScheme.onPrimary),
+                                valueColor: AlwaysStoppedAnimation(Colors.black),
                               ),
                             )
-                          : const Text(
-                              'Send Reset Link',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
+                          : const Text('Send Reset Link'),
                     ),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
@@ -245,32 +252,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
         );
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_authMode == AuthMode.signUp ? 'Registration successful!' : 'Login successful!'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        ref.read(onboardingStepProvider.notifier).setStep(1);
-      }
+      _showSnack(_authMode == AuthMode.signUp ? 'Registration successful!' : 'Welcome back!');
+      ref.read(onboardingStepProvider.notifier).setStep(1);
     } catch (e) {
       _shakeForm();
-      if (mounted) {
-        String errorMsg = e.toString();
-        if (errorMsg.contains(']')) {
-          errorMsg = errorMsg.substring(errorMsg.indexOf(']') + 1).trim();
-        }
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Auth failed: $errorMsg'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+      String errorMsg = e.toString();
+      if (errorMsg.contains(']')) {
+        errorMsg = errorMsg.substring(errorMsg.indexOf(']') + 1).trim();
       }
+      _showSnack('Auth failed: $errorMsg', isError: true);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -278,40 +268,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     }
   }
 
-
-
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
       final authRepo = ref.read(authRepositoryProvider);
       await authRepo.signInWithGoogle();
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Google Login successful!'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        ref.read(onboardingStepProvider.notifier).setStep(1);
-      }
+      _showSnack('Google Login successful!');
+      ref.read(onboardingStepProvider.notifier).setStep(1);
     } catch (e) {
       _shakeForm();
-      if (mounted) {
-        String errorMsg = e.toString();
-        if (errorMsg.contains(']')) {
-          errorMsg = errorMsg.substring(errorMsg.indexOf(']') + 1).trim();
-        }
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Google Sign-In failed: $errorMsg'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+      String errorMsg = e.toString();
+      if (errorMsg.contains(']')) {
+        errorMsg = errorMsg.substring(errorMsg.indexOf(']') + 1).trim();
       }
+      _showSnack('Google Sign-In failed: $errorMsg', isError: true);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -320,14 +291,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   }
 
   Future<void> _handleSocialLogin(String provider) async {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$provider Sign-In is not configured yet.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    _showSnack('$provider Sign-In is not configured yet.');
   }
 
   @override
@@ -339,35 +303,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
       body: Container(
         height: size.height,
         width: size.width,
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-        ),
+        color: Colors.black,
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 32),
+                const SizedBox(height: 48),
+                // Logo
                 Center(
                   child: Image.asset(
                     'assets/logo/app_icon.png',
-                    height: 52,
+                    height: 56,
                     fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Text(
                   "Discover who's AroundU.",
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant.withAlpha(200),
-                    fontWeight: FontWeight.w500,
+                  style: GoogleFonts.inter(
+                    color: AppTheme.textSecondary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.2,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
 
-                // Glassmorphic Input Form Container with Shake Animation
+                // Form Container with shake animation
                 AnimatedBuilder(
                   animation: _shakeAnimation,
                   builder: (context, child) {
@@ -378,14 +343,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   },
                   child: Container(
                     padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.colorScheme.outline,
-                        width: 1.2,
-                      ),
-                    ),
+                    decoration: AppDecorations.card(borderRadius: 24),
                     child: Form(
                       key: _formKey,
                       child: AnimatedSwitcher(
@@ -394,7 +352,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                         switchOutCurve: Curves.easeInOut,
                         transitionBuilder: (child, animation) {
                           final offsetAnimation = Tween<Offset>(
-                            begin: const Offset(0.08, 0.0),
+                            begin: const Offset(0.06, 0.0),
                             end: Offset.zero,
                           ).animate(animation);
                           return FadeTransition(
@@ -413,36 +371,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
                 // Divider
                 Row(
                   children: [
                     Expanded(
-                      child: Divider(color: theme.colorScheme.outlineVariant),
+                      child: Container(height: 0.5, color: AppTheme.borderGray),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Text(
-                        'or connect with',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        'or continue with',
+                        style: GoogleFonts.inter(
+                          color: AppTheme.textTertiary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
                     Expanded(
-                      child: Divider(color: theme.colorScheme.outlineVariant),
+                      child: Container(height: 0.5, color: AppTheme.borderGray),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
                 // Social Auth Buttons
                 OutlinedButton.icon(
                   onPressed: _isLoading ? null : _handleGoogleSignIn,
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: theme.colorScheme.outline),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    side: const BorderSide(color: AppTheme.borderGray, width: 0.8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   icon: Image.network(
                     'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
@@ -452,30 +413,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   ),
                   label: Text(
                     'Continue with Google',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                ElevatedButton.icon(
+                FilledButton.icon(
                   onPressed: _isLoading ? null : () => _handleSocialLogin('Apple'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.onSurface,
-                    foregroundColor: theme.colorScheme.surface,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  icon: Icon(Icons.apple, size: 20, color: theme.colorScheme.surface),
+                  icon: const Icon(Icons.apple, size: 22, color: Colors.black),
                   label: Text(
                     'Continue with Apple',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.surface,
+                      color: Colors.black,
+                      fontSize: 14,
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -499,13 +463,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
       children: [
         Text(
           'Welcome Back',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            fontSize: 22,
+            letterSpacing: -0.5,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 6),
+        Text(
+          'Sign in to continue',
+          style: GoogleFonts.inter(
+            color: AppTheme.textSecondary,
+            fontSize: 14,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 28),
 
         // Email Field
         TextFormField(
@@ -526,7 +501,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             return null;
           },
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         // Password Field
         TextFormField(
@@ -539,6 +514,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             suffixIcon: IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                size: 20,
               ),
               onPressed: () {
                 setState(() => _obscurePassword = !_obscurePassword);
@@ -565,36 +541,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             ),
             child: Text(
               'Forgot Password?',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
+              style: GoogleFonts.inter(
+                color: AppTheme.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
               ),
             ),
           ),
         ),
+        const SizedBox(height: 4),
 
         FilledButton(
           onPressed: _isLoading ? null : _handleLogin,
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
           child: _isLoading
-              ? SizedBox(
+              ? const SizedBox(
                   height: 20,
                   width: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation(theme.colorScheme.onPrimary),
+                    valueColor: AlwaysStoppedAnimation(Colors.black),
                   ),
                 )
-              : const Text(
-                  'Sign In',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+              : const Text('Sign In'),
         ),
         const SizedBox(height: 16),
 
-        // Switching buttons
+        // Switch to sign up
         Center(
           child: TextButton(
             onPressed: () {
@@ -604,7 +576,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 _confirmPasswordController.clear();
               });
             },
-            child: const Text('Don\'t have an account? Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: RichText(
+              text: TextSpan(
+                style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textSecondary),
+                children: [
+                  const TextSpan(text: "Don't have an account? "),
+                  TextSpan(
+                    text: 'Sign Up',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ],
@@ -617,13 +603,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
       children: [
         Text(
           'Create Account',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            fontSize: 22,
+            letterSpacing: -0.5,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 6),
+        Text(
+          'Join the community',
+          style: GoogleFonts.inter(
+            color: AppTheme.textSecondary,
+            fontSize: 14,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 28),
 
         // Email Field
         TextFormField(
@@ -644,7 +641,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             return null;
           },
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         // Password Field
         TextFormField(
@@ -657,6 +654,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             suffixIcon: IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                size: 20,
               ),
               onPressed: () {
                 setState(() => _obscurePassword = !_obscurePassword);
@@ -677,7 +675,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
 
         // Password Strength bar (Sign Up only)
         if (_passwordController.text.isNotEmpty) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -686,24 +684,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   child: LinearProgressIndicator(
                     value: _getPasswordStrength(),
                     color: _getStrengthColor(_getPasswordStrength()),
-                    backgroundColor: theme.colorScheme.outlineVariant.withAlpha(50),
-                    minHeight: 6,
+                    backgroundColor: AppTheme.borderGray,
+                    minHeight: 4,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
                 _getStrengthText(_getPasswordStrength()),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                   color: _getStrengthColor(_getPasswordStrength()),
                 ),
               ),
             ],
           ),
         ],
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         // Confirm Password Field
         TextFormField(
@@ -716,6 +714,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             suffixIcon: IconButton(
               icon: Icon(
                 _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                size: 20,
               ),
               onPressed: () {
                 setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
@@ -736,26 +735,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
 
         FilledButton(
           onPressed: _isLoading ? null : _handleLogin,
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
           child: _isLoading
-              ? SizedBox(
+              ? const SizedBox(
                   height: 20,
                   width: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation(theme.colorScheme.onPrimary),
+                    valueColor: AlwaysStoppedAnimation(Colors.black),
                   ),
                 )
-              : const Text(
-                  'Sign Up',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+              : const Text('Sign Up'),
         ),
         const SizedBox(height: 16),
 
-        // Switching buttons
+        // Switch to sign in
         Center(
           child: TextButton(
             onPressed: () {
@@ -763,7 +756,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 _authMode = AuthMode.signIn;
               });
             },
-            child: const Text('Already have an account? Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: RichText(
+              text: TextSpan(
+                style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textSecondary),
+                children: [
+                  const TextSpan(text: 'Already have an account? '),
+                  TextSpan(
+                    text: 'Sign In',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ],

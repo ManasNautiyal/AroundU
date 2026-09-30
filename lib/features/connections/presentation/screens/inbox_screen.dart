@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/theme/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/image_helper.dart';
 import '../../../discovery/data/models/nearby_user.dart';
@@ -651,44 +653,41 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withAlpha(20),
+              decoration: const BoxDecoration(
+                color: AppTheme.darkGray,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
-                size: 48,
-                color: theme.colorScheme.primary,
+                size: 44,
+                color: AppTheme.textTertiary,
               ),
             ),
             const SizedBox(height: 24),
             Text(
               title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                fontSize: 17,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               body,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: GoogleFonts.inter(
+                color: AppTheme.textSecondary,
+                fontSize: 13,
                 height: 1.5,
               ),
             ),
             if (actionButtonText != null && onActionButtonPressed != null) ...[
               const SizedBox(height: 24),
-              ElevatedButton.icon(
+              FilledButton.icon(
                 onPressed: onActionButtonPressed,
-                icon: const Icon(Icons.add_rounded),
+                icon: const Icon(Icons.add_rounded, size: 18),
                 label: Text(actionButtonText),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
               ),
             ],
           ],

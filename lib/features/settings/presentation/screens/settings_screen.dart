@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../discovery/presentation/controllers/discovery_providers.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
@@ -13,20 +15,25 @@ class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   void _showDeleteAccountDialog(BuildContext parentContext, WidgetRef ref) {
-    final theme = Theme.of(parentContext);
-
     showDialog(
       context: parentContext,
       builder: (dialogContext) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF6B6B)),
             const SizedBox(width: 8),
-            const Text('Delete Account'),
+            Text(
+              'Delete Account',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Are you absolutely sure you want to delete your account? This action is permanent and will completely erase your profile details, connections, messages, and uploaded photos.',
+          style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
         ),
         actions: [
           TextButton(
@@ -35,13 +42,13 @@ class SettingsScreen extends ConsumerWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
+              backgroundColor: const Color(0xFFFF6B6B),
+              foregroundColor: Colors.white,
             ),
             onPressed: () {
               final navigator = Navigator.of(dialogContext);
-              navigator.pop(); // Close step 1 dialog
-              _showDeleteAccountFinalConfirmationDialog(navigator.context, ref, theme);
+              navigator.pop();
+              _showDeleteAccountFinalConfirmationDialog(navigator.context, ref);
             },
             child: const Text('Delete'),
           ),
@@ -53,14 +60,17 @@ class SettingsScreen extends ConsumerWidget {
   void _showDeleteAccountFinalConfirmationDialog(
     BuildContext parentContext,
     WidgetRef ref,
-    ThemeData theme,
   ) {
     showDialog(
       context: parentContext,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Final Warning'),
-        content: const Text(
+        title: Text(
+          'Final Warning',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+        content: Text(
           'This is your last warning. Once clicked, your profile will be completely wiped from the database and there is no way to recover it. Proceed?',
+          style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
         ),
         actions: [
           TextButton(
@@ -69,12 +79,12 @@ class SettingsScreen extends ConsumerWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
+              backgroundColor: const Color(0xFFFF6B6B),
+              foregroundColor: Colors.white,
             ),
             onPressed: () {
               final navigator = Navigator.of(dialogContext);
-              navigator.pop(); // Close dialog
+              navigator.pop();
               _performDelete(navigator.context, ref);
             },
             child: const Text('PERMANENTLY DELETE'),
@@ -120,14 +130,11 @@ class SettingsScreen extends ConsumerWidget {
     ScaffoldMessenger.of(parentContext).showSnackBar(
       const SnackBar(
         content: Text('Account successfully deleted. All data has been wiped.'),
-        backgroundColor: Colors.black,
       ),
     );
   }
 
   void _showSettingsBottomSheet(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -136,207 +143,193 @@ class SettingsScreen extends ConsumerWidget {
         return Consumer(
           builder: (sheetContext, sheetRef, child) {
             final isGhostMode = sheetRef.watch(ghostModeControllerProvider);
-            final colorScheme = theme.colorScheme;
-            final isDark = theme.brightness == Brightness.dark;
 
-            final sheetBgColor = Color.alphaBlend(
-              colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.05),
-              colorScheme.surface,
-            );
-            final borderBgColor = colorScheme.outlineVariant;
-            final textThemeColor = colorScheme.onSurface;
-            final subtitleColor = colorScheme.onSurfaceVariant;
-            final iconThemeColor = colorScheme.onSurfaceVariant;
-            final chevronThemeColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.3);
-            final dividerColor = colorScheme.outlineVariant;
-
-            return Material(
-              color: sheetBgColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(color: borderBgColor, width: 1.5),
+            return Container(
+              decoration: AppDecorations.bottomSheet(),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppDecorations.dragHandle(),
+                  Text(
+                    'Settings',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Container(
-                        height: 4,
-                        width: 40,
-                        margin: const EdgeInsets.only(bottom: 24),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.grey.shade800 : Colors.grey.shade400,
-                          borderRadius: BorderRadius.circular(2),
+                  const SizedBox(height: 20),
+                  
+                  // Ghost Mode Toggle
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: AppDecorations.card(borderRadius: 16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.subtleGray,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.visibility_off_outlined,
+                            color: isGhostMode ? Colors.white : AppTheme.textSecondary,
+                            size: 18,
+                          ),
                         ),
-                      ),
-                    ),
-                    Text(
-                      'Settings',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: textThemeColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Ghost Mode Toggle Switch Tile
-                    SwitchListTile(
-                      title: Row(
-                        children: [
-                          Icon(Icons.visibility_off_outlined, color: iconThemeColor),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Ghost Mode',
-                            style: TextStyle(fontWeight: FontWeight.w600, color: textThemeColor),
-                          ),
-                        ],
-                      ),
-                      subtitle: Text(
-                        'Disappear from radars. Your location stops updating.',
-                        style: TextStyle(fontSize: 12, color: subtitleColor),
-                      ),
-                      value: isGhostMode,
-                      activeThumbColor: theme.colorScheme.primary,
-                      activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.4),
-                      onChanged: (val) {
-                        sheetRef.read(ghostModeControllerProvider.notifier).toggle();
-                      },
-                    ),
-                    const Divider(color: Colors.transparent, height: 4),
-
-                    // Edit Profile
-                    ListTile(
-                      leading: Icon(Icons.person_outline_rounded, color: iconThemeColor),
-                      title: Text('Edit Profile', style: TextStyle(color: textThemeColor)),
-                      trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
-                      onTap: () {
-                        Navigator.pop(modalContext);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EditProfileScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    
-                    // Notifications
-                    ListTile(
-                      leading: Icon(Icons.notifications_none_rounded, color: iconThemeColor),
-                      title: Text('Notifications', style: TextStyle(color: textThemeColor)),
-                      trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
-                      onTap: () {
-                        Navigator.pop(modalContext);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Notification settings coming soon!'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                    ),
-
-                     // Privacy
-                    ListTile(
-                      leading: Icon(Icons.privacy_tip_outlined, color: iconThemeColor),
-                      title: Text('Privacy Policy', style: TextStyle(color: textThemeColor)),
-                      trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
-                      onTap: () {
-                        Navigator.pop(modalContext);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Privacy Policy will be available soon.'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                    ),
-
-                    // Terms
-                    ListTile(
-                      leading: Icon(Icons.description_outlined, color: iconThemeColor),
-                      title: Text('Terms of Service', style: TextStyle(color: textThemeColor)),
-                      trailing: Icon(Icons.chevron_right_rounded, color: chevronThemeColor),
-                      onTap: () {
-                        Navigator.pop(modalContext);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Terms of Service will be available soon.'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                    ),
-                    Divider(color: dividerColor),
-                    const SizedBox(height: 16),
-
-                    // Log Out Button
-                    FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: () async {
-                        final navigator = Navigator.of(modalContext);
-                        navigator.pop(); // Close sheet
-                        final confirm = await showDialog<bool>(
-                          context: navigator.context,
-                          builder: (dialogContext) => AlertDialog(
-                            title: const Text('Log Out'),
-                            content: const Text('Are you sure you want to log out of AroundU?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(dialogContext, false),
-                                child: const Text('Cancel'),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Ghost Mode',
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
                               ),
-                              FilledButton(
-                                onPressed: () => Navigator.pop(dialogContext, true),
-                                child: const Text('Log Out'),
+                              Text(
+                                'Disappear from radars',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: AppTheme.textSecondary,
+                                ),
                               ),
                             ],
                           ),
-                        );
-
-                        if (confirm == true) {
-                          await ref.read(authRepositoryProvider).signOut();
-                          final navContext = navigator.context;
-                          if (navContext.mounted) {
-                            Navigator.of(navContext).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (context) => const OnboardingRouter()),
-                              (route) => false,
-                            );
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.logout_rounded, size: 18),
-                      label: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Delete Account Button
-                    TextButton.icon(
-                      style: TextButton.styleFrom(
-                        foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: StadiumBorder(
-                          side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.24), width: 1),
                         ),
-                      ),
-                      onPressed: () {
-                        final navigator = Navigator.of(modalContext);
-                        navigator.pop(); // Close sheet
-                        _showDeleteAccountDialog(navigator.context, ref);
-                      },
-                      icon: Icon(Icons.delete_forever_rounded, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                      label: const Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold)),
+                        SizedBox(
+                          height: 28,
+                          child: Switch(
+                            value: isGhostMode,
+                            onChanged: (val) {
+                              sheetRef.read(ghostModeControllerProvider.notifier).toggle();
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Settings menu items
+                  _SettingsMenuItem(
+                    icon: Icons.person_outline_rounded,
+                    label: 'Edit Profile',
+                    onTap: () {
+                      Navigator.pop(modalContext);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                      );
+                    },
+                  ),
+                  _SettingsMenuItem(
+                    icon: Icons.notifications_none_rounded,
+                    label: 'Notifications',
+                    onTap: () {
+                      Navigator.pop(modalContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Notification settings coming soon!')),
+                      );
+                    },
+                  ),
+                  _SettingsMenuItem(
+                    icon: Icons.privacy_tip_outlined,
+                    label: 'Privacy Policy',
+                    onTap: () {
+                      Navigator.pop(modalContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Privacy Policy will be available soon.')),
+                      );
+                    },
+                  ),
+                  _SettingsMenuItem(
+                    icon: Icons.description_outlined,
+                    label: 'Terms of Service',
+                    onTap: () {
+                      Navigator.pop(modalContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Terms of Service will be available soon.')),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Container(height: 0.5, color: AppTheme.borderGray),
+                  const SizedBox(height: 16),
+
+                  // Log Out Button
+                  FilledButton.icon(
+                    onPressed: () async {
+                      final navigator = Navigator.of(modalContext);
+                      navigator.pop();
+                      final confirm = await showDialog<bool>(
+                        context: navigator.context,
+                        builder: (dialogContext) => AlertDialog(
+                          title: Text(
+                            'Log Out',
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
+                          ),
+                          content: Text(
+                            'Are you sure you want to log out of AroundU?',
+                            style: GoogleFonts.inter(color: AppTheme.textSecondary),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogContext, false),
+                              child: const Text('Cancel'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(dialogContext, true),
+                              child: const Text('Log Out'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        await ref.read(authRepositoryProvider).signOut();
+                        final navContext = navigator.context;
+                        if (navContext.mounted) {
+                          Navigator.of(navContext).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (context) => const OnboardingRouter()),
+                            (route) => false,
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.logout_rounded, size: 18),
+                    label: Text(
+                      'Log Out',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Delete Account Button
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textSecondary,
+                      side: const BorderSide(color: AppTheme.borderGray, width: 0.8),
+                    ),
+                    onPressed: () {
+                      final navigator = Navigator.of(modalContext);
+                      navigator.pop();
+                      _showDeleteAccountDialog(navigator.context, ref);
+                    },
+                    icon: const Icon(Icons.delete_forever_rounded, size: 18),
+                    label: Text(
+                      'Delete Account',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
               ),
             );
           },
@@ -345,25 +338,25 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatColumn(String label, int value, ThemeData theme) {
+  Widget _buildStatColumn(String label, int value) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           '$value',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w700,
             fontSize: 18,
-            color: theme.colorScheme.onSurface,
+            color: Colors.white,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(
+          style: GoogleFonts.inter(
             fontSize: 12,
-            color: theme.colorScheme.onSurfaceVariant,
+            color: AppTheme.textSecondary,
           ),
         ),
       ],
@@ -380,15 +373,32 @@ class SettingsScreen extends ConsumerWidget {
         title: currentUserAsync.when(
           data: (user) => Text(
             user?.name ?? 'Profile',
-            style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface, fontSize: 18),
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              fontSize: 20,
+            ),
           ),
-          loading: () => Text('Loading...', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
-          error: (err, stack) => Text('Error', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+          loading: () => Text(
+            'Loading...',
+            style: GoogleFonts.inter(color: AppTheme.textSecondary),
+          ),
+          error: (err, stack) => Text(
+            'Error',
+            style: GoogleFonts.inter(color: AppTheme.textSecondary),
+          ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.settings_outlined, color: theme.colorScheme.onSurface),
-            onPressed: () => _showSettingsBottomSheet(context, ref),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.darkGray,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.settings_outlined, size: 20),
+              onPressed: () => _showSettingsBottomSheet(context, ref),
+            ),
           ),
         ],
       ),
@@ -396,7 +406,10 @@ class SettingsScreen extends ConsumerWidget {
         data: (user) {
           if (user == null) {
             return Center(
-              child: Text('No profile found. Please register.', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+              child: Text(
+                'No profile found. Please register.',
+                style: GoogleFonts.inter(color: AppTheme.textSecondary),
+              ),
             );
           }
 
@@ -415,19 +428,25 @@ class SettingsScreen extends ConsumerWidget {
               // Header Row: Avatar + Stats
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: theme.colorScheme.surface,
-                    backgroundImage: getUserImageProvider(avatarUrl),
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppTheme.borderGray, width: 2),
+                    ),
+                    child: CircleAvatar(
+                      radius: 42,
+                      backgroundColor: AppTheme.darkGray,
+                      backgroundImage: getUserImageProvider(avatarUrl),
+                    ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 20),
                   Expanded(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildStatColumn('Posts', validPics.length, theme),
-                        _buildStatColumn('Likes', likesCount, theme),
-                        _buildStatColumn('Liked', sentLikesCount, theme),
+                        _buildStatColumn('Posts', validPics.length),
+                        _buildStatColumn('Likes', likesCount),
+                        _buildStatColumn('Liked', sentLikesCount),
                       ],
                     ),
                   ),
@@ -438,62 +457,56 @@ class SettingsScreen extends ConsumerWidget {
               // Name and Bio Section
               Text(
                 user.name,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: theme.colorScheme.onSurface,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 user.bio,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 14,
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.3,
+                  color: AppTheme.textSecondary,
+                  height: 1.35,
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Wide Outlined "Edit Profile" Button
+              // Edit Profile Button
               OutlinedButton(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const EditProfileScreen(),
-                    ),
+                    MaterialPageRoute(builder: (context) => const EditProfileScreen()),
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: theme.colorScheme.outlineVariant),
-                  minimumSize: const Size(double.infinity, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  minimumSize: const Size(double.infinity, 42),
                 ),
                 child: Text(
                   'Edit Profile',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Tab Divider matching Instagram grid look
-              Divider(color: theme.colorScheme.outlineVariant, height: 1),
+              // Grid header
+              Container(height: 0.5, color: AppTheme.borderGray),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.grid_on_sharp, color: theme.colorScheme.onSurface, size: 22),
+                    Icon(Icons.grid_on_sharp, color: Colors.white, size: 20),
                   ],
                 ),
               ),
-              Divider(color: theme.colorScheme.outlineVariant, height: 1),
+              Container(height: 0.5, color: AppTheme.borderGray),
               const SizedBox(height: 12),
 
               // Image Grid Section
@@ -504,14 +517,21 @@ class SettingsScreen extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.camera_alt_outlined, color: theme.colorScheme.onSurfaceVariant, size: 48),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: const BoxDecoration(
+                                color: AppTheme.darkGray,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt_outlined, color: AppTheme.textTertiary, size: 40),
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               'No Posts Yet',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.onSurfaceVariant,
-                                fontSize: 16,
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textSecondary,
+                                fontSize: 15,
                               ),
                             ),
                           ],
@@ -524,8 +544,8 @@ class SettingsScreen extends ConsumerWidget {
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
-                        crossAxisSpacing: 3,
-                        mainAxisSpacing: 3,
+                        crossAxisSpacing: 4,
+                        mainAxisSpacing: 4,
                       ),
                       itemCount: validPics.length,
                       itemBuilder: (context, index) {
@@ -534,6 +554,7 @@ class SettingsScreen extends ConsumerWidget {
                           child: AspectRatio(
                             aspectRatio: 1,
                             child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
                               child: getUserImageWidget(
                                 validPics[index],
                                 fit: BoxFit.cover,
@@ -550,7 +571,59 @@ class SettingsScreen extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
         error: (err, _) => Center(
-          child: Text('Error loading profile: $err', style: const TextStyle(color: Colors.redAccent)),
+          child: Text(
+            'Error loading profile: $err',
+            style: GoogleFonts.inter(color: const Color(0xFFFF6B6B)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Settings menu item — consistent style
+// ─────────────────────────────────────────────
+class _SettingsMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SettingsMenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Icon(icon, color: AppTheme.textSecondary, size: 20),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: AppTheme.subtleGray, size: 20),
+              ],
+            ),
+          ),
         ),
       ),
     );

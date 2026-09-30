@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/location_service.dart';
 import '../controllers/onboarding_providers.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
@@ -51,8 +53,6 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     if (state == AppLifecycleState.resumed) {
       await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
-      // Always invalidate the provider so OnboardingRouter re-evaluates the
-      // location gate, even if _isRequesting was previously stuck.
       ref.invalidate(locationPermissionAndServiceStatusProvider);
       _checkLocationAndAutoAdvance();
     }
@@ -60,7 +60,6 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
 
   Future<void> _checkLocationAndAutoAdvance() async {
     if (!mounted) return;
-    // Reset any stuck requesting state so returning from Settings is never blocked.
     _isRequesting = false;
     try {
       final locService = ref.read(locationServiceProvider);
@@ -93,7 +92,6 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     try {
       final locService = ref.read(locationServiceProvider);
       
-      // 1. Check if location services (GPS) are enabled
       final serviceEnabled = await locService.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (mounted) {
@@ -102,7 +100,6 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
         return;
       }
 
-      // 2. Request permission using LocationService
       var permission = await locService.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await locService.requestPermission();
@@ -140,9 +137,13 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Location Services Disabled'),
-        content: const Text(
+        title: Text(
+          'Location Services Disabled',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+        content: Text(
           'Your device GPS / Location Services are turned off. Please turn on Location in your device settings to continue.',
+          style: GoogleFonts.inter(color: AppTheme.textSecondary, height: 1.5),
         ),
         actions: [
           TextButton(
@@ -165,9 +166,13 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Permission Permanently Denied'),
-        content: const Text(
+        title: Text(
+          'Permission Permanently Denied',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+        content: Text(
           'Location permission has been permanently denied for AroundU. Please enable Location in App Settings to proceed.',
+          style: GoogleFonts.inter(color: AppTheme.textSecondary, height: 1.5),
         ),
         actions: [
           TextButton(
@@ -191,9 +196,13 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Always-On Location Recommended'),
-        content: const Text(
+        title: Text(
+          'Always-On Location Recommended',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+        content: Text(
           'To ensure you never miss any nearby connections or local chat zones (even when the app runs in the background), please set location permission to "Always Allow" in your system settings.',
+          style: GoogleFonts.inter(color: AppTheme.textSecondary, height: 1.5),
         ),
         actions: [
           TextButton(
@@ -220,9 +229,13 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Location Access Required'),
-        content: const Text(
+        title: Text(
+          'Location Access Required',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+        content: Text(
           'AroundU requires precise location permissions to calculate relative distances between you and other users. Please enable location services.',
+          style: GoogleFonts.inter(color: AppTheme.textSecondary, height: 1.5),
         ),
         actions: [
           if (!hasProfile)
@@ -247,22 +260,20 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
 
-              // Pulsing Radar / Pin Graphic
+              // Pulsing Radar Graphic
               Center(
                 child: SizedBox(
-                  height: 200,
-                  width: 200,
+                  height: 180,
+                  width: 180,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
@@ -271,12 +282,12 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
                         animation: _pulseController,
                         builder: (context, child) {
                           return Container(
-                            height: 200 * _pulseController.value,
-                            width: 200 * _pulseController.value,
+                            height: 180 * _pulseController.value,
+                            width: 180 * _pulseController.value,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: theme.colorScheme.primary
-                                  .withAlpha((50 * (1 - _pulseController.value)).toInt()),
+                              color: Colors.white
+                                  .withAlpha((30 * (1 - _pulseController.value)).toInt()),
                             ),
                           );
                         },
@@ -287,35 +298,35 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
                         builder: (context, child) {
                           final val = (_pulseController.value + 0.5) % 1.0;
                           return Container(
-                            height: 200 * val,
-                            width: 200 * val,
+                            height: 180 * val,
+                            width: 180 * val,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: theme.colorScheme.primary
-                                  .withAlpha((80 * (1 - val)).toInt()),
+                              color: Colors.white
+                                  .withAlpha((50 * (1 - val)).toInt()),
                             ),
                           );
                         },
                       ),
                       // Center Icon
                       Container(
-                        height: 90,
-                        width: 90,
+                        height: 80,
+                        width: 80,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
+                          color: Colors.white,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: theme.colorScheme.primary.withAlpha(80),
-                              blurRadius: 15,
-                              spreadRadius: 2,
+                              color: Colors.white.withAlpha(40),
+                              blurRadius: 20,
+                              spreadRadius: 4,
                             ),
                           ],
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.location_on_rounded,
-                          size: 44,
-                          color: theme.colorScheme.onPrimary,
+                          size: 40,
+                          color: Colors.black,
                         ),
                       ),
                     ],
@@ -329,44 +340,44 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
               Text(
                 'Find Your Crowd',
                 textAlign: TextAlign.center,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  fontSize: 24,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Text(
-                'To discover nearby connections and matching vibes in the background, AroundU needs your location permission set to Always Allow. Please keep your location services enabled to ensure uninterrupted scans.',
+                'To discover nearby connections and matching vibes in the background, AroundU needs your location permission set to Always Allow.',
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: GoogleFonts.inter(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
                   height: 1.5,
                 ),
               ),
 
               const Spacer(),
 
-              // Primary / Secondary Action Buttons
+              // Primary Action Button
               FilledButton.icon(
                 onPressed: _isRequesting ? null : _requestLocationPermission,
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
                 icon: _isRequesting
-                    ? SizedBox(
+                    ? const SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation(theme.colorScheme.onPrimary),
+                          valueColor: AlwaysStoppedAnimation(Colors.black),
                         ),
                       )
-                    : const Icon(Icons.share_location_rounded),
-                label: const Text(
+                    : const Icon(Icons.share_location_rounded, size: 20),
+                label: Text(
                   'Enable Location',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -374,14 +385,11 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: _onPermissionGranted,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
                   child: Text(
                     'Maybe Later',
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w600,
+                    style: GoogleFonts.inter(
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -391,15 +399,12 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
                 onPressed: () async {
                   await ref.read(authRepositoryProvider).signOut();
                 },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-                label: const Text(
+                icon: const Icon(Icons.logout_rounded, color: Color(0xFFFF6B6B), size: 18),
+                label: Text(
                   'Sign Out / Go to Login',
-                  style: TextStyle(
-                    color: Colors.redAccent,
-                    fontWeight: FontWeight.w600,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFFFF6B6B),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),

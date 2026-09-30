@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/image_helper.dart';
 import '../../../discovery/data/models/nearby_user.dart';
 import '../../data/models/message_model.dart';
@@ -165,15 +167,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundImage: getUserImageProvider(avatarUrl),
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.borderGray, width: 1.5),
+              ),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundImage: getUserImageProvider(avatarUrl),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                widget.targetUser.name,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.targetUser.name,
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white),
+                  ),
+                  Text(
+                    'Active now',
+                    style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textSecondary),
+                  ),
+                ],
               ),
             ),
           ],
@@ -295,16 +312,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Widget _buildMessageBubble(MessageModel message, bool isMe, ThemeData theme) {
     final bubbleColor = isMe
-        ? theme.colorScheme.primary
-        : theme.colorScheme.surface;
+        ? Colors.white
+        : AppTheme.darkGray;
     final textColor = isMe
-        ? theme.colorScheme.onPrimary
-        : theme.colorScheme.onSurface;
+        ? Colors.black
+        : Colors.white;
 
     final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final margin = isMe
-        ? const EdgeInsets.only(left: 64, top: 4, bottom: 4)
-        : const EdgeInsets.only(right: 64, top: 4, bottom: 4);
+        ? const EdgeInsets.only(left: 64, top: 3, bottom: 3)
+        : const EdgeInsets.only(right: 64, top: 3, bottom: 3);
 
     final formattedTime = DateFormat('h:mm a').format(message.timestamp);
 
@@ -322,15 +339,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: message.isDeleted
-                        ? theme.colorScheme.onSurface.withValues(alpha: 0.1)
+                        ? AppTheme.subtleGray
                         : bubbleColor,
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(18),
-                      topRight: const Radius.circular(18),
-                      bottomLeft: Radius.circular(isMe ? 18 : 4),
-                      bottomRight: Radius.circular(isMe ? 4 : 18),
+                      topLeft: const Radius.circular(20),
+                      topRight: const Radius.circular(20),
+                      bottomLeft: Radius.circular(isMe ? 20 : 6),
+                      bottomRight: Radius.circular(isMe ? 6 : 20),
                     ),
-                    border: isMe ? null : Border.all(color: theme.colorScheme.outline, width: 1.0),
+                    border: isMe ? null : Border.all(color: AppTheme.borderGray, width: 0.5),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -449,20 +466,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildInputArea(ThemeData theme) {
-    final cardBg = theme.colorScheme.surface;
-    final borderBg = theme.colorScheme.outline;
-    final textColor = theme.colorScheme.onSurface;
-    final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
-    final hintColor = theme.colorScheme.onSurface.withValues(alpha: 0.4);
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
+        color: Colors.black,
         border: Border(
           top: BorderSide(
-            color: borderBg,
-            width: 1.0,
+            color: AppTheme.borderGray,
+            width: 0.5,
           ),
         ),
       ),
@@ -471,26 +482,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           children: [
             Expanded(
               child: Container(
-                constraints: const BoxConstraints(minHeight: 48),
+                constraints: const BoxConstraints(minHeight: 46),
                 decoration: BoxDecoration(
-                  color: cardBg,
+                  color: AppTheme.darkGray,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: borderBg,
-                    width: 1.2,
+                    color: AppTheme.borderGray,
+                    width: 0.5,
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: Row(
                   children: [
                     // Camera / Gallery Image Attachment
                     IconButton(
-                      icon: Icon(Icons.camera_alt_outlined, color: subTextColor, size: 22),
+                      icon: const Icon(Icons.camera_alt_outlined, color: AppTheme.textSecondary, size: 20),
                       onPressed: () => _pickImage(ImageSource.camera),
+                      visualDensity: VisualDensity.compact,
                     ),
                     IconButton(
-                      icon: Icon(Icons.photo_outlined, color: subTextColor, size: 22),
+                      icon: const Icon(Icons.photo_outlined, color: AppTheme.textSecondary, size: 20),
                       onPressed: () => _pickImage(ImageSource.gallery),
+                      visualDensity: VisualDensity.compact,
                     ),
                     const SizedBox(width: 2),
 
@@ -502,10 +515,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         textCapitalization: TextCapitalization.sentences,
                         maxLines: 4,
                         minLines: 1,
-                        style: TextStyle(color: textColor, fontSize: 15),
+                        style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
                         decoration: InputDecoration(
                           hintText: 'Message...',
-                          hintStyle: TextStyle(color: hintColor),
+                          hintStyle: GoogleFonts.inter(color: AppTheme.textTertiary, fontSize: 14),
                           border: InputBorder.none,
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
@@ -518,15 +531,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ),
 
                     // Send Button
-                    TextButton(
-                      onPressed: () => _sendMessage(),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        foregroundColor: theme.colorScheme.primary,
+                    Container(
+                      margin: const EdgeInsets.only(right: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
-                        'Send',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      child: IconButton(
+                        onPressed: () => _sendMessage(),
+                        icon: const Icon(Icons.arrow_upward_rounded, color: Colors.black, size: 18),
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                        padding: const EdgeInsets.all(6),
                       ),
                     ),
                   ],

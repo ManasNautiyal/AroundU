@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
 import '../../../../core/widgets/image_helper.dart';
 
@@ -137,7 +139,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          'Edit Profile',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 18),
+        ),
         actions: [
           if (_isSaving)
             const Padding(
@@ -155,10 +160,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               onPressed: _saveProfile,
               child: Text(
                 'Save',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                  fontSize: 16,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  fontSize: 15,
                 ),
               ),
             ),
@@ -175,9 +180,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 // 1. Pictures Selection Layout (1 large + 2 small slots)
                 Text(
                   'Profile Pictures',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    fontSize: 16,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -323,14 +329,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 // 3. Save Button
                 SizedBox(
                   height: 50,
-                  child: ElevatedButton(
+                  child: FilledButton(
                     onPressed: _isSaving ? null : _saveProfile,
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                    ),
-                    child: const Text(
+                    child: Text(
                       'Save Profile',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
                     ),
                   ),
                 ),

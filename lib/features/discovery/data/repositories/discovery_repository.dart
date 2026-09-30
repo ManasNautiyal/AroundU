@@ -34,10 +34,7 @@ class DiscoveryRepository {
     try {
       final geoFirePoint = GeoFirePoint(GeoPoint(latitude, longitude));
       await _firestore.collection('users').doc(uid).set({
-        'location': {
-          'geohash': geoFirePoint.geohash,
-          'geopoint': geoFirePoint.geopoint,
-        },
+        'location': geoFirePoint.data,
         'lastActive': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
@@ -48,15 +45,13 @@ class DiscoveryRepository {
     }
   }
 
-  /// Streams nearby users within [maxDistanceInMeters] of the current user.
-  /// Automatically filters out the current user, ghost mode users, and blocked users.
-  /// The Firestore geo-query always uses a 10 km radius for a warm cache;
-  /// [maxDistanceInMeters] is enforced client-side for fine-grained filtering.
-  Stream<List<NearbyUser>> getNearbyUsersStream({
+  /// Streams all users within 10 km of [currentPosition] with their distances.
+  /// This is a stable stream — only the position affects the Firestore query.
+  /// Further filtering (range, ghost mode, blocked) is done client-side in
+  /// a separate provider to avoid tearing down this stream on every filter change.
+  Stream<List<NearbyUser>> getRawNearbyUsersStream({
     required String currentUserId,
     required Position currentPosition,
-    List<String> blockedUserIds = const [],
-    double maxDistanceInMeters = 500.0,
   }) {
     if (!_isFirebaseInitialized) {
       return Stream.value([]);
@@ -68,7 +63,8 @@ class DiscoveryRepository {
       
       final center = GeoFirePoint(GeoPoint(currentPosition.latitude, currentPosition.longitude));
       
-      // Subscribe to users within 10.0 km (and filter to 100 meters client-side below)
+      // Subscribe to users within 10 km; finer filtering is done client-side
+      // in the nearbyUsersProvider to avoid re-subscribing on every filter change.
       return geoRef.subscribeWithin(
         center: center,
         radiusInKm: 10.0,
@@ -89,17 +85,11 @@ class DiscoveryRepository {
           
           final user = UserModel.fromMap(data, doc.id);
           
-          // Exclude users in Ghost Mode
-          if (user.isGhostMode) continue;
-          
-          // Exclude blocked users
-          if (blockedUserIds.contains(user.uid)) continue;
-          
           final locationMap = data['location'] as Map<String, dynamic>?;
           final geopoint = locationMap?['geopoint'] as GeoPoint?;
           if (geopoint == null) continue;
           
-          // Fine-grained client-side distance calculation in meters
+          // Calculate distance in meters for client-side filtering
           final distance = Geolocator.distanceBetween(
             currentPosition.latitude,
             currentPosition.longitude,
@@ -107,13 +97,10 @@ class DiscoveryRepository {
             geopoint.longitude,
           );
           
-          // Client-side filter to the user's chosen range
-          if (distance <= maxDistanceInMeters) {
-            nearbyList.add(NearbyUser(
-              user: user,
-              distanceInMeters: distance,
-            ));
-          }
+          nearbyList.add(NearbyUser(
+            user: user,
+            distanceInMeters: distance,
+          ));
         }
         
         // Sort by distance (closest first)
@@ -133,22 +120,21 @@ DiscoveryRepository discoveryRepository(DiscoveryRepositoryRef ref) {
   return DiscoveryRepository(FirebaseFirestore.instance);
 }
 
+/// Stable raw geo-stream that only depends on the user's position.
+/// This avoids tearing down and re-subscribing the Firestore listener
+/// every time a client-side filter (range, ghost mode, blocked) changes.
 @riverpod
-Stream<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String currentUserId}) {
+Stream<List<NearbyUser>> rawNearbyUsers(RawNearbyUsersRef ref, {required String currentUserId}) {
   final repository = ref.watch(discoveryRepositoryProvider);
   final positionAsync = ref.watch(userPositionProvider);
-  final blockedUsersAsync = ref.watch(blockedUsersStreamProvider(currentUserId: currentUserId));
   final isGhostMode = ref.watch(ghostModeControllerProvider);
-  final rangeInMeters = ref.watch(discoveryRangeFilterProvider);
-  
-  final blockedUserIds = blockedUsersAsync.valueOrNull ?? const [];
   
   return positionAsync.when(
     data: (position) {
       // ignore: avoid_print
       print('DEBUG MY CURRENT POSITION: lat=${position.latitude}, lng=${position.longitude}');
       if (!isGhostMode) {
-        // Periodic location update to Firestore only when NOT in Ghost Mode
+        // Update own location in Firestore only when NOT in Ghost Mode
         repository.updateUserLocation(
           uid: currentUserId,
           latitude: position.latitude,
@@ -156,11 +142,9 @@ Stream<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String curren
         );
       }
       
-      return repository.getNearbyUsersStream(
+      return repository.getRawNearbyUsersStream(
         currentUserId: currentUserId,
         currentPosition: position,
-        blockedUserIds: blockedUserIds,
-        maxDistanceInMeters: rangeInMeters,
       );
     },
     error: (err, stack) {
@@ -174,5 +158,44 @@ Stream<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String curren
       return Stream.value([]);
     },
   );
+}
+
+/// Filtered provider that applies range, ghost mode, and blocked user filters
+/// on top of the stable raw geo-stream. Changing these filters does NOT
+/// re-subscribe to Firestore — only the client-side list is re-filtered.
+@riverpod
+AsyncValue<List<NearbyUser>> nearbyUsers(NearbyUsersRef ref, {required String currentUserId}) {
+  final rawAsync = ref.watch(rawNearbyUsersProvider(currentUserId: currentUserId));
+  final blockedUsersAsync = ref.watch(blockedUsersStreamProvider(currentUserId: currentUserId));
+  final rangeInMeters = ref.watch(discoveryRangeFilterProvider);
+  
+  if (rawAsync.isLoading || blockedUsersAsync.isLoading) {
+    // Preserve old data while refreshing if available
+    if (rawAsync.hasValue) {
+       // will just fall through to the filter below
+    } else {
+       return const AsyncLoading();
+    }
+  }
+  
+  if (rawAsync.hasError) {
+    return AsyncError(rawAsync.error!, rawAsync.stackTrace!);
+  }
+  
+  final blockedUserIds = blockedUsersAsync.valueOrNull ?? const [];
+  final rawList = rawAsync.valueOrNull ?? const [];
+  
+  final filteredList = rawList.where((nearby) {
+    // Exclude users in Ghost Mode
+    if (nearby.user.isGhostMode) return false;
+    // Exclude blocked users
+    if (blockedUserIds.contains(nearby.user.uid)) return false;
+    // Enforce the user's chosen discovery range
+    if (nearby.distanceInMeters > rangeInMeters) return false;
+    return true;
+  }).toList()
+    ..sort((a, b) => a.distanceInMeters.compareTo(b.distanceInMeters));
+    
+  return AsyncData(filteredList);
 }
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/services/location_service.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/image_helper.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../data/models/nearby_user.dart';
@@ -41,105 +43,87 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     );
   }
 
-
-
   Widget _buildHeader(ThemeData theme) {
-    final cardBg = theme.colorScheme.surface;
-    final borderBg = theme.colorScheme.outline;
-    final textColor = theme.colorScheme.onSurface;
-    final hintColor = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
     return Column(
       children: [
-        // App Logo + Title Row
+        // App Logo
         Row(
           children: [
             Image.asset(
               'assets/logo/app_icon.png',
-              height: 24,
+              height: 26,
               fit: BoxFit.contain,
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        // Search Bar
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                height: 44,
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: borderBg, width: 1.2),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Icon(Icons.search_rounded, color: hintColor, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        style: TextStyle(color: textColor, fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: 'Search people...',
-                          hintStyle: TextStyle(color: hintColor, fontSize: 14),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          disabledBorder: InputBorder.none,
-                          filled: false,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        onChanged: (val) {
-                          setState(() {
-                            _searchQuery = val.trim();
-                          });
-                        },
-                      ),
-                    ),
-                    if (_searchQuery.isNotEmpty)
-                      GestureDetector(
-                        onTap: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                        },
-                        child: Icon(Icons.close_rounded, color: hintColor, size: 18),
-                      ),
-                  ],
+        const SizedBox(height: 14),
+        // Search Bar — premium glassmorphic style
+        Container(
+          height: 46,
+          decoration: BoxDecoration(
+            color: AppTheme.darkGray,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.borderGray, width: 0.8),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Icon(Icons.search_rounded, color: AppTheme.textTertiary, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Search people nearby...',
+                    hintStyle: GoogleFonts.inter(color: AppTheme.textTertiary, fontSize: 14),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    filled: false,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: (val) {
+                    setState(() {
+                      _searchQuery = val.trim();
+                    });
+                  },
                 ),
               ),
-            ),
-          ],
+              if (_searchQuery.isNotEmpty)
+                GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.subtleGray,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close_rounded, color: Colors.white, size: 14),
+                  ),
+                ),
+            ],
+          ),
         ),
       ],
     );
   }
 
   Widget _buildRangeSlider(ThemeData theme, double rangeInMeters) {
-    final isDark = theme.brightness == Brightness.dark;
-    final accentColor = theme.colorScheme.primary;
-    final labelBg = isDark
-        ? Colors.white.withValues(alpha: 0.1)
-        : Colors.black.withValues(alpha: 0.06);
-    final labelFg = theme.colorScheme.onSurface;
-
-    return Row(
-      children: [
-        Expanded(
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: accentColor,
-              inactiveTrackColor: accentColor.withValues(alpha: 0.2),
-              thumbColor: accentColor,
-              overlayColor: accentColor.withValues(alpha: 0.12),
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
-              trackHeight: 3.0,
-              showValueIndicator: ShowValueIndicator.never,
-            ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Row(
+        children: [
+          Icon(Icons.radar_rounded, color: AppTheme.textSecondary, size: 16),
+          const SizedBox(width: 4),
+          Expanded(
             child: Slider(
               value: rangeInMeters,
               min: 50,
@@ -150,33 +134,29 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               },
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: labelBg,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            _formatRange(rangeInMeters),
-            style: TextStyle(
-              color: labelFg,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppTheme.darkGray,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.borderGray, width: 0.5),
+            ),
+            child: Text(
+              _formatRange(rangeInMeters),
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildProfileCard(NearbyUser nearbyUser) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final cardBg = theme.colorScheme.surface;
-    final borderBg = theme.colorScheme.outline;
-
     final user = nearbyUser.user;
     final primaryPhoto = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
 
@@ -184,65 +164,94 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
       onTap: () => _handleConnect(user),
       child: Container(
         decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderBg, width: 1.2),
+          color: AppTheme.darkGray,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.borderGray, width: 0.5),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(20),
           child: Stack(
             fit: StackFit.expand,
             children: [
+              // Photo
               getUserImageWidget(
                 primaryPhoto,
                 fit: BoxFit.cover,
                 errorWidget: Container(
-                  color: isDark ? Colors.black : Colors.white,
-                  child: Icon(Icons.person, size: 40, color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3)),
+                  color: AppTheme.darkGray,
+                  child: const Icon(Icons.person_rounded, size: 40, color: AppTheme.subtleGray),
                 ),
                 placeholder: Container(
-                  color: isDark ? Colors.black : Colors.white,
-                  child: Center(
+                  color: AppTheme.darkGray,
+                  child: const Center(
                     child: SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3))),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.subtleGray),
                     ),
                   ),
                 ),
               ),
+              // Gradient overlay
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      stops: const [0.55, 1.0],
+                      stops: const [0.45, 0.75, 1.0],
                       colors: [
                         Colors.transparent,
-                        Colors.black.withValues(alpha: 0.95),
+                        Colors.black.withValues(alpha: 0.5),
+                        Colors.black.withValues(alpha: 0.92),
                       ],
                     ),
                   ),
                 ),
               ),
+              // Info overlay
               Positioned(
-                bottom: 12,
-                left: 12,
-                right: 12,
+                bottom: 14,
+                left: 14,
+                right: 14,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       user.name,
-                      style: const TextStyle(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        letterSpacing: -0.2,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Distance chip
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.near_me_rounded, size: 10, color: Colors.white70),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatRange(nearbyUser.distanceInMeters),
+                            style: GoogleFonts.inter(
+                              color: Colors.white70,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -257,8 +266,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final subTextColor = isDark ? Colors.white70 : Colors.black54;
 
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     final isGhostMode = ref.watch(ghostModeControllerProvider);
@@ -266,7 +273,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     final rangeInMeters = ref.watch(discoveryRangeFilterProvider);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -275,50 +282,65 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
             children: [
               _buildHeader(theme),
               const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        isGhostMode ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                        color: subTextColor,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        isGhostMode ? 'Ghost Mode' : 'Visible',
-                        style: TextStyle(
-                          color: subTextColor,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 28,
-                    child: Switch(
-                      value: isGhostMode,
-                      activeThumbColor: isDark ? Colors.white : Colors.black,
-                      activeTrackColor: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.38),
-                      inactiveThumbColor: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-                      inactiveTrackColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
-                      onChanged: (val) {
-                        ref.read(ghostModeControllerProvider.notifier).toggle();
-                      },
+              // Ghost mode toggle row
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.darkGray,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.borderGray, width: 0.5),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isGhostMode ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                      color: isGhostMode ? AppTheme.textSecondary : Colors.white,
+                      size: 18,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isGhostMode ? 'Ghost Mode' : 'Visible',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            isGhostMode ? 'You\'re hidden from others' : 'Others can see you',
+                            style: GoogleFonts.inter(
+                              color: AppTheme.textTertiary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 28,
+                      child: Switch(
+                        value: isGhostMode,
+                        onChanged: (val) {
+                          ref.read(ghostModeControllerProvider.notifier).toggle();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               _buildRangeSlider(theme, rangeInMeters),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Expanded(
                 child: RefreshIndicator(
+                  color: Colors.white,
+                  backgroundColor: AppTheme.darkGray,
                   onRefresh: () async {
                     ref.invalidate(nearbyUsersProvider(currentUserId: currentUserId));
-                    // Wait a moment for the provider to start refetching
                     await Future.delayed(const Duration(milliseconds: 500));
                   },
                   child: nearbyUsersAsync.when(
@@ -335,7 +357,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                       filteredUsers.sort((a, b) => b.user.likesCount.compareTo(a.user.likesCount));
 
                       if (filteredUsers.isEmpty) {
-                        // Determine a helpful empty-state message
                         final allWithinRange = nearbyUsers
                             .where((u) => u.distanceInMeters <= rangeInMeters)
                             .toList();
@@ -359,12 +380,23 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.people_outline_rounded, size: 48, color: isDark ? Colors.white30 : Colors.black26),
-                                    const SizedBox(height: 12),
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.darkGray,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.people_outline_rounded, size: 40, color: AppTheme.textTertiary),
+                                    ),
+                                    const SizedBox(height: 20),
                                     Text(
                                       emptyMsg,
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(color: subTextColor, fontSize: 14, height: 1.4),
+                                      style: GoogleFonts.inter(
+                                        color: AppTheme.textSecondary,
+                                        fontSize: 14,
+                                        height: 1.5,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -380,7 +412,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
-                          childAspectRatio: 0.8,
+                          childAspectRatio: 0.72,
                         ),
                         itemCount: filteredUsers.length,
                         itemBuilder: (context, index) {
@@ -396,7 +428,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: SizedBox(
                         height: MediaQuery.of(context).size.height * 0.5,
-                        child: _buildLocationErrorWidget(err, theme, isDark),
+                        child: _buildLocationErrorWidget(err, theme),
                       ),
                     ),
                   ),
@@ -416,14 +448,15 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
             builder: (context) => const CreateRoomSheet(),
           );
         },
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        child: const Icon(Icons.store_rounded),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(Icons.add_rounded, size: 22),
       ),
     );
   }
 
-  Widget _buildLocationErrorWidget(dynamic err, ThemeData theme, bool isDark) {
+  Widget _buildLocationErrorWidget(dynamic err, ThemeData theme) {
     final errStr = err.toString();
     final isPermissionDenied = errStr.contains('permission') || errStr.contains('Permission');
     final isServiceDisabled = errStr.contains('disabled') || errStr.contains('Disabled');
@@ -441,7 +474,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
     if (isPermissionDenied) {
       iconData = Icons.security_rounded;
       title = 'Location Access Required';
-      description = 'AroundU uses precise location permissions to discover people and chat zones in your area.';
+      description = 'AroundU uses precise location to discover people and chat zones in your area.';
       primaryBtnLabel = 'Grant Permission';
       primaryBtnAction = () async {
         try {
@@ -461,74 +494,63 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
         onPressed: () async {
           await Geolocator.openAppSettings();
         },
-        child: const Text('Open App Settings'),
+        child: Text(
+          'Open App Settings',
+          style: GoogleFonts.inter(color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+        ),
       );
     } else if (isServiceDisabled) {
       iconData = Icons.gps_off_rounded;
       title = 'Location Services Disabled';
-      description = 'Your device\'s GPS or location services are turned off. Please enable them to start scanning your area.';
+      description = 'Your device\'s GPS or location services are turned off. Please enable them to start scanning.';
       primaryBtnLabel = 'Open Location Settings';
       primaryBtnAction = () async {
         await Geolocator.openLocationSettings();
       };
     }
 
-    final cardBg = theme.colorScheme.surface;
-    final borderBg = theme.colorScheme.outline;
-    final textColor = theme.colorScheme.onSurface;
-    final subTextColor = theme.colorScheme.onSurfaceVariant;
-
     return Center(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 24),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: borderBg, width: 1.5),
-        ),
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(28),
+        decoration: AppDecorations.card(borderRadius: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(
-              iconData,
-              size: 56,
-              color: textColor,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: AppTheme.subtleGray,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(iconData, size: 36, color: Colors.white),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: textColor,
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                fontSize: 18,
               ),
             ),
             const SizedBox(height: 10),
             Text(
               description,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: subTextColor,
+              style: GoogleFonts.inter(
+                color: AppTheme.textSecondary,
                 fontSize: 13,
-                height: 1.4,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: primaryBtnAction,
-              style: FilledButton.styleFrom(
-                backgroundColor: textColor,
-                foregroundColor: cardBg,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: const StadiumBorder(),
-              ),
-              child: Text(
-                primaryBtnLabel,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+              child: Text(primaryBtnLabel),
             ),
             if (secondaryBtn != null) ...[
               const SizedBox(height: 8),

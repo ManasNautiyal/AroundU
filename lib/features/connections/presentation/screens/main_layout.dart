@@ -27,34 +27,43 @@ class _MainLayoutState extends State<MainLayout> {
         index: _currentIndex,
         children: _tabs,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        elevation: 8,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.location_on_outlined),
-            selectedIcon: Icon(Icons.location_on_rounded),
-            label: 'Discover',
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Subtle top divider for premium separation
+          Container(
+            height: 0.5,
+            color: Colors.white.withValues(alpha: 0.08),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline_rounded),
-            selectedIcon: Icon(Icons.chat_bubble_rounded),
-            label: 'Chats',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.group_outlined),
-            selectedIcon: Icon(Icons.group_rounded),
-            label: 'People',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
+          NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.explore_outlined),
+                selectedIcon: Icon(Icons.explore_rounded),
+                label: 'Discover',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.chat_bubble_outline_rounded),
+                selectedIcon: Icon(Icons.chat_bubble_rounded),
+                label: 'Chats',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.favorite_outline_rounded),
+                selectedIcon: Icon(Icons.favorite_rounded),
+                label: 'People',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline_rounded),
+                selectedIcon: Icon(Icons.person_rounded),
+                label: 'Profile',
+              ),
+            ],
           ),
         ],
       ),
