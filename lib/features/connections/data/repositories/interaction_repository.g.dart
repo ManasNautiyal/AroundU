@@ -26,7 +26,7 @@ final interactionRepositoryProvider =
 // ignore: unused_element
 typedef InteractionRepositoryRef =
     AutoDisposeProviderRef<InteractionRepository>;
-String _$matchesStreamHash() => r'9e38bd43aaffcca10dbb7e0d8b580a3f27643919';
+String _$matchesStreamHash() => r'e5b0250512157a97ab753e8c9cd31f4415f88877';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -173,7 +173,7 @@ class _MatchesStreamProviderElement
 }
 
 String _$connectionRequestsStreamHash() =>
-    r'58c3127c9ef57a7e7ea6741cbf423f6a42b12e72';
+    r'c60c8a7131e858d16f27ad6095bb0e860912ce51';
 
 /// See also [connectionRequestsStream].
 @ProviderFor(connectionRequestsStream)
@@ -305,7 +305,7 @@ class _ConnectionRequestsStreamProviderElement
 }
 
 String _$receivedLikesStreamHash() =>
-    r'71dc8a1301c3efa6bae203dd21dbca4b463bb702';
+    r'abb42ae0a1f1178fd777d6908c209578f9a169de';
 
 /// See also [receivedLikesStream].
 @ProviderFor(receivedLikesStream)
@@ -434,7 +434,7 @@ class _ReceivedLikesStreamProviderElement
       (origin as ReceivedLikesStreamProvider).currentUserId;
 }
 
-String _$sentLikesStreamHash() => r'6d25521ffe6e284e903b8145497f9ca17ccd097b';
+String _$sentLikesStreamHash() => r'3043354b656d2ecb3118fa1611ea2e9e592f0cba';
 
 /// See also [sentLikesStream].
 @ProviderFor(sentLikesStream)

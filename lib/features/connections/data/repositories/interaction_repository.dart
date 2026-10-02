@@ -204,6 +204,7 @@ InteractionRepository interactionRepository(InteractionRepositoryRef ref) {
 
 @riverpod
 Stream<List<MatchModel>> matchesStream(MatchesStreamRef ref, {required String currentUserId}) {
+  ref.keepAlive(); // Prevent re-subscribing on tab switches
   final repo = ref.watch(interactionRepositoryProvider);
   return repo.getMatchesStream(currentUserId);
 }
@@ -211,18 +212,21 @@ Stream<List<MatchModel>> matchesStream(MatchesStreamRef ref, {required String cu
 
 @riverpod
 Stream<List<MessageRequestModel>> connectionRequestsStream(ConnectionRequestsStreamRef ref, {required String currentUserId}) {
+  ref.keepAlive(); // Prevent re-subscribing on tab switches
   final repo = ref.watch(interactionRepositoryProvider);
   return repo.getConnectionRequestsStream(currentUserId);
 }
 
 @riverpod
 Stream<List<InteractionModel>> receivedLikesStream(ReceivedLikesStreamRef ref, {required String currentUserId}) {
+  ref.keepAlive(); // Prevent re-subscribing on tab switches
   final repo = ref.watch(interactionRepositoryProvider);
   return repo.getReceivedLikesStream(currentUserId);
 }
 
 @riverpod
 Stream<List<InteractionModel>> sentLikesStream(SentLikesStreamRef ref, {required String currentUserId}) {
+  ref.keepAlive(); // Prevent re-subscribing on tab switches
   final repo = ref.watch(interactionRepositoryProvider);
   return repo.getSentLikesStream(currentUserId);
 }

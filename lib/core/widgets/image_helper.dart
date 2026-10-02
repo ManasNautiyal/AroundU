@@ -49,29 +49,35 @@ Widget getUserImageWidget(
   BoxFit fit = BoxFit.cover,
   Widget? placeholder,
   Widget? errorWidget,
+  double? width,
+  double? height,
 }) {
   final cleanUrl = url.trim();
   if (cleanUrl.isEmpty) {
     return Image.network(
       'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500',
       fit: fit,
+      width: width,
+      height: height,
     );
   }
 
   if (cleanUrl.startsWith('data:image/') && cleanUrl.contains('base64,')) {
     final base64String = cleanUrl.split('base64,').last;
     try {
-      return Image.memory(base64Decode(base64String), fit: fit);
+      return Image.memory(base64Decode(base64String), fit: fit, width: width, height: height);
     } catch (_) {}
   } else if (cleanUrl.startsWith('base64:')) {
     final base64String = cleanUrl.substring(7);
     try {
-      return Image.memory(base64Decode(base64String), fit: fit);
+      return Image.memory(base64Decode(base64String), fit: fit, width: width, height: height);
     } catch (_) {}
   } else if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
     return Image.network(
       cleanUrl,
       fit: fit,
+      width: width,
+      height: height,
       loadingBuilder: placeholder != null
           ? (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
@@ -88,17 +94,19 @@ Widget getUserImageWidget(
     final filePath = cleanUrl.startsWith('file://') ? cleanUrl.substring(7) : cleanUrl;
     final file = File(filePath);
     if (file.existsSync()) {
-      return Image.file(file, fit: fit);
+      return Image.file(file, fit: fit, width: width, height: height);
     }
   } catch (_) {}
 
   try {
-    return Image.memory(base64Decode(cleanUrl), fit: fit);
+    return Image.memory(base64Decode(cleanUrl), fit: fit, width: width, height: height);
   } catch (_) {}
 
   return Image.network(
     cleanUrl,
     fit: fit,
+    width: width,
+    height: height,
     errorBuilder: errorWidget != null ? (context, error, stackTrace) => errorWidget : null,
   );
 }
@@ -194,6 +202,8 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                   child: getUserImageWidget(
                     widget.images[index],
                     fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: double.infinity,
                   ),
                 ),
               );

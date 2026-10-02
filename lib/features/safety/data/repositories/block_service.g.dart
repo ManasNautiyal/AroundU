@@ -24,7 +24,7 @@ final blockServiceProvider = AutoDisposeProvider<BlockService>.internal(
 // ignore: unused_element
 typedef BlockServiceRef = AutoDisposeProviderRef<BlockService>;
 String _$blockedUsersStreamHash() =>
-    r'a39b1f99021a58e1f78ddac947fd5dec5f754c77';
+    r'46da3c97537277dec3afb03cac4afb0edea417a7';
 
 /// Copied from Dart SDK
 class _SystemHash {

@@ -20,22 +20,7 @@ class BlockService {
     });
   }
 
-  /// Reports and automatically blocks a user.
-  Future<void> reportUser({
-    required String reporterId,
-    required String targetUserId,
-    required String reason,
-  }) async {
-    await _firestore.collection('reports').add({
-      'reporterId': reporterId,
-      'reportedId': targetUserId,
-      'reason': reason,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
 
-    // Automatically block the reported user for safety
-    await blockUser(blockerId: reporterId, blockedId: targetUserId);
-  }
 
   /// Streams the list of user IDs that the current user has blocked or has been blocked by.
   Stream<List<String>> getBlockedUsersStream(String blockerId) {
@@ -62,6 +47,7 @@ BlockService blockService(BlockServiceRef ref) {
 
 @riverpod
 Stream<List<String>> blockedUsersStream(BlockedUsersStreamRef ref, {required String currentUserId}) {
+  ref.keepAlive(); // Prevent re-subscribing on tab switches
   final service = ref.watch(blockServiceProvider);
   return service.getBlockedUsersStream(currentUserId);
 }

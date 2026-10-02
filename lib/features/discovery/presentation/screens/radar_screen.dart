@@ -156,7 +156,6 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   }
 
   Widget _buildProfileCard(NearbyUser nearbyUser) {
-    final theme = Theme.of(context);
     final user = nearbyUser.user;
     final primaryPhoto = user.profilePictures.isNotEmpty ? user.profilePictures[0] : '';
 
@@ -310,13 +309,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          Text(
-                            isGhostMode ? 'You\'re hidden from others' : 'Others can see you',
-                            style: GoogleFonts.inter(
-                              color: AppTheme.textTertiary,
-                              fontSize: 11,
-                            ),
-                          ),
+                          
                         ],
                       ),
                     ),

@@ -138,24 +138,28 @@ class ChatRepository {
   }
 
   /// Streams messages for a given match, ordered by timestamp descending.
+  /// Limited to the 50 most recent messages to reduce Firestore reads.
   Stream<List<MessageModel>> getMessagesStream(String matchId) {
     return _firestore
         .collection('chats')
         .doc(matchId)
         .collection('messages')
         .orderBy('timestamp', descending: true)
+        .limit(50)
         .snapshots()
         .map((snap) =>
             snap.docs.map((doc) => MessageModel.fromMap(doc.data(), doc.id)).toList());
   }
 
   /// Streams messages for a given proximity room.
+  /// Limited to the 50 most recent messages to reduce Firestore reads.
   Stream<List<MessageModel>> getProximityRoomMessagesStream(String roomId) {
     return _firestore
         .collection('proximity_rooms')
         .doc(roomId)
         .collection('messages')
         .orderBy('timestamp', descending: true)
+        .limit(50)
         .snapshots()
         .map((snap) =>
             snap.docs.map((doc) => MessageModel.fromMap(doc.data(), doc.id)).toList());

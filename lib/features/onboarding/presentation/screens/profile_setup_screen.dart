@@ -372,133 +372,77 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           LayoutBuilder(
             builder: (context, constraints) {
               final double totalWidth = constraints.maxWidth;
-              final double gap = 16.0;
-              final double leftWidth = (totalWidth - gap) * 0.6;
-              final double itemHeight = (leftWidth * 1.25); // Aspect ratio for boxes
-
-              return SizedBox(
-                height: itemHeight,
-                child: Row(
-                  children: [
-                    // Primary Large Photo Slot
-                    GestureDetector(
-                      onTap: () => _pickImage(0),
-                      child: Container(
-                        width: leftWidth,
-                        height: itemHeight,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: state.profilePictures[0] != null
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.outline,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
-                          child: state.profilePictures[0] != null
-                              ? _buildImageWidget(state.profilePictures[0]!)
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.add_a_photo_outlined,
-                                      size: 36,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      'Primary Photo',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: theme.colorScheme.onSurface,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Required',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
+              final double gap = 12.0;
+              final double itemWidth = (totalWidth - (2 * gap)) / 3;
+              
+              Widget buildBox(int index, double w, double h) {
+                return GestureDetector(
+                  onTap: () => _pickImage(index),
+                  child: Container(
+                    width: w,
+                    height: h,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: state.profilePictures[index] != null
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outline,
+                        width: 1.5,
                       ),
                     ),
-                    SizedBox(width: gap),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      child: state.profilePictures[index] != null
+                          ? _buildImageWidget(state.profilePictures[index]!)
+                          : Center(
+                              child: index == 0
+                                  ? Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.add_a_photo_outlined, color: theme.colorScheme.primary, size: 28),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Primary',
+                                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    )
+                                  : Icon(Icons.add_photo_alternate_outlined, color: theme.colorScheme.onSurface.withValues(alpha: 0.3), size: 24),
+                            ),
+                    ),
+                  ),
+                );
+              }
 
-                    // Right column containing 2 smaller slots
-                    Expanded(
-                      child: Column(
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      // Large Primary (2 columns, 2 rows)
+                      buildBox(0, itemWidth * 2 + gap, itemWidth * 2 + gap),
+                      SizedBox(width: gap),
+                      // Right column (2 small photos)
+                      Column(
                         children: [
-                          // Secondary Photo 1
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => _pickImage(1),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: theme.colorScheme.outline,
-                                    width: 1.2,
-                                  ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(11),
-                                  child: state.profilePictures[1] != null
-                                      ? _buildImageWidget(state.profilePictures[1]!)
-                                      : Center(
-                                          child: Icon(
-                                            Icons.add_photo_alternate_outlined,
-                                            size: 24,
-                                            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ),
+                          buildBox(1, itemWidth, itemWidth),
                           SizedBox(height: gap),
-
-                          // Secondary Photo 2
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => _pickImage(2),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: theme.colorScheme.outline,
-                                    width: 1.2,
-                                  ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(11),
-                                  child: state.profilePictures[2] != null
-                                      ? _buildImageWidget(state.profilePictures[2]!)
-                                      : Center(
-                                          child: Icon(
-                                            Icons.add_photo_alternate_outlined,
-                                            size: 24,
-                                            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ),
+                          buildBox(2, itemWidth, itemWidth),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                  SizedBox(height: gap),
+                  Row(
+                    children: [
+                      buildBox(3, itemWidth, itemWidth),
+                      SizedBox(width: gap),
+                      buildBox(4, itemWidth, itemWidth),
+                      SizedBox(width: gap),
+                      buildBox(5, itemWidth, itemWidth),
+                    ],
+                  ),
+                ],
               );
             },
           ),

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
 import '../../../../core/widgets/image_helper.dart';
 
@@ -18,7 +17,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
-  final List<String?> _profilePictures = [null, null, null];
+  final List<String?> _profilePictures = List.filled(6, null);
   bool _isSaving = false;
 
   @override
@@ -28,7 +27,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (user != null) {
       _nameController.text = user.name;
       _bioController.text = user.bio;
-      for (int i = 0; i < user.profilePictures.length && i < 3; i++) {
+      for (int i = 0; i < user.profilePictures.length && i < 6; i++) {
         _profilePictures[i] = user.profilePictures[i];
       }
     }
@@ -132,7 +131,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final cardBg = theme.colorScheme.surface;
     final borderBg = theme.colorScheme.outline;
-    final textColor = theme.colorScheme.onSurface;
     final subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
     final iconColor = theme.colorScheme.onSurface.withValues(alpha: 0.3);
 
@@ -191,104 +189,76 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   builder: (context, constraints) {
                     final double totalWidth = constraints.maxWidth;
                     final double gap = 12.0;
-                    final double leftWidth = (totalWidth - gap) * 0.6;
-                    final double itemHeight = (leftWidth * 1.25);
-
-                    return SizedBox(
-                      height: itemHeight,
-                      child: Row(
-                        children: [
-                          // Primary Photo
-                          GestureDetector(
-                            onTap: () => _pickImage(0),
-                            child: Container(
-                              width: leftWidth,
-                              height: itemHeight,
-                              decoration: BoxDecoration(
-                                color: cardBg,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: _profilePictures[0] != null
-                                      ? theme.colorScheme.primary
-                                      : borderBg,
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(15),
-                                child: _profilePictures[0] != null
-                                    ? _buildImageWidget(_profilePictures[0]!)
-                                    : Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.add_a_photo_outlined, color: isDark ? Colors.white70 : Colors.black54, size: 32),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'Primary Photo',
-                                              style: TextStyle(color: subTextColor, fontSize: 12, fontWeight: FontWeight.bold),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                              ),
+                    final double itemWidth = (totalWidth - (2 * gap)) / 3;
+                    
+                    Widget buildBox(int index, double w, double h) {
+                      return GestureDetector(
+                        onTap: () => _pickImage(index),
+                        child: Container(
+                          width: w,
+                          height: h,
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _profilePictures[index] != null
+                                  ? theme.colorScheme.primary
+                                  : borderBg,
+                              width: 1.5,
                             ),
                           ),
-                          SizedBox(width: gap),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(11),
+                            child: _profilePictures[index] != null
+                                ? _buildImageWidget(_profilePictures[index]!)
+                                : Center(
+                                    child: index == 0
+                                        ? Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.add_a_photo_outlined, color: isDark ? Colors.white70 : Colors.black54, size: 28),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Primary',
+                                                style: TextStyle(color: subTextColor, fontSize: 11, fontWeight: FontWeight.bold),
+                                              ),
+                                            ],
+                                          )
+                                        : Icon(Icons.add_photo_alternate_outlined, color: iconColor, size: 24),
+                                  ),
+                          ),
+                        ),
+                      );
+                    }
 
-                          // Right Column containing two smaller secondary photos
-                          Expanded(
-                            child: Column(
+                    return Column(
+                      children: [
+                        Row(
+                          children: [
+                            // Large Primary (2 columns, 2 rows)
+                            buildBox(0, itemWidth * 2 + gap, itemWidth * 2 + gap),
+                            SizedBox(width: gap),
+                            // Right column (2 small photos)
+                            Column(
                               children: [
-                                // Photo 2
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => _pickImage(1),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: cardBg,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: borderBg, width: 1.2),
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(11),
-                                        child: _profilePictures[1] != null
-                                            ? _buildImageWidget(_profilePictures[1]!)
-                                            : Center(
-                                                child: Icon(Icons.add_photo_alternate_outlined, color: iconColor, size: 24),
-                                              ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                buildBox(1, itemWidth, itemWidth),
                                 SizedBox(height: gap),
-
-                                // Photo 3
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => _pickImage(2),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: cardBg,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: borderBg, width: 1.2),
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(11),
-                                        child: _profilePictures[2] != null
-                                            ? _buildImageWidget(_profilePictures[2]!)
-                                            : Center(
-                                                child: Icon(Icons.add_photo_alternate_outlined, color: iconColor, size: 24),
-                                              ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                buildBox(2, itemWidth, itemWidth),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                        SizedBox(height: gap),
+                        Row(
+                          children: [
+                            buildBox(3, itemWidth, itemWidth),
+                            SizedBox(width: gap),
+                            buildBox(4, itemWidth, itemWidth),
+                            SizedBox(width: gap),
+                            buildBox(5, itemWidth, itemWidth),
+                          ],
+                        ),
+                      ],
                     );
                   },
                 ),

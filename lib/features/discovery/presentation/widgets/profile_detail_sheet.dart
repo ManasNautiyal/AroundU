@@ -5,7 +5,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/image_helper.dart';
 import '../../data/models/nearby_user.dart';
 import '../../../connections/data/repositories/interaction_repository.dart';
-import '../../../safety/data/repositories/block_service.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
 import '../../../connections/presentation/widgets/match_overlay.dart';
@@ -32,91 +31,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     showFullScreenPhotoViewer(context, images, initialIndex: index);
   }
 
-  void _showReportBottomSheet(BuildContext context) {
-    final reasons = ['Spam', 'Harassment', 'Inappropriate Content'];
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (modalContext) {
-        return Container(
-          decoration: AppDecorations.bottomSheet(),
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppDecorations.dragHandle(),
-              Text(
-                'Report ${widget.userModel.name}',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Please select a reason. This user will also be blocked automatically.',
-                style: GoogleFonts.inter(
-                  color: AppTheme.textSecondary,
-                  fontSize: 13,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...reasons.map((reason) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkGray,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.borderGray, width: 0.5),
-                  ),
-                  child: ListTile(
-                    title: Text(
-                      reason,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textTertiary, size: 20),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    onTap: () async {
-                      Navigator.pop(modalContext);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Reporting ${widget.userModel.name}...'),
-                          duration: const Duration(seconds: 1),
-                        ),
-                      );
-                      final blockService = ref.read(blockServiceProvider);
-                      final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid ?? '';
-                      await blockService.reportUser(
-                        reporterId: currentUserId,
-                        targetUserId: widget.userModel.uid,
-                        reason: reason,
-                      );
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${widget.userModel.name} has been reported and blocked.'),
-                        ),
-                      );
-                      Navigator.pop(context);
-                    },
-                  ),
-                );
-              }),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   void _showConnectDialog() {
     final textController = TextEditingController();
@@ -228,7 +143,6 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
     final currentUserId = ref.watch(authRepositoryProvider).currentUser?.uid ?? '';
     final sentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: currentUserId));
     final hasLiked = sentLikesAsync.valueOrNull?.any((like) => like.receiverId == user.uid) ?? false;
-    final userSentLikesAsync = ref.watch(sentLikesStreamProvider(currentUserId: user.uid));
 
     final matchesAsync = ref.watch(matchesStreamProvider(currentUserId: currentUserId));
     final matches = matchesAsync.valueOrNull ?? [];
@@ -247,9 +161,6 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
       images.add('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500');
     }
 
-    final avatarUrl = images[0];
-    final gridPhotos = images.length > 1 ? images.sublist(1) : <String>[];
-
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
       minChildSize: 0.5,
@@ -266,130 +177,72 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                 children: [
                   AppDecorations.dragHandle(),
 
-                  // ── Header ──
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Avatar
-                        GestureDetector(
-                          onTap: () => _openPhotoViewer(images, 0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppTheme.borderGray, width: 2),
+                  // First large photo with overlay
+                  if (images.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Stack(
+                          alignment: Alignment.bottomLeft,
+                          children: [
+                            AspectRatio(
+                              aspectRatio: 4 / 5,
+                              child: GestureDetector(
+                                onTap: () => _openPhotoViewer(images, 0),
+                                child: getUserImageWidget(images[0], fit: BoxFit.cover),
+                              ),
                             ),
-                            child: CircleAvatar(
-                              radius: 46,
-                              backgroundColor: AppTheme.darkGray,
-                              child: ClipOval(
-                                child: getUserImageWidget(
-                                  avatarUrl,
-                                  fit: BoxFit.cover,
-                                  errorWidget: const Icon(Icons.person, size: 40, color: AppTheme.textTertiary),
+                            // Overlay gradient
+                            Positioned(
+                              bottom: 0, left: 0, right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      user.name,
+                                      style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 32, color: Colors.white, height: 1.1),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        _StatChip(label: 'Photos', value: images.length.toString()),
+                                        const SizedBox(width: 8),
+                                        _StatChip(label: 'Likes', value: user.likesCount.toString()),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 20),
-
-                        // Name + stats column
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      user.name,
-                                      style: GoogleFonts.inter(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 20,
-                                        color: Colors.white,
-                                        letterSpacing: -0.3,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  // Report
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.darkGray,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.more_horiz_rounded,
-                                        color: AppTheme.textSecondary,
-                                        size: 20,
-                                      ),
-                                      tooltip: 'Report / Block',
-                                      onPressed: () => _showReportBottomSheet(context),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              // Stats row with stylized chips
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  _StatChip(
-                                    label: 'Photos',
-                                    value: images.length.toString(),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _StatChip(
-                                    label: 'Likes',
-                                    value: user.likesCount.toString(),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _StatChip(
-                                    label: 'Liked',
-                                    value: userSentLikesAsync.valueOrNull?.length.toString() ?? '0',
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
 
                   const SizedBox(height: 20),
 
                   // ── Bio ──
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: AppDecorations.card(borderRadius: 16),
+                      padding: const EdgeInsets.all(24),
+                      decoration: AppDecorations.card(borderRadius: 24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'About',
-                            style: GoogleFonts.inter(
-                              color: AppTheme.textSecondary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            user.bio,
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 14,
-                              height: 1.55,
-                            ),
-                          ),
+                          Text('About me', style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 12),
+                          Text(user.bio, style: GoogleFonts.inter(color: Colors.white, fontSize: 16, height: 1.5)),
                         ],
                       ),
                     ),
@@ -397,68 +250,21 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
 
                   const SizedBox(height: 24),
 
-                  // ── Photo grid ──
-                  if (images.length > 1) ...[
+                  // ── Remaining photos ──
+                  for (int i = 1; i < images.length; i++)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        'Photos',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textSecondary,
-                          fontSize: 11,
-                          letterSpacing: 0.5,
+                      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: AspectRatio(
+                          aspectRatio: 4 / 5,
+                          child: GestureDetector(
+                            onTap: () => _openPhotoViewer(images, i),
+                            child: getUserImageWidget(images[i], fit: BoxFit.cover),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 6,
-                          mainAxisSpacing: 6,
-                          childAspectRatio: 1,
-                        ),
-                        itemCount: gridPhotos.length,
-                        itemBuilder: (ctx, i) {
-                          return GestureDetector(
-                            onTap: () => _openPhotoViewer(images, i + 1),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: AppTheme.borderGray, width: 0.5),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: getUserImageWidget(
-                                  gridPhotos[i],
-                                  fit: BoxFit.cover,
-                                  placeholder: Container(
-                                    color: AppTheme.darkGray,
-                                    child: const Center(
-                                      child: SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: Container(
-                                    color: AppTheme.darkGray,
-                                    child: const Icon(Icons.broken_image_outlined, color: AppTheme.textTertiary),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
                 ],
               ),
 

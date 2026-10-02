@@ -78,7 +78,23 @@ class UserRepository {
     });
   }
 
+  /// Fetches a user profile, trying the local Firestore cache first
+  /// to avoid redundant network reads for already-fetched profiles.
   Future<UserModel?> getUserProfile(String uid) async {
+    // Try cache first to reduce network reads
+    try {
+      final cachedDoc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .get(const GetOptions(source: Source.cache));
+      if (cachedDoc.exists && cachedDoc.data() != null) {
+        return UserModel.fromMap(cachedDoc.data()!, uid);
+      }
+    } catch (_) {
+      // Cache miss — fall through to server fetch
+    }
+
+    // Fallback to server
     final doc = await _firestore.collection('users').doc(uid).get();
     if (doc.exists && doc.data() != null) {
       return UserModel.fromMap(doc.data()!, uid);

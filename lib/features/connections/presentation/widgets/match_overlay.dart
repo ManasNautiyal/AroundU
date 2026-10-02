@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../discovery/data/models/nearby_user.dart';
 import '../../../discovery/data/repositories/user_repository.dart';
 import '../../../../core/widgets/image_helper.dart';
@@ -135,7 +134,7 @@ class _MatchOverlayState extends ConsumerState<MatchOverlay> with TickerProvider
                 children: [
                   // Celebration Header
                   Text(
-                    'It\'s a Match! ✨',
+                    'You\'re connected! ✨',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       color: Colors.white,

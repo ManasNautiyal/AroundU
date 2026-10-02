@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/onboarding/presentation/screens/location_permission_screen.dart';
@@ -25,6 +26,13 @@ void main() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    );
+    // Enable offline persistence with unlimited cache to reduce network reads.
+    // Firestore will serve data from local cache first, only fetching from
+    // the server when the cache is stale or missing.
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
     );
   } catch (e) {
     debugPrint('Firebase initialization failed or unsupported on this platform: $e');

@@ -10,14 +10,14 @@ class OnboardingState {
   final int currentPage;
   final String name;
   final String bio;
-  final List<String?> profilePictures; // Index 0 is primary, 1 and 2 are secondary slots
+  final List<String?> profilePictures; // Up to 6 slots
   final bool isLoading;
 
   OnboardingState({
     this.currentPage = 0,
     this.name = '',
     this.bio = '',
-    this.profilePictures = const [null, null, null],
+    this.profilePictures = const [null, null, null, null, null, null],
     this.isLoading = false,
   });
 
@@ -50,7 +50,7 @@ class OnboardingController extends _$OnboardingController {
   OnboardingState build() {
     final user = ref.watch(authRepositoryProvider).currentUser;
     String initialName = '';
-    List<String?> initialPics = [null, null, null];
+    List<String?> initialPics = List.filled(6, null);
 
     if (user != null) {
       if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
@@ -97,7 +97,7 @@ class OnboardingController extends _$OnboardingController {
 
   void updatePicture(int index, String? path) {
     final currentPics = List<String?>.from(state.profilePictures);
-    if (index >= 0 && index < 3) {
+    if (index >= 0 && index < 6) {
       currentPics[index] = path;
       state = state.copyWith(profilePictures: currentPics);
     }
